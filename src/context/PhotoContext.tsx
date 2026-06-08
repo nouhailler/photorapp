@@ -7,7 +7,9 @@ interface PhotoContextType {
   albums: Album[];
   toggleFavorite: (id: string) => void;
   updateAdjustments: (id: string, adjustments: PhotoAdjustments) => void;
-  addPhoto: (photo: Photo) => void;
+  addPhotos: (newPhotos: Photo[]) => void;
+  deletePhoto: (id: string) => void;
+  createAlbum: (title: string) => void;
 }
 
 const PhotoContext = createContext<PhotoContextType | undefined>(undefined);
@@ -18,11 +20,18 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : INITIAL_PHOTOS;
   });
 
-  const [albums] = useState<Album[]>(INITIAL_ALBUMS);
+  const [albums, setAlbums] = useState<Album[]>(() => {
+    const saved = localStorage.getItem('gallery_pro_albums');
+    return saved ? JSON.parse(saved) : INITIAL_ALBUMS;
+  });
 
   useEffect(() => {
     localStorage.setItem('gallery_pro_photos', JSON.stringify(photos));
   }, [photos]);
+
+  useEffect(() => {
+    localStorage.setItem('gallery_pro_albums', JSON.stringify(albums));
+  }, [albums]);
 
   const toggleFavorite = (id: string) => {
     setPhotos(prev => prev.map(p => 
@@ -36,12 +45,29 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     ));
   };
 
-  const addPhoto = (photo: Photo) => {
-    setPhotos(prev => [photo, ...prev]);
+  const addPhotos = (newPhotos: Photo[]) => {
+    setPhotos(prev => [...newPhotos, ...prev]);
+  };
+
+  const deletePhoto = (id: string) => {
+    setPhotos(prev => prev.filter(p => p.id !== id));
+  };
+
+  const createAlbum = (title: string) => {
+    const newAlbum: Album = {
+      id: Date.now().toString(),
+      title,
+      coverPhotoId: photos[0]?.id || '',
+      photoCount: 0,
+      isShared: false,
+      isPrivate: true,
+      type: 'personal'
+    };
+    setAlbums(prev => [newAlbum, ...prev]);
   };
 
   return (
-    <PhotoContext.Provider value={{ photos, albums, toggleFavorite, updateAdjustments, addPhoto }}>
+    <PhotoContext.Provider value={{ photos, albums, toggleFavorite, updateAdjustments, addPhotos, deletePhoto, createAlbum }}>
       {children}
     </PhotoContext.Provider>
   );

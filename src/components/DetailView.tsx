@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Photo } from '../types/types';
+import { usePhotos } from '../context/PhotoContext';
 
 interface DetailViewProps {
   photo: Photo;
@@ -10,6 +11,14 @@ interface DetailViewProps {
 
 const DetailView: React.FC<DetailViewProps> = ({ photo, onClose, onEdit, onToggleFavorite }) => {
   const [showInfo, setShowInfo] = useState(false);
+  const { deletePhoto } = usePhotos();
+
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this photo?')) {
+      deletePhoto(photo.id);
+      onClose();
+    }
+  };
 
   const photoStyle = photo.adjustments ? {
     filter: `brightness(${100 + photo.adjustments.brightness}%) contrast(${100 + photo.adjustments.contrast}%) saturate(${100 + photo.adjustments.saturation}%)`,
@@ -19,14 +28,17 @@ const DetailView: React.FC<DetailViewProps> = ({ photo, onClose, onEdit, onToggl
     <div className="fixed inset-0 z-[55] bg-black flex flex-col animate-in fade-in duration-300">
       {/* Top Bar */}
       <header className={`fixed top-0 left-0 right-0 z-10 flex justify-between items-center px-4 h-16 bg-gradient-to-b from-black/60 to-transparent transition-opacity duration-300`}>
-        <button onClick={onClose} className="p-2 text-white bg-black/20 rounded-full backdrop-blur-md">
+        <button onClick={onClose} className="p-2 text-white bg-black/20 rounded-full backdrop-blur-md active:scale-90 transition-transform">
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
         <div className="flex gap-2">
-          <button onClick={onToggleFavorite} className="p-2 text-white bg-black/20 rounded-full backdrop-blur-md">
+          <button onClick={onToggleFavorite} className="p-2 text-white bg-black/20 rounded-full backdrop-blur-md active:scale-90 transition-transform">
             <span className={`material-symbols-outlined ${photo.isFavorite ? 'material-symbols-fill text-primary' : ''}`}>favorite</span>
           </button>
-          <button onClick={() => setShowInfo(!showInfo)} className="p-2 text-white bg-black/20 rounded-full backdrop-blur-md">
+          <button onClick={handleDelete} className="p-2 text-white bg-black/20 rounded-full backdrop-blur-md active:scale-90 transition-transform">
+            <span className="material-symbols-outlined text-error">delete</span>
+          </button>
+          <button onClick={() => setShowInfo(!showInfo)} className="p-2 text-white bg-black/20 rounded-full backdrop-blur-md active:scale-90 transition-transform">
             <span className="material-symbols-outlined">info</span>
           </button>
         </div>

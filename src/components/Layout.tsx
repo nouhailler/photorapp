@@ -1,7 +1,37 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { NavLink } from 'react-router-dom';
+import { usePhotos } from '../context/PhotoContext';
+import type { Photo } from '../types/types';
 
 const TopAppBar: React.FC = () => {
+  const { addPhotos } = usePhotos();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newPhotos: Photo[] = Array.from(files).map((file, index) => ({
+        id: Date.now().toString() + index,
+        url: URL.createObjectURL(file),
+        alt: file.name,
+        date: new Date().toISOString().split('T')[0],
+        isFavorite: false,
+        albumIds: [],
+        tags: [],
+        metadata: {
+          device: 'Uploaded File',
+          resolution: 'Unknown',
+          date: new Date().toLocaleString(),
+        }
+      }));
+      addPhotos(newPhotos);
+    }
+  };
+
   return (
     <header className="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl shadow-sm h-16 flex justify-between items-center px-container-padding">
       <div className="flex items-center gap-3">
@@ -15,7 +45,18 @@ const TopAppBar: React.FC = () => {
         <h1 className="text-headline-md font-bold tracking-tight text-on-surface">Gallery Pro</h1>
       </div>
       <div className="flex items-center gap-2">
-        <button className="bg-primary text-on-primary text-label-md font-semibold px-4 py-2 rounded-xl active:scale-95 duration-200 ease-in-out transition-colors hover:bg-primary-container">
+        <input 
+          type="file" 
+          multiple 
+          accept="image/*" 
+          className="hidden" 
+          ref={fileInputRef} 
+          onChange={handleFileChange}
+        />
+        <button 
+          onClick={handleImportClick}
+          className="bg-primary text-on-primary text-label-md font-semibold px-4 py-2 rounded-xl active:scale-95 duration-200 ease-in-out transition-colors hover:bg-primary-container"
+        >
           Import
         </button>
       </div>

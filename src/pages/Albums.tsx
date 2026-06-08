@@ -48,7 +48,14 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhotoUrl }) => {
 };
 
 const Albums: React.FC = () => {
-  const { albums, photos } = usePhotos();
+  const { albums, photos, createAlbum } = usePhotos();
+
+  const handleCreateAlbum = () => {
+    const title = window.prompt('Enter album title:');
+    if (title) {
+      createAlbum(title);
+    }
+  };
 
   return (
     <div className="px-container-padding space-y-section-margin">
@@ -71,7 +78,10 @@ const Albums: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {/* Create New Album Card */}
-        <button className="group relative flex flex-col items-center justify-center aspect-square border-2 border-dashed border-outline-variant rounded-xl hover:border-primary hover:bg-primary-fixed/10 transition-all duration-300">
+        <button 
+          onClick={handleCreateAlbum}
+          className="group relative flex flex-col items-center justify-center aspect-square border-2 border-dashed border-outline-variant rounded-xl hover:border-primary hover:bg-primary-fixed/10 transition-all duration-300 active:scale-95"
+        >
           <div className="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
             <span className="material-symbols-outlined text-primary text-[32px]">create_new_folder</span>
           </div>

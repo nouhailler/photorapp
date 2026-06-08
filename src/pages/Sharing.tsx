@@ -1,8 +1,45 @@
 import React from 'react';
+import { usePhotos } from '../context/PhotoContext';
+import type { Photo } from '../types/types';
 
 const Sharing: React.FC = () => {
+  const { addPhotos } = usePhotos();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newPhotos: Photo[] = Array.from(files).map((file, index) => ({
+        id: Date.now().toString() + index,
+        url: URL.createObjectURL(file),
+        alt: file.name,
+        date: new Date().toISOString().split('T')[0],
+        isFavorite: false,
+        albumIds: [],
+        tags: [],
+        metadata: {
+          device: 'Manual Import',
+          resolution: 'Unknown',
+          date: new Date().toLocaleString(),
+        }
+      }));
+      addPhotos(newPhotos);
+      alert(`${newPhotos.length} photos imported successfully!`);
+    }
+  };
+
   return (
     <div className="px-container-padding space-y-section-margin max-w-4xl mx-auto pb-8">
+      <input 
+        type="file" 
+        multiple 
+        accept="image/*" 
+        className="hidden" 
+        ref={fileInputRef} 
+        onChange={handleFileChange}
+      />
       {/* Header Text */}
       <section>
         <h2 className="text-headline-lg font-bold text-on-surface">Transfert de contenu</h2>
@@ -19,7 +56,11 @@ const Sharing: React.FC = () => {
             { label: 'Google Drive', icon: 'add_to_drive', bg: 'bg-surface-container-high', color: 'text-[#34A853]' },
             { label: 'Carte SD', icon: 'sd_card', bg: 'bg-surface-container-high', color: 'text-on-surface-variant' },
           ].map((item) => (
-            <button key={item.label} className="flex flex-col items-center justify-center p-6 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 hover:border-primary/40 transition-all group active:scale-95">
+            <button 
+              key={item.label} 
+              onClick={handleImportClick}
+              className="flex flex-col items-center justify-center p-6 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 hover:border-primary/40 transition-all group active:scale-95"
+            >
               <div className={`w-12 h-12 rounded-full ${item.bg} flex items-center justify-center ${item.color} mb-3 group-hover:scale-110 transition-transform`}>
                 <span className="material-symbols-outlined">{item.icon}</span>
               </div>
