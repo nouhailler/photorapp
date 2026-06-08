@@ -1,0 +1,339 @@
+<!DOCTYPE html><html class="light" lang="fr"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#5c5f60",
+                    "surface-container-low": "#f3f3f7",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#f0f0f4",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "secondary-fixed": "#e1e2e4",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed-variant": "#132cca",
+                    "surface-bright": "#f9f9fd",
+                    "background": "#f9f9fd",
+                    "on-secondary-fixed": "#191c1e",
+                    "tertiary-container": "#00734e",
+                    "on-surface": "#1a1c1f",
+                    "on-tertiary-fixed": "#002113",
+                    "on-background": "#1a1c1f",
+                    "surface": "#f9f9fd",
+                    "primary": "#1e35d0",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#00583b",
+                    "surface-container-high": "#e8e8ec",
+                    "surface-variant": "#e2e2e6",
+                    "surface-container-highest": "#e2e2e6",
+                    "outline-variant": "#c5c5d8",
+                    "surface-dim": "#d9dade",
+                    "primary-container": "#3e52e8",
+                    "on-primary-fixed": "#000b62",
+                    "surface-container-lowest": "#ffffff",
+                    "outline": "#757687",
+                    "on-secondary-container": "#606365",
+                    "on-primary-container": "#dfe0ff",
+                    "on-primary": "#ffffff",
+                    "on-surface-variant": "#444655",
+                    "surface-container": "#eeedf2",
+                    "on-secondary-fixed-variant": "#444749",
+                    "inverse-surface": "#2f3034",
+                    "secondary-fixed-dim": "#c5c6c8",
+                    "secondary-container": "#dee0e2",
+                    "primary-fixed-dim": "#bcc2ff",
+                    "tertiary-fixed": "#6ffbbe",
+                    "primary-fixed": "#dfe0ff",
+                    "surface-tint": "#364be1",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-container": "#6efbbd",
+                    "inverse-primary": "#bcc2ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "grid-gap": "2px",
+                    "element-gap": "12px",
+                    "section-margin": "24px",
+                    "container-padding": "16px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        .photo-cluster-pin {
+            box-shadow: 0 4px 12px rgba(30, 53, 208, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-lg min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-16 w-full bg-surface/70 dark:bg-surface-dim/70 backdrop-blur-xl shadow-sm">
+<div class="flex items-center gap-3">
+<img alt="User Profile" class="w-10 h-10 rounded-full object-cover" data-alt="A professional studio portrait of a mid-30s man with a friendly expression, soft lighting, and a clean minimalist aesthetic. The image is crisp with high-key lighting to match the light-mode UI, featuring subtle blue undertones in the shadows for a sophisticated, professional look consistent with a high-end photography app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5v21AKYV1ElC9HMidHTz0jf7Bh_QZNazw9YMWVSgWPjr-GFwG-FjbHZZC0YBcA1GOZHTagBLmOI9XpSrvC90zrS46ePi9-W7lxKH1JjFwXF0a1CfLhduDdySOMGDqW3UKKiG3jZ1wlT-yRAqZ7F-rwec0HuIgb-694jpBbuvJ-w9OA7JRNZPNsbjD5zQlm6qmn3g1LMrIc5mTpaTcESUxe7B-xUWa8lIWT2JSZGPL4uPULsOPYrHq69E3MdnK-rbQpYn8lI3230Q">
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface dark:text-surface-bright">Intelligence IA</h1>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-on-primary font-label-md hover:bg-primary-container transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+<span class="">Import</span>
+</button>
+</header>
+<main class="pt-20 px-container-padding space-y-section-margin">
+<!-- Search Bar Section -->
+<section class="mt-4">
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-primary" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<input class="w-full h-14 pl-12 pr-4 rounded-2xl bg-surface-container-lowest border-2 border-transparent focus:border-primary/20 focus:ring-0 shadow-sm font-body-lg text-on-surface placeholder:text-on-surface-variant transition-all outline-none" placeholder="Chien à la plage en 2024..." type="text">
+<div class="absolute inset-y-0 right-4 flex items-center">
+<span class="material-symbols-outlined text-on-surface-variant">mic</span>
+</div>
+</div>
+<p class="mt-2 text-label-md font-label-md text-on-surface-variant ml-2 uppercase tracking-wider">Recherche sémantique</p>
+</section>
+<!-- Reconnaissance Faciale Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">Reconnaissance Faciale</h2>
+<button class="text-primary font-label-md hover:underline">Voir tout</button>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-4 -mx-container-padding px-container-padding">
+<!-- Face Item -->
+<div class="flex flex-col items-center gap-2 flex-shrink-0 group">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-primary p-0.5 group-active:scale-95 transition-transform">
+<img alt="Person" class="w-full h-full rounded-full object-cover" data-alt="A sharp, detailed close-up of a smiling young woman's face in soft natural daylight. The lighting is warm and bright, emphasizing a professional and clean photography aesthetic. The composition is a tightly cropped circle, perfectly suited for facial recognition UI, using a high-end commercial portrait style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcjl1PfhHAK9xJ6Ack0SgGtABf9RJwJ7ucOcxhfbWVjREmbhDc1xn1X0CI1wV70KfSpzTenxB5FEEYNkR_hSiPND0brJhDJZ34zgQnyyG9JP7zDGDwmo_5EDcUKw0p0LOPGLGggvlqYsbjqaUod-8DgwPD4xC8OPnXNn41dV3vIdbf9InF9om_qzAu06cX-N0Qgv_Twwq8QCL7G6tkWWpqvCCDAczxMbOxWp6cycxZri16-TkP2z7TPJgZESnRy-Nt6QVDVX_AVpU">
+</div>
+<span class="font-label-md text-label-md text-on-surface">Marie</span>
+</div>
+<!-- Face Item -->
+<div class="flex flex-col items-center gap-2 flex-shrink-0 group">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-outline-variant p-0.5 group-active:scale-95 transition-transform">
+<img alt="Person" class="w-full h-full rounded-full object-cover" data-alt="A focused portrait of a man with a beard, captured with high-detail clarity. The lighting is professional and even, against a neutral light grey background. The visual style is crisp and modern, reflecting the sophisticated image processing capabilities of an AI-powered gallery app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHE9prXQnUq7JQA8omke0C5aP4IuHpOY2BDx3JWigFKUIzeCQ9KL_cA9ptrjW-zN3BVpUrCrabv6WbuSGjcvMgqnBmpTxpYjNEEh7wwCcWQV8P4mnAalSf6oVKL2bFuWDYDu6eBO-qtIUdZwfRU45aPRsuXtzwCqQnQ3HVUxO1e6ceEMcW22ym7hRFw6VBE_w5mQW1LdXsCGJIBjd7Eg8V0QT9pC9X6pgarRAz9IqN_il-tmjBYUjtQHp9svdi1M-ryCSMxuxZG6k">
+</div>
+<span class="font-label-md text-label-md text-on-surface">Thomas</span>
+</div>
+<!-- Face Item (Unknown) -->
+<div class="flex flex-col items-center gap-2 flex-shrink-0 group">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-dashed border-outline-variant p-0.5 group-active:scale-95 transition-transform">
+<img alt="Unknown Person" class="w-full h-full rounded-full object-cover grayscale opacity-60" data-alt="A high-contrast black and white portrait of a man with mysterious shadows, intended to represent an unidentified person in a facial recognition system. The lighting is dramatic yet professional, keeping with a modern minimalist aesthetic. The image conveys a sense of anonymity through its stylistic treatment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlIR_3svSSLVMmjsVXBiNnKUxnanLdyP5tpoVy-JPPIWxwD5ukqErrNkLdJTW9dwKlUapL4lgb3HhEaLifNl4Q8FWzcWTh_PDhhZsWNUJ58mpJq888T7QFs6-BQWP28tXzoRkwREqrayYZDc-qEb495IV4615WIz80NvwDcWwPFEBAOlIvjMHruICNdWF_Jw2GDKbwQpvmCPlGbp2ZtRYMWH5d4y9cQhfSP4RCUxBbbP8Onjm7dqlqwik_gvO1JCuxBAbmfqex4_o">
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Inconnu</span>
+</div>
+<!-- Repeat for scroll feel -->
+<div class="flex flex-col items-center gap-2 flex-shrink-0 group">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-primary p-0.5 group-active:scale-95 transition-transform">
+<img alt="Person" class="w-full h-full rounded-full object-cover" data-alt="A beautiful candid portrait of a woman with curly hair, set against a bright, airy background. The lighting is soft and flattering, creating a premium photographic look. The image is sharp and vibrant, showcasing the high-quality assets typical of a pro-level gallery application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWNATPRxZ9lQZr6O_KAJpcX6jsfu88c9mmhxT20y5SnA9Duf3_i6XSbVZfulJJZRuIiSIsqel-X8DQFxAj1_daqghShejGyFZ8tpysSN1NZusj9tk8JvUfvvR15MELtspnAQXeaWiUylnkIKMgDXciRa-_WVR_ZxN-L2vYMzqzyTi8UqzLKTT_UN2t3y1wqac98QLf6WU-r7ZFMmZWDk54FshO8_G73b86pc4b-DhIFWfA9ksIhI5MArbAGpGmK8qjPcLNsJhvnVg">
+</div>
+<span class="font-label-md text-label-md text-on-surface">Léa</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-shrink-0 group">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-dashed border-outline-variant p-0.5 group-active:scale-95 transition-transform">
+<img alt="Unknown Person" class="w-full h-full rounded-full object-cover grayscale opacity-60" data-alt="A professional headshot of a man, stylistically rendered in a desaturated, slightly blurred fashion to denote an unidentified user in the AI interface. The lighting is clean and high-key, maintaining consistency with the app's minimalist, glassmorphic design language and light theme." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqKtEHQqlqgS40_mwzLMxgzsFFMvGbu6ZLVDNz2vtrj5Bh3ZCeOUnfqJPOJTLcYYDUdl1BadtKc0Rv_a86MILoPsXZv4L1pYdotbobw6zhrIFIpJJThCjIkPgImYiA2NAKsplbreJYNlnUrsOqdWiA_YR3Fz4wkXGTCnTgZJx07C1HeRDzSrjYBXChsJ28n2b3xclq0tle14YTDwFnNhjInGlGIRhJF2iKyE7qlveLV-8n0BUewswp2y2hJH12PTFYOci64SYA1yw">
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Inconnu</span>
+</div>
+</div>
+</section>
+<!-- Classification Automatique Section -->
+<section>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-4">Classification Automatique</h2>
+<div class="grid grid-cols-2 gap-grid-gap rounded-xl overflow-hidden">
+<div class="relative aspect-square group overflow-hidden bg-surface-container">
+<img alt="Paysage" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A breathtaking mountain landscape at sunrise, with a crystal clear lake reflecting the jagged peaks. The lighting is warm and ethereal, with soft oranges and deep blues. This vibrant, high-resolution scenery represents the landscape classification category in a premium digital photo gallery app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoNNaDoSO7hfpfM95o0sLOL8V1BbyUnJq4E-3FKZq8snUGV-Hv63Lu6E1roVj1Y57XZitWsC7gNiiYfoQfhhTLHiLg1U2AWKOvB93zeA-Pa_TaURi3Poi4le8eznq2UKkRu4FuUcvMjvdUIAlCVTqbSsu-jUZY2DL9msPzT7CygehM-dMzE7k3972Sn-QJtTIk8NMokLQAQ8x3jpD4Sw5xQLUd4b7qofkLUm74-abwJWlVBcD-k79Y6dN4_i4ovwPTnSu0GD3vxtg">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
+<span class="font-label-md text-white/80 uppercase">Paysage</span>
+<span class="font-body-lg text-white font-bold">1,248 photos</span>
+</div>
+</div>
+<div class="relative aspect-square group overflow-hidden bg-surface-container">
+<img alt="Nourriture" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="An artistic top-down shot of a gourmet breakfast spread on a clean, light wood table. The lighting is natural and bright, highlighting fresh ingredients and vibrant colors. This high-end culinary photography illustrates the food classification category in a modern minimalist UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0JC0z-M1ot1HFoCuQuD53sXvm3vTd1b8OQdwaH8fAn4ak_pTKecRT1eaVwcu3oiYxpMEGv19jajR_YYkmQLSKreaqr_aZt3VSGr_0WWLFms0hvvo2e8W1h4jcGI9ueoS3p_xYmxgW91vSDXaavu9sBmfpRXwIVA2y24_btWtOpHsTKdbTRSK0RAuj9FfrqsT3HX9EnNkO5rcdyFgHqb0ZwEgjB0b4uvRLmLkJGZzv1-HrINm5twq1-6kkK4zshvfhyaZix4rsIzk">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
+<span class="font-label-md text-white/80 uppercase">Nourriture</span>
+<span class="font-body-lg text-white font-bold">532 photos</span>
+</div>
+</div>
+<div class="relative aspect-square group overflow-hidden bg-surface-container">
+<img alt="Documents" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A clean, flat-lay arrangement of organized paperwork and folders in a bright, modern office setting. The aesthetic is professional and orderly, with plenty of white space and soft shadows. This image depicts the document classification feature within a sophisticated photo management application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSFGSowXolEjujaKP_V8iZtqaFGxU7MLeCP8vDPAfHjw53djqwt5mVvHb46GWATkdLOmp0W7liLSuTg5niki56opkSwHoIEsNqGJEzlHth8OqHL6vtDxc71YC3Rvi3AHDA5nGTa3MnCtZG-MsyQNMed4ngs37zZ0e3gbX3EpHt7fTiONzV5t25P-oYhopb6AlkLpygQQ_MSMtoac2xsN01GpuFwrSQ5NY5huP9hYDhvqtjVs-JkPvumSzUi23EATje0JXcZJf7R-E">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
+<span class="font-label-md text-white/80 uppercase">Documents</span>
+<span class="font-body-lg text-white font-bold">89 photos</span>
+</div>
+</div>
+<div class="relative aspect-square group overflow-hidden bg-surface-container">
+<div class="w-full h-full bg-secondary-container flex flex-col items-center justify-center gap-2">
+<span class="material-symbols-outlined text-on-secondary-container text-4xl" data-icon="screenshot">screenshot</span>
+<span class="font-body-lg text-on-secondary-container font-bold">Screenshots</span>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent flex flex-col justify-end p-4">
+<span class="font-body-lg text-white font-bold">2,410 photos</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Nettoyage Intelligent Section -->
+<section>
+<div class="flex items-center gap-2 mb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">Nettoyage Intelligent</h2>
+<div class="px-2 py-0.5 bg-tertiary-container rounded-md text-[10px] font-bold text-on-tertiary-container uppercase tracking-tighter">Action requise</div>
+</div>
+<div class="space-y-3">
+<!-- Cleaning Card -->
+<div class="glass-card rounded-2xl p-4 flex items-center justify-between shadow-sm border border-outline-variant/20 group hover:bg-surface-bright transition-all">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-error-container/20 flex items-center justify-center text-error">
+<span class="material-symbols-outlined" data-icon="blur_on">blur_on</span>
+</div>
+<div>
+<h3 class="font-body-lg font-semibold text-on-surface">Photos floues</h3>
+<p class="font-label-sm text-on-surface-variant">42 éléments détectés</p>
+</div>
+</div>
+<button class="px-4 py-2 rounded-xl bg-surface-container-high text-primary font-label-md group-active:scale-95 transition-transform">Réviser</button>
+</div>
+<!-- Cleaning Card -->
+<div class="glass-card rounded-2xl p-4 flex items-center justify-between shadow-sm border border-outline-variant/20 group hover:bg-surface-bright transition-all">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="content_copy">content_copy</span>
+</div>
+<div>
+<h3 class="font-body-lg font-semibold text-on-surface">Doublons</h3>
+<p class="font-label-sm text-on-surface-variant">15 groupes identifiés</p>
+</div>
+</div>
+<button class="px-4 py-2 rounded-xl bg-surface-container-high text-primary font-label-md group-active:scale-95 transition-transform">Fusionner</button>
+</div>
+<!-- Cleaning Card -->
+<div class="glass-card rounded-2xl p-4 flex items-center justify-between shadow-sm border border-outline-variant/20 group hover:bg-surface-bright transition-all">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="delete_sweep">delete_sweep</span>
+</div>
+<div>
+<h3 class="font-body-lg font-semibold text-on-surface">Screenshots inutiles</h3>
+<p class="font-label-sm text-on-surface-variant">Vieux de plus de 30 jours</p>
+</div>
+</div>
+<button class="px-4 py-2 rounded-xl bg-error-container text-error font-label-md group-active:scale-95 transition-transform">Tout supprimer</button>
+</div>
+</div>
+</section>
+<!-- Carte Interactive Widget -->
+<section class="pb-8">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-4">Carte Interactive</h2>
+<div class="relative w-full h-48 rounded-2xl overflow-hidden shadow-md group">
+<!-- Map Background Placeholder -->
+<div class="absolute inset-0 bg-surface-container-low">
+<img alt="Map Background" class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700" data-alt="A stylized, artistic overhead map view of a major city with clear geometric streets and soft pastel tones. The lighting is diffused and bright, creating a clean, modern aesthetic. This visual background serves as a canvas for interactive photo pins in a high-tech gallery application." data-location="Paris" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrzh1mwPv5_kYRZ1AEVot8ZSNytHRkNURjnQ85BPDhCRJHhVC294lFHMweATjCF3q5tVdJUURCq7gtZdWXqJN0dkvEvcLimVQN0pOeS0WXrD8ZgR_Jalh2vB505JjZRMb7aeuW5uwGN5qGhV1mZHzTILEuYvYP9dSxBWxokJT4Zi1XSSIw_npd_Vh1wP0p8wPyFUlB7JPmw1Hu1X_UF6pmFKqUkmkyz79CC4CjMx0j1ZF6uo-ep1LYHs_33DR1wRPZGkwZYfyuLEg">
+</div>
+<!-- Interactive Pins Overlay -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="relative">
+<!-- Pin 1 -->
+<div class="photo-cluster-pin absolute -top-12 -left-20 w-12 h-12 rounded-lg border-2 border-white overflow-hidden rotate-[-5deg] z-10 transition-transform group-hover:scale-110">
+<img alt="Travel Photo" class="w-full h-full object-cover" data-alt="A vibrant landscape shot of a snowy mountain peak under a clear blue sky. The image is crisp and professional, serving as a tiny thumbnail pin on a map interface. The visual style is high-end nature photography, conveying a sense of adventure and travel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3McX0uPs0J5kJzISy4XI9s7gObxKTvF2n0j-PzWP8-fIyYSz1WdDQqDxOdnf8v-k5JrmYrzkzkzohX3ZQfl794KYdPKBYokAn-pphaIN8Ye8TDNZeTCSiKgHOM598psGfm3cL-RczZjP1Gh3a9cYi2CPBYN7HFaXEgiXQ0LaJdzTb3oiXdW5eWqW4pOjglQDUT2iCow1rqwjlqDxiV5Y3z_z_UncYwpJ0AU0leDDQOdk_zbfmDhEnp0Pb1t2syXtSljiDktBq86Q">
+</div>
+<!-- Pin 2 -->
+<div class="photo-cluster-pin absolute -bottom-4 left-10 w-14 h-14 rounded-lg border-2 border-white overflow-hidden rotate-[8deg] z-20 transition-transform group-hover:scale-110 delay-75">
+<img alt="Travel Photo" class="w-full h-full object-cover" data-alt="A beautiful sunset view of the Eiffel Tower, with golden light washing over the city. This high-detail travel photo thumbnail represents a location cluster on an interactive map, following a premium and clean photographic style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCZ_6gM7YmYcuqaq7qVkrEeyvMUUgAR_UCfF3jrzPLECyqceKW0Vsuu2zPogAdsbdhV3AOjoykD657N335oAjGzn1NLXoilkMawxndsD0OoG_B4WV7Qb03I6SParYoCV-hHwNAIzx2wX-nwO2VLqRSsySQ_sQgRSYk44VOMCJ6GUeSkLPmoY8WC4WKSJ7FNzHaO09FPHOb3ktWgEFdZTUKxsqJzbV7X8RuVDxdk2Bksv4Huq3gth6VsYHp21sqLQqWy1hEhe6xzqQ">
+</div>
+<!-- Central Pin -->
+<div class="flex flex-col items-center">
+<div class="w-4 h-4 bg-primary rounded-full border-2 border-white shadow-lg animate-pulse"></div>
+<div class="mt-2 bg-primary text-on-primary px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
+                                482 photos ici
+                            </div>
+</div>
+</div>
+</div>
+<!-- View Button -->
+<div class="absolute bottom-3 right-3">
+<button class="bg-white/90 backdrop-blur-md text-primary px-4 py-1.5 rounded-full font-label-md shadow-sm active:scale-95 transition-transform flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">map</span>
+                        Explorer la carte
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-2 bg-surface/70 dark:bg-surface-dim/70 backdrop-blur-xl border-t border-outline-variant/30 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-50 pb-safe"><a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#"><span class="material-symbols-outlined" data-icon="photo_library">photo_library</span><span class="font-label-sm text-label-sm">Photos</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#"><span class="material-symbols-outlined" data-icon="collections_bookmark">collections_bookmark</span><span class="font-label-sm text-label-sm">Albums</span></a><a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim bg-primary-container/20 dark:bg-primary-container/40 rounded-xl px-4 py-1 transition-all active:scale-90 duration-200" href="#"><span class="material-symbols-outlined" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span><span class="font-label-sm text-label-sm">IA</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#"><span class="material-symbols-outlined" data-icon="search">search</span><span class="font-label-sm text-label-sm">Recherche</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-200" href="#"><span class="material-symbols-outlined" data-icon="group">group</span><span class="font-label-sm text-label-sm">Partage</span></a></nav>
+<!-- Contextual FAB -->
+<div class="fixed bottom-24 right-6 z-40">
+<button class="w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-[0_4px_12px_rgba(30,53,208,0.3)] hover:scale-105 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined text-2xl" data-icon="camera_enhance">camera_enhance</span>
+</button>
+</div>
+<script>
+        // Micro-interactions for smooth scrolling and hover states
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('shadow-md');
+            });
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('shadow-md');
+            });
+        });
+
+        // Simple search focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('scale-[1.02]');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('scale-[1.02]');
+        });
+    </script>
+
+
+</body></html>

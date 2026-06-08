@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Gallery Pro - Immersive View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#93000a",
+                    "primary-container": "#3e52e8",
+                    "secondary-fixed": "#e1e2e4",
+                    "on-primary-fixed-variant": "#132cca",
+                    "on-surface": "#1a1c1f",
+                    "surface-bright": "#f9f9fd",
+                    "tertiary-fixed": "#6ffbbe",
+                    "on-primary": "#ffffff",
+                    "surface-dim": "#d9dade",
+                    "on-secondary-fixed": "#191c1e",
+                    "on-secondary": "#ffffff",
+                    "tertiary-container": "#00734e",
+                    "inverse-on-surface": "#f0f0f4",
+                    "secondary-container": "#dee0e2",
+                    "on-background": "#1a1c1f",
+                    "secondary-fixed-dim": "#c5c6c8",
+                    "on-secondary-fixed-variant": "#444749",
+                    "surface-variant": "#e2e2e6",
+                    "on-tertiary-fixed": "#002113",
+                    "tertiary": "#00583b",
+                    "surface-container-highest": "#e2e2e6",
+                    "on-secondary-container": "#606365",
+                    "inverse-primary": "#bcc2ff",
+                    "on-error": "#ffffff",
+                    "on-primary-container": "#dfe0ff",
+                    "secondary": "#5c5f60",
+                    "inverse-surface": "#2f3034",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "surface": "#f9f9fd",
+                    "background": "#f9f9fd",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "surface-tint": "#364be1",
+                    "on-primary-fixed": "#000b62",
+                    "on-surface-variant": "#444655",
+                    "surface-container-low": "#f3f3f7",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#dfe0ff",
+                    "primary": "#1e35d0",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#e8e8ec",
+                    "on-tertiary-container": "#6efbbd",
+                    "primary-fixed-dim": "#bcc2ff",
+                    "outline": "#757687",
+                    "surface-container": "#eeedf2",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c5c5d8",
+                    "surface-container-lowest": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "grid-gap": "2px",
+                    "container-padding": "16px",
+                    "element-gap": "12px",
+                    "section-margin": "24px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .photo-viewer {
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .filter-item {
+            scroll-snap-align: start;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background overflow-hidden font-body-lg text-body-lg">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-container-padding h-16 w-full bg-surface/10 backdrop-blur-md transition-opacity duration-300" id="topNav">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95" onclick="window.history.back()">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<!-- Reset to Original Button -->
+<button class="hidden text-primary font-label-md text-label-md px-4 py-2 hover:bg-primary-container/10 rounded-full transition-all" id="revertBtn" onclick="revertChanges()">
+    Revert
+</button>
+<div class="flex gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95" onclick="toggleInfo()">
+<span class="material-symbols-outlined text-on-surface">info</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/50 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-on-surface">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Main Immersive Photo Canvas -->
+<main class="relative w-screen h-screen bg-black flex items-center justify-center group" id="mainCanvas">
+<!-- Photo Container -->
+<div class="relative w-full h-full flex items-center justify-center overflow-hidden">
+<img alt="Main Gallery Image" class="w-full h-full object-contain photo-viewer" data-alt="A breathtaking high-resolution photograph of the Eiffel Tower in Paris during the golden hour. The sky is painted with soft pastel gradients of pink and orange, casting a warm glow over the intricate iron structure. The lighting is ethereal and natural, reflecting a sophisticated and professional photography style. The image captures the romantic and grand atmosphere of Paris with sharp details and a modern, high-contrast aesthetic that aligns with the Gallery Pro brand identity." id="mainPhoto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8LxLjLLuQL_IEJKNU3j--yW4d3c8xoLS0ER2-njpvkTY19ktebXZysY4zq8SmK434SgLdSDGrFohEPoikbQJjCyFqBRG8PVelOhLmTXbWnvrP0GR0NlcvPI3tquxaTsc44yuSm2SJbAXbjdjqhxAVi0Hvb187Tyfvvrb9U4V1Evc_dM7sj466RoXdO8X0RCir5dFwUyn3jvqGKvkZq8E-BFhUc7uxsSph5206WgsqH1afZsEw03OZRYyaBqZbh63AcpQYTGw1h8U"/>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/30 blur-xl rounded-full border-4 border-primary/50 animate-pulse pointer-events-none" style="top: 75%; left: 60%;"></div></div>
+<!-- Navigation Arrows (Subtle) -->
+<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" id="navArrows">
+<button class="p-4 rounded-full bg-surface/20 backdrop-blur-md text-white pointer-events-auto hover:bg-surface/40 transition-colors active:scale-90">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="p-4 rounded-full bg-surface/20 backdrop-blur-md text-white pointer-events-auto hover:bg-surface/40 transition-colors active:scale-90">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<!-- Indicators Dots -->
+<div class="absolute bottom-24 flex gap-2 justify-center w-full transition-opacity duration-300 hidden" id="dots">
+<div class="w-2 h-2 rounded-full bg-white"></div>
+<div class="w-2 h-2 rounded-full bg-white/30"></div>
+<div class="w-2 h-2 rounded-full bg-white/30"></div>
+</div>
+<!-- Primary Adjust Button -->
+<div class="absolute bottom-28 left-1/2 -translate-x-1/2 transition-all duration-300 hidden" id="adjustBtnContainer">
+<button class="flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary-container text-on-primary-container font-label-md text-label-md shadow-xl hover:brightness-110 active:scale-95 transition-all" onclick="toggleEditMode()">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+                Adjust
+            </button>
+</div>
+<div class="absolute bottom-32 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-surface/90 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-outline-variant/30 z-40 animate-in fade-in slide-in-from-bottom-4"><button class="px-4 py-2 text-on-surface font-label-md text-label-md hover:bg-surface-variant/50 rounded-full transition-colors">Annuler</button><button class="flex items-center gap-2 px-6 py-2 bg-primary text-on-primary rounded-full font-label-md text-label-md shadow-md hover:brightness-110 active:scale-95 transition-all"><span class="material-symbols-outlined text-[18px]">auto_awesome</span>Effacer</button></div></main>
+<!-- Edit Workspace -->
+<div class="fixed inset-x-0 bottom-0 z-40 flex flex-col bg-surface/90 glass-panel border-t border-outline-variant/30 hidden animate-in fade-in slide-in-from-bottom-4 duration-300" id="editWorkspace">
+<!-- 1. Filter Gallery (Horizontal Scrolling) -->
+<div class="w-full border-b border-outline-variant/20 py-4">
+<div class="flex gap-4 px-6 overflow-x-auto hide-scrollbar snap-x">
+<div class="filter-item flex flex-col items-center gap-2 flex-shrink-0">
+<div class="w-14 h-14 rounded-lg bg-surface-container-high border-2 border-primary overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8LxLjLLuQL_IEJKNU3j--yW4d3c8xoLS0ER2-njpvkTY19ktebXZysY4zq8SmK434SgLdSDGrFohEPoikbQJjCyFqBRG8PVelOhLmTXbWnvrP0GR0NlcvPI3tquxaTsc44yuSm2SJbAXbjdjqhxAVi0Hvb187Tyfvvrb9U4V1Evc_dM7sj466RoXdO8X0RCir5dFwUyn3jvqGKvkZq8E-BFhUc7uxsSph5206WgsqH1afZsEw03OZRYyaBqZbh63AcpQYTGw1h8U"/>
+</div>
+<span class="font-label-sm text-label-sm">Original</span>
+</div>
+<div class="filter-item flex flex-col items-center gap-2 flex-shrink-0">
+<div class="w-14 h-14 rounded-lg bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8LxLjLLuQL_IEJKNU3j--yW4d3c8xoLS0ER2-njpvkTY19ktebXZysY4zq8SmK434SgLdSDGrFohEPoikbQJjCyFqBRG8PVelOhLmTXbWnvrP0GR0NlcvPI3tquxaTsc44yuSm2SJbAXbjdjqhxAVi0Hvb187Tyfvvrb9U4V1Evc_dM7sj466RoXdO8X0RCir5dFwUyn3jvqGKvkZq8E-BFhUc7uxsSph5206WgsqH1afZsEw03OZRYyaBqZbh63AcpQYTGw1h8U"/>
+</div>
+<span class="font-label-sm text-label-sm">B&amp;W</span>
+</div>
+<div class="filter-item flex flex-col items-center gap-2 flex-shrink-0">
+<div class="w-14 h-14 rounded-lg bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover sepia" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8LxLjLLuQL_IEJKNU3j--yW4d3c8xoLS0ER2-njpvkTY19ktebXZysY4zq8SmK434SgLdSDGrFohEPoikbQJjCyFqBRG8PVelOhLmTXbWnvrP0GR0NlcvPI3tquxaTsc44yuSm2SJbAXbjdjqhxAVi0Hvb187Tyfvvrb9U4V1Evc_dM7sj466RoXdO8X0RCir5dFwUyn3jvqGKvkZq8E-BFhUc7uxsSph5206WgsqH1afZsEw03OZRYyaBqZbh63AcpQYTGw1h8U"/>
+</div>
+<span class="font-label-sm text-label-sm">Vintage</span>
+</div>
+<div class="filter-item flex flex-col items-center gap-2 flex-shrink-0">
+<div class="w-14 h-14 rounded-lg bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover contrast-125 saturate-150" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8LxLjLLuQL_IEJKNU3j--yW4d3c8xoLS0ER2-njpvkTY19ktebXZysY4zq8SmK434SgLdSDGrFohEPoikbQJjCyFqBRG8PVelOhLmTXbWnvrP0GR0NlcvPI3tquxaTsc44yuSm2SJbAXbjdjqhxAVi0Hvb187Tyfvvrb9U4V1Evc_dM7sj466RoXdO8X0RCir5dFwUyn3jvqGKvkZq8E-BFhUc7uxsSph5206WgsqH1afZsEw03OZRYyaBqZbh63AcpQYTGw1h8U"/>
+</div>
+<span class="font-label-sm text-label-sm">HDR</span>
+</div>
+<div class="filter-item flex flex-col items-center gap-2 flex-shrink-0">
+<div class="w-14 h-14 rounded-lg bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover brightness-110 hue-rotate-15" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8LxLjLLuQL_IEJKNU3j--yW4d3c8xoLS0ER2-njpvkTY19ktebXZysY4zq8SmK434SgLdSDGrFohEPoikbQJjCyFqBRG8PVelOhLmTXbWnvrP0GR0NlcvPI3tquxaTsc44yuSm2SJbAXbjdjqhxAVi0Hvb187Tyfvvrb9U4V1Evc_dM7sj466RoXdO8X0RCir5dFwUyn3jvqGKvkZq8E-BFhUc7uxsSph5206WgsqH1afZsEw03OZRYyaBqZbh63AcpQYTGw1h8U"/>
+</div>
+<span class="font-label-sm text-label-sm">Cool</span>
+</div>
+<div class="filter-item flex flex-col items-center gap-2 flex-shrink-0">
+<div class="w-14 h-14 rounded-lg bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover brightness-90 hue-rotate-340" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8LxLjLLuQL_IEJKNU3j--yW4d3c8xoLS0ER2-njpvkTY19ktebXZysY4zq8SmK434SgLdSDGrFohEPoikbQJjCyFqBRG8PVelOhLmTXbWnvrP0GR0NlcvPI3tquxaTsc44yuSm2SJbAXbjdjqhxAVi0Hvb187Tyfvvrb9U4V1Evc_dM7sj466RoXdO8X0RCir5dFwUyn3jvqGKvkZq8E-BFhUc7uxsSph5206WgsqH1afZsEw03OZRYyaBqZbh63AcpQYTGw1h8U"/>
+</div>
+<span class="font-label-sm text-label-sm">Warm</span>
+</div>
+</div>
+</div>
+<!-- 2. Slider Adjustments Area -->
+<div class="px-6 py-6 space-y-6 max-w-md mx-auto w-full">
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-label-md text-on-surface">Brightness</span>
+<span class="font-label-md text-label-md text-primary">0</span>
+</div>
+<input class="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer accent-primary" max="100" min="-100" type="range" value="0"/>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-label-md text-on-surface">Contrast</span>
+<span class="font-label-md text-label-md text-primary">0</span>
+</div>
+<input class="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer accent-primary" max="100" min="-100" type="range" value="0"/>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-label-md text-on-surface">Saturation</span>
+<span class="font-label-md text-label-md text-primary">0</span>
+</div>
+<input class="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer accent-primary" max="100" min="-100" type="range" value="0"/>
+</div>
+</div>
+<!-- 3. AI Magic Tools & Basic Tools Bottom Toolbar -->
+<div class="bg-surface-container-low border-t border-outline-variant/20">
+<!-- AI Tools Section -->
+<div class="flex justify-around items-center py-3 border-b border-outline-variant/10">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-primary/10 transition-colors group">
+<span class="material-symbols-outlined text-primary text-[20px] group-hover:scale-110 transition-transform">auto_fix_high</span>
+<span class="font-label-sm text-label-sm text-on-surface">Magic Eraser</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-primary/10 transition-colors group">
+<span class="material-symbols-outlined text-primary text-[20px] group-hover:scale-110 transition-transform">flare</span>
+<span class="font-label-sm text-label-sm text-on-surface">Auto-Enhance</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-primary/10 transition-colors group">
+<span class="material-symbols-outlined text-primary text-[20px] group-hover:scale-110 transition-transform">grid_guides</span>
+<span class="font-label-sm text-label-sm text-on-surface">Outpaint</span>
+</button>
+</div>
+<!-- Basic Tools Toolbar -->
+<div class="flex justify-around items-center h-16 px-4">
+<button class="flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">crop</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Crop</span>
+</button>
+<button class="flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">rotate_right</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Rotate</span>
+</button>
+<button class="flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined text-primary">tune</span>
+<span class="font-label-sm text-label-sm text-primary">Adjust</span>
+</button>
+<button class="flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">auto_awesome</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">AI Magic</span>
+</button>
+<button class="flex items-center justify-center w-12 h-8 rounded-lg bg-primary text-on-primary font-label-md text-label-md" onclick="toggleEditMode()">
+                Done
+            </button>
+</div>
+</div>
+</div>
+<!-- Info Panel (Expandable) -->
+<div class="fixed right-0 top-0 bottom-0 w-80 z-50 glass-panel bg-surface/80 border-l border-outline-variant/30 translate-x-full transition-transform duration-500 ease-in-out shadow-2xl" id="infoPanel">
+<div class="p-6 h-full overflow-y-auto hide-scrollbar">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-headline-md text-headline-md text-on-surface">Details</h3>
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant/50" onclick="toggleInfo()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Map View Placeholder -->
+<div class="w-full h-40 rounded-xl overflow-hidden mb-6 bg-surface-variant relative">
+<img alt="Map of Paris" class="w-full h-full object-cover grayscale opacity-50" data-location="Paris, France" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhZpD51Anr_WZZ3Gz4_sjzR4axproPzgIoT-6wXdc_UCUHmfU9Enbn8U2V1vzhMFeEOYwv_9NnJV6zdEeA9OfOYjVElrxChDGT2wS-gg7nh0ZAuzYMCRqZfctFSJ4q0mO9MN5YbMVWPg-zCz20PMHCMYA1iVZKk0d0X6xCfbey2feurlAsz3ItrXTLrzrwLbCQELcpLG2BdfDR86qMSk3Eq8KgRczkD2Wptqmv4wtv3RfidkxWMRkAhkaONLdyvtqm9vUaG8kYVPQ"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="px-4 py-2 bg-surface shadow-md rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">location_on</span>
+                        Paris, France
+                    </div>
+</div>
+</div>
+<div class="space-y-6">
+<div>
+<span class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase tracking-wider">Date &amp; Time</span>
+<p class="font-body-lg text-body-lg text-on-surface">October 14, 2023 · 18:42</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<span class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase tracking-wider">Device</span>
+<p class="font-body-lg text-body-lg text-on-surface">iPhone 15 Pro</p>
+</div>
+<div>
+<span class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase tracking-wider">Resolution</span>
+<p class="font-body-lg text-body-lg text-on-surface">12MP · HEIF</p>
+</div>
+</div>
+<div class="pt-6 border-t border-outline-variant/30">
+<span class="block font-label-md text-label-md text-on-surface-variant mb-4 uppercase tracking-wider">EXIF Data</span>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">shutter_speed</span>
+<span class="font-body-sm text-body-sm">1/250s · f/1.8 · ISO 32</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">straighten</span>
+<span class="font-body-sm text-body-sm">24mm (Main Camera)</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">photo_size_select_large</span>
+<span class="font-body-sm text-body-sm">4032 x 3024 · 2.4 MB</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions Bar (Bottom Bar) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 glass-panel bg-surface/70 border-t border-outline-variant/30" id="bottomNav">
+<div class="max-w-2xl mx-auto flex justify-around items-center h-20 px-4"><button class="flex flex-col items-center gap-1 group">
+<div class="w-12 h-12 flex items-center justify-center rounded-xl group-hover:bg-primary-container/10 transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">photo_library</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Photos</span>
+</button>
+<button class="flex flex-col items-center gap-1 group">
+<div class="w-12 h-12 flex items-center justify-center rounded-xl group-hover:bg-primary-container/10 transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">photo_album</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Albums</span>
+</button>
+<a class="flex flex-col items-center gap-1 group" href="{{DATA:SCREEN:SCREEN_7}}"><div class="w-12 h-12 flex items-center justify-center rounded-xl group-hover:bg-primary-container/10 transition-colors active:scale-90"><span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">auto_awesome</span></div><span class="font-label-sm text-label-sm text-on-surface-variant">IA</span></a>
+<button class="flex flex-col items-center gap-1 group">
+<div class="w-12 h-12 flex items-center justify-center rounded-xl group-hover:bg-primary-container/10 transition-colors active:scale-90">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">search</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Recherche</span>
+</button>
+<button class="flex flex-col items-center gap-1 group">
+<div class="w-12 h-12 flex items-center justify-center rounded-xl group-hover:bg-primary-container/10 transition-colors active:scale-90">
+<span class="material-symbols-outlined text-primary">ios_share</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary">Partage</span>
+</button></div>
+</nav>
+<script>
+        function toggleInfo() {
+            const panel = document.getElementById('infoPanel');
+            panel.classList.toggle('translate-x-full');
+        }
+
+        let editMode = false;
+        function toggleEditMode() {
+            editMode = !editMode;
+            const workspace = document.getElementById('editWorkspace');
+            const bottomNav = document.getElementById('bottomNav');
+            const adjustBtn = document.getElementById('adjustBtnContainer');
+            const dots = document.getElementById('dots');
+            const photo = document.getElementById('mainPhoto');
+            const revertBtn = document.getElementById('revertBtn');
+            const navArrows = document.getElementById('navArrows');
+
+            if (editMode) {
+                workspace.classList.remove('hidden');
+                bottomNav.classList.add('hidden');
+                adjustBtn.classList.add('opacity-0', 'pointer-events-none');
+                dots.classList.add('opacity-0');
+                navArrows.classList.add('hidden');
+                revertBtn.classList.remove('hidden');
+                photo.style.transform = 'scale(0.8) translateY(-100px)';
+            } else {
+                workspace.classList.add('hidden');
+                bottomNav.classList.remove('hidden');
+                adjustBtn.classList.remove('opacity-0', 'pointer-events-none');
+                dots.classList.remove('opacity-0');
+                navArrows.classList.remove('hidden');
+                revertBtn.classList.add('hidden');
+                photo.style.transform = 'scale(1) translateY(0)';
+            }
+        }
+
+        function revertChanges() {
+            // Mock revert logic
+            const sliders = document.querySelectorAll('input[type="range"]');
+            sliders.forEach(s => s.value = 0);
+            toggleEditMode();
+        }
+
+        // Tap on main canvas to hide/show UI (immersive feature)
+        let uiVisible = true;
+        document.getElementById('mainCanvas').addEventListener('click', (e) => {
+            if (editMode) return; // Disable immersive toggle while editing
+            
+            if (e.target === e.currentTarget || e.target.id === 'mainPhoto') {
+                const elements = [
+                    document.getElementById('topNav'),
+                    document.getElementById('bottomNav'),
+                    document.getElementById('dots'),
+                    document.getElementById('adjustBtnContainer')
+                ];
+                uiVisible = !uiVisible;
+                elements.forEach(el => {
+                    if (el) el.style.opacity = uiVisible ? '1' : '0';
+                    if (el) el.style.pointerEvents = uiVisible ? 'auto' : 'none';
+                });
+            }
+        });
+    </script>
+</body></html>
