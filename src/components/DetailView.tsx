@@ -63,7 +63,20 @@ const DetailView: React.FC<DetailViewProps> = ({ photo, onClose, onEdit, onToggl
           <span className="material-symbols-outlined text-[18px]">tune</span>
           Adjust
         </button>
-        <button className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/20 text-white backdrop-blur-md font-bold text-label-md shadow-xl hover:bg-white/30 active:scale-95 transition-all">
+        <button 
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({
+                title: photo.alt,
+                text: 'Check out this photo from Gallery Pro!',
+                url: photo.url,
+              }).catch(console.error);
+            } else {
+              alert('Sharing is not supported on this browser. URL: ' + photo.url);
+            }
+          }}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/20 text-white backdrop-blur-md font-bold text-label-md shadow-xl hover:bg-white/30 active:scale-95 transition-all"
+        >
           <span className="material-symbols-outlined text-[18px]">ios_share</span>
           Share
         </button>
