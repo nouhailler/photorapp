@@ -8,25 +8,30 @@ const Sharing: React.FC = () => {
 
   const handleImportClick = () => fileInputRef.current?.click();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const newPhotos: Photo[] = Array.from(files).map((file, index) => ({
-        id: Date.now().toString() + index,
-        url: URL.createObjectURL(file),
-        alt: file.name,
-        date: new Date().toISOString().split('T')[0],
-        isFavorite: false,
-        albumIds: [],
-        tags: [],
-        metadata: {
-          device: 'Manual Import',
-          resolution: 'Unknown',
-          date: new Date().toLocaleString(),
-        }
-      }));
-      addPhotos(newPhotos);
-      alert(`${newPhotos.length} photos imported successfully!`);
+      const newItems = Array.from(files).map((file, index) => {
+        const id = Date.now().toString() + index;
+        const photo: Photo = {
+          id,
+          url: '', // Will be handled by getPhotoUrl
+          alt: file.name,
+          date: new Date().toISOString().split('T')[0],
+          isFavorite: false,
+          albumIds: [],
+          tags: [],
+          storage: 'local',
+          metadata: {
+            device: 'Manual Import',
+            resolution: 'Unknown',
+            date: new Date().toLocaleString(),
+          }
+        };
+        return { photo, blob: file };
+      });
+      await addPhotos(newItems);
+      alert(`${newItems.length} photos imported successfully!`);
     }
   };
 

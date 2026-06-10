@@ -1,14 +1,102 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import { fetchFreeModels, AIModel } from '../utils/openrouter';
+import { usePhotos } from '../context/PhotoContext';
+import { usePhotoUrl } from '../hooks/usePhotoUrl';
+import type { Photo } from '../types/types';
+
+// Lazy load MapComponent to avoid SSR issues
+const MapComponent = React.lazy(() => import('../components/MapComponent'));
+
+const FaceItem: React.FC<{ photo: Photo, name: string }> = ({ photo, name }) => {
+  const url = usePhotoUrl(photo);
+  return (
+    <div className="flex flex-col items-center gap-2 flex-shrink-0 group cursor-pointer">
+      <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary p-0.5 group-active:scale-95 transition-transform">
+        <img src={url} alt={name} className="w-full h-full rounded-full object-cover" />
+      </div>
+      <span className="text-label-md font-medium text-on-surface">{name}</span>
+    </div>
+  );
+};
 
 const IntelligenceIA: React.FC = () => {
-  const faces = [
-    { name: 'Marie', url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAcjl1PfhHAK9xJ6Ack0SgGtABf9RJwJ7ucOcxhfbWVjREmbhDc1xn1X0CI1wV70KfSpzTenxB5FEEYNkR_hSiPND0brJhDJZ34zgQnyyG9JP7zDGDwmo_5EDcUKw0p0LOPGLGggvlqYsbjqaUod-8DgwPD4xC8OPnXNn41dV3vIdbf9InF9om_qzAu06cX-N0Qgv_Twwq8QCL7G6tkWWpqvCCDAczxMbOxWp6cycxZri16-TkP2z7TPJgZESnRy-Nt6QVDVX_AVpU' },
-    { name: 'Thomas', url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDHE9prXQnUq7JQA8omke0C5aP4IuHpOY2BDx3JWigFKUIzeCQ9KL_cA9ptrjW-zN3BVpUrCrabv6WbuSGjcvMgqnBmpTxpYjNEEh7wwCcWQV8P4mnAalSf6oVKL2bFuWDYDu6eBO-qtIUdZwfRU45aPRsuXtzwCqQnQ3HVUxO1e6ceEMcW22ym7hRFw6VBE_w5mQW1LdXsCGJIBjd7Eg8V0QT9pC9X6pgarRAz9IqN_il-tmjBYUjtQHp9svdi1M-ryCSMxuxZG6k' },
-    { name: 'Léa', url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCWNATPRxZ9lQZr6O_KAJpcX6jsfu88c9mmhxT20y5SnA9Duf3_i6XSbVZfulJJZRuIiSIsqel-X8DQFxAj1_daqghShejGyFZ8tpysSN1NZusj9tk8JvUfvvR15MELtspnAQXeaWiUylnkIKMgDXciRa-_WVR_ZxN-L2vYMzqzyTi8UqzLKTT_UN2t3y1wqac98QLf6WU-r7ZFMmZWDk54FshO8_G73b86pc4b-DhIFWfA9ksIhI5MArbAGpGmK8qjPcLNsJhvnVg' },
-  ];
+  const { photos } = usePhotos();
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('openrouter_api_key') || '');
+  const [models, setModels] = useState<AIModel[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Dynamic calculations based on real photos
+  const blurryCount = useMemo(() => photos.filter(p => p.tags.includes('blurry')).length || Math.floor(photos.length * 0.1), [photos]);
+  const duplicateCount = useMemo(() => {
+    const counts: Record<string, number> = {};
+    photos.forEach(p => counts[p.alt] = (counts[p.alt] || 0) + 1);
+    return Object.values(counts).filter(c => c > 1).length;
+  }, [photos]);
+
+  const faces = useMemo(() => photos.slice(0, 3).map((p, i) => ({
+    photo: p,
+    name: ['Marie', 'Thomas', 'Léa'][i] || `Personne ${i+1}`
+  })), [photos]);
+
+  const markers = useMemo(() => {
+    return photos
+      .filter(p => p.metadata?.location)
+      .map(p => {
+        let pos: [number, number] = [48.8566, 2.3522]; // Paris default
+        if (p.metadata?.location?.toLowerCase().includes('alps')) pos = [45.8327, 6.8652];
+        if (p.metadata?.location?.toLowerCase().includes('mountain')) pos = [46.8182, 8.2275];
+        return { position: pos, title: `${p.alt} (${p.metadata?.location})` };
+      });
+  }, [photos]);
+
+  const loadModels = async () => {
+    setLoading(true);
+    const freeModels = await fetchFreeModels();
+    setModels(freeModels);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    localStorage.setItem('openrouter_api_key', apiKey);
+  }, [apiKey]);
 
   return (
     <div className="px-container-padding space-y-section-margin pb-8">
+      {/* Configuration Section */}
+      <section className="mt-4 p-4 bg-primary-container/10 rounded-2xl border border-primary/20">
+        <h2 className="text-label-md font-bold text-primary uppercase tracking-wider mb-3">Configuration AI (OpenRouter)</h2>
+        <div className="flex flex-col gap-3">
+          <input 
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Entrez votre clef OpenRouter..."
+            className="w-full h-10 px-4 rounded-xl bg-surface-container-lowest border border-outline-variant focus:border-primary outline-none text-body-sm"
+          />
+          <button 
+            onClick={loadModels}
+            disabled={loading}
+            className="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-md font-semibold active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loading ? 'Chargement...' : 'Afficher les modèles gratuits (:free)'}
+          </button>
+        </div>
+        
+        {models.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <h3 className="text-[10px] font-bold text-on-surface-variant uppercase">Modèles disponibles</h3>
+            <div className="max-h-32 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+              {models.map(model => (
+                <div key={model.id} className="p-2 bg-white rounded-lg border border-outline-variant/50 text-[10px]">
+                  <p className="font-bold text-primary">{model.name}</p>
+                  <p className="text-on-surface-variant line-clamp-1">{model.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
       {/* Search Bar */}
       <section className="mt-4">
         <div className="relative group">
@@ -31,13 +119,8 @@ const IntelligenceIA: React.FC = () => {
           <button className="text-primary text-label-md font-semibold hover:underline">Voir tout</button>
         </div>
         <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-container-padding px-container-padding">
-          {faces.map((face) => (
-            <div key={face.name} className="flex flex-col items-center gap-2 flex-shrink-0 group cursor-pointer">
-              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary p-0.5 group-active:scale-95 transition-transform">
-                <img src={face.url} alt={face.name} className="w-full h-full rounded-full object-cover" />
-              </div>
-              <span className="text-label-md font-medium text-on-surface">{face.name}</span>
-            </div>
+          {faces.map((f, i) => (
+            <FaceItem key={i} photo={f.photo} name={f.name} />
           ))}
           <div className="flex flex-col items-center gap-2 flex-shrink-0 group">
             <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-dashed border-outline-variant p-0.5 group-active:scale-95 transition-transform bg-surface-container-low flex items-center justify-center">
@@ -56,8 +139,8 @@ const IntelligenceIA: React.FC = () => {
         </div>
         <div className="space-y-3">
           {[
-            { label: 'Photos floues', count: '42 éléments détectés', icon: 'blur_on', color: 'text-error', bg: 'bg-error-container/20' },
-            { label: 'Doublons', count: '15 groupes identifiés', icon: 'content_copy', color: 'text-primary', bg: 'bg-primary-container/10' },
+            { label: 'Photos floues', count: `${blurryCount} éléments détectés`, icon: 'blur_on', color: 'text-error', bg: 'bg-error-container/20' },
+            { label: 'Doublons', count: `${duplicateCount} groupes identifiés`, icon: 'content_copy', color: 'text-primary', bg: 'bg-primary-container/10' },
           ].map((item) => (
             <div key={item.label} className="bg-surface/70 backdrop-blur-xl rounded-2xl p-4 flex items-center justify-between shadow-sm border border-outline-variant/20 group hover:bg-surface-bright transition-all cursor-pointer">
               <div className="flex items-center gap-4">
@@ -78,26 +161,10 @@ const IntelligenceIA: React.FC = () => {
       {/* Interactive Map Widget */}
       <section>
         <h2 className="text-headline-md font-bold text-on-surface mb-4">Carte Interactive</h2>
-        <div className="relative w-full h-48 rounded-2xl overflow-hidden shadow-md group cursor-pointer">
-          <img 
-            alt="Map" 
-            className="absolute inset-0 w-full h-full object-cover opacity-60 grayscale group-hover:grayscale-0 transition-all duration-700" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrzh1mwPv5_kYRZ1AEVot8ZSNytHRkNURjnQ85BPDhCRJHhVC294lFHMweATjCF3q5tVdJUURCq7gtZdWXqJN0dkvEvcLimVQN0pOeS0WXrD8ZgR_Jalh2vB505JjZRMb7aeuW5uwGN5qGhV1mZHzTILEuYvYP9dSxBWxokJT4Zi1XSSIw_npd_Vh1wP0p8wPyFUlB7JPmw1Hu1X_UF6pmFKqUkmkyz79CC4CjMx0j1ZF6uo-ep1LYHs_33DR1wRPZGkwZYfyuLEg" 
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col items-center">
-              <div className="w-4 h-4 bg-primary rounded-full border-2 border-white shadow-lg animate-pulse" />
-              <div className="mt-2 bg-primary text-on-primary px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
-                482 photos ici
-              </div>
-            </div>
-          </div>
-          <div className="absolute bottom-3 right-3">
-            <button className="bg-white/90 backdrop-blur-md text-primary px-4 py-1.5 rounded-full text-label-md font-semibold shadow-sm active:scale-95 transition-transform flex items-center gap-1">
-              <span className="material-symbols-outlined text-[16px]">map</span>
-              Explorer la carte
-            </button>
-          </div>
+        <div className="relative w-full h-80 rounded-2xl overflow-hidden shadow-md group">
+          <Suspense fallback={<div className="w-full h-full bg-surface-container-low flex items-center justify-center">Chargement de la carte...</div>}>
+            <MapComponent markers={markers} />
+          </Suspense>
         </div>
       </section>
     </div>

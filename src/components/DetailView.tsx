@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Photo } from '../types/types';
 import { usePhotos } from '../context/PhotoContext';
+import { usePhotoUrl } from '../hooks/usePhotoUrl';
 
 interface DetailViewProps {
   photo: Photo;
@@ -12,6 +13,7 @@ interface DetailViewProps {
 const DetailView: React.FC<DetailViewProps> = ({ photo, onClose, onEdit, onToggleFavorite }) => {
   const [showInfo, setShowInfo] = useState(false);
   const { deletePhoto } = usePhotos();
+  const url = usePhotoUrl(photo);
 
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this photo?')) {
@@ -21,7 +23,7 @@ const DetailView: React.FC<DetailViewProps> = ({ photo, onClose, onEdit, onToggl
   };
 
   const photoStyle = photo.adjustments ? {
-    filter: `brightness(${100 + photo.adjustments.brightness}%) contrast(${100 + photo.adjustments.contrast}%) saturate(${100 + photo.adjustments.saturation}%)`,
+    filter: `${photo.adjustments.filter || ''} brightness(${100 + photo.adjustments.brightness}%) contrast(${100 + photo.adjustments.contrast}%) saturate(${100 + photo.adjustments.saturation}%)`,
   } : {};
 
   return (
@@ -47,11 +49,18 @@ const DetailView: React.FC<DetailViewProps> = ({ photo, onClose, onEdit, onToggl
       {/* Main Photo Canvas */}
       <main className="flex-grow flex items-center justify-center overflow-hidden touch-none" onClick={() => setShowInfo(false)}>
         <img 
-          src={photo.url} 
+          src={url} 
           alt={photo.alt} 
           className="max-w-full max-h-full object-contain transition-transform duration-500"
           style={photoStyle}
         />
+        
+        {/* Indicators Dots (as in design) */}
+        <div className="absolute bottom-24 flex gap-2 justify-center w-full transition-opacity duration-300">
+          <div className="w-2 h-2 rounded-full bg-white"></div>
+          <div className="w-2 h-2 rounded-full bg-white/30"></div>
+          <div className="w-2 h-2 rounded-full bg-white/30"></div>
+        </div>
       </main>
 
       {/* Bottom Actions */}

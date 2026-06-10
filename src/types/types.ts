@@ -8,6 +8,7 @@ export interface Photo {
   adjustments?: PhotoAdjustments;
   albumIds: string[];
   tags: string[];
+  storage?: 'local' | 'remote';
 }
 
 export interface PhotoMetadata {
