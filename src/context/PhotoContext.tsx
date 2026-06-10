@@ -11,6 +11,7 @@ interface PhotoContextType {
   addPhotos: (newItems: { photo: Photo, blob?: Blob }[]) => Promise<void>;
   deletePhoto: (id: string) => Promise<void>;
   createAlbum: (title: string) => void;
+  deleteAlbum: (id: string) => void;
   addPhotosToAlbum: (photoIds: string[], albumId: string) => void;
   getPhotoUrl: (photo: Photo) => Promise<string>;
 }
@@ -95,6 +96,15 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setAlbums(prev => [newAlbum, ...prev]);
   };
 
+  const deleteAlbum = (id: string) => {
+    setAlbums(prev => prev.filter(a => a.id !== id));
+    // Also remove the album reference from all photos
+    setPhotos(prev => prev.map(p => ({
+      ...p,
+      albumIds: p.albumIds.filter(aid => aid !== id)
+    })));
+  };
+
   const addPhotosToAlbum = (photoIds: string[], albumId: string) => {
     setPhotos(prev => prev.map(p => {
       if (photoIds.includes(p.id)) {
@@ -106,9 +116,11 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setAlbums(prev => prev.map(a => {
       if (a.id === albumId) {
+        // Correctly calculate new photo count by checking how many photos were actually added
+        const addedPhotos = photos.filter(p => photoIds.includes(p.id) && !p.albumIds.includes(albumId));
         return {
           ...a,
-          photoCount: a.photoCount + photoIds.length,
+          photoCount: a.photoCount + addedPhotos.length,
           coverPhotoId: a.coverPhotoId || photoIds[0]
         };
       }
@@ -125,6 +137,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       addPhotos, 
       deletePhoto, 
       createAlbum,
+      deleteAlbum,
       addPhotosToAlbum,
       getPhotoUrl
     }}>
