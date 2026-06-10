@@ -25,6 +25,15 @@ const DetailView: React.FC<DetailViewProps> = ({ photo: initialPhoto, onClose, o
     }
   };
 
+  const getAspectClass = () => {
+    switch(photo.adjustments?.aspectRatio) {
+      case '1:1': return 'aspect-square';
+      case '4:3': return 'aspect-[4/3]';
+      case '16:9': return 'aspect-[16/9]';
+      default: return '';
+    }
+  };
+
   const photoStyle = photo.adjustments ? {
     filter: `${photo.adjustments.filter || ''} brightness(${100 + photo.adjustments.brightness}%) contrast(${100 + photo.adjustments.contrast}%) saturate(${100 + photo.adjustments.saturation}%)`,
     transform: `rotate(${photo.adjustments.rotation || 0}deg)`,
@@ -52,12 +61,14 @@ const DetailView: React.FC<DetailViewProps> = ({ photo: initialPhoto, onClose, o
 
       {/* Main Photo Canvas */}
       <main className="flex-grow flex items-center justify-center overflow-hidden touch-none" onClick={() => setShowInfo(false)}>
-        <img 
-          src={url} 
-          alt={photo.alt} 
-          className="max-w-full max-h-full object-contain transition-transform duration-500"
-          style={photoStyle}
-        />
+        <div className={`relative max-w-full max-h-full flex items-center justify-center overflow-hidden transition-all duration-300 ${getAspectClass()}`}>
+          <img 
+            src={url} 
+            alt={photo.alt} 
+            className="max-w-full max-h-full object-contain transition-transform duration-500"
+            style={photoStyle}
+          />
+        </div>
         
         {/* Indicators Dots (as in design) */}
         <div className="absolute bottom-24 flex gap-2 justify-center w-full transition-opacity duration-300">

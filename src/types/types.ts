@@ -29,6 +29,7 @@ export interface PhotoAdjustments {
   contrast: number;
   saturation: number;
   rotation?: number;
+  aspectRatio?: 'original' | '1:1' | '4:3' | '16:9';
   filter?: string;
 }
 
