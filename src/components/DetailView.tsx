@@ -74,21 +74,42 @@ const DetailView: React.FC<DetailViewProps> = ({ photo, onClose, onEdit, onToggl
           Adjust
         </button>
         <button 
-          onClick={() => {
-            if (navigator.share) {
-              navigator.share({
-                title: photo.alt,
-                text: 'Check out this photo from Gallery Pro!',
-                url: photo.url,
-              }).catch(console.error);
-            } else {
-              alert('Sharing is not supported on this browser. URL: ' + photo.url);
+          onClick={async () => {
+            try {
+              if (navigator.share) {
+                const shareData: ShareData = {
+                  title: photo.alt,
+                  text: 'Découvrez cette photo sur Gallery Pro !',
+                };
+
+                // If it's a local photo, try to share the file itself
+                if (photo.storage === 'local') {
+                  const blob = await fetch(url).then(r => r.blob());
+                  const file = new File([blob], `${photo.alt || 'photo'}.jpg`, { type: blob.type });
+                  
+                  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    shareData.files = [file];
+                  } else {
+                    shareData.url = url; // Fallback to object URL (might not work well outside browser)
+                  }
+                } else {
+                  shareData.url = photo.url;
+                }
+
+                await navigator.share(shareData);
+              } else {
+                // Fallback: Copy URL to clipboard
+                await navigator.clipboard.writeText(photo.storage === 'local' ? 'Photo locale (partage non supporté)' : photo.url);
+                alert('Lien copié dans le presse-papier !');
+              }
+            } catch (error) {
+              console.error('Erreur lors du partage :', error);
             }
           }}
           className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/20 text-white backdrop-blur-md font-bold text-label-md shadow-xl hover:bg-white/30 active:scale-95 transition-all"
         >
           <span className="material-symbols-outlined text-[18px]">ios_share</span>
-          Share
+          Partager
         </button>
       </footer>
 
