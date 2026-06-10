@@ -12,7 +12,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
   const { updateAdjustments } = usePhotos();
   const url = usePhotoUrl(photo);
   const [adjustments, setAdjustments] = useState<PhotoAdjustments>(
-    photo.adjustments || { brightness: 0, contrast: 0, saturation: 0, filter: '' }
+    photo.adjustments || { brightness: 0, contrast: 0, saturation: 0, filter: '', rotation: 0 }
   );
 
   const filters = [
@@ -32,6 +32,20 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
     setAdjustments(prev => ({ ...prev, filter: filterValue }));
   };
 
+  const handleRotate = () => {
+    setAdjustments(prev => ({ ...prev, rotation: ((prev.rotation || 0) + 90) % 360 }));
+  };
+
+  const handleMagic = () => {
+    setAdjustments(prev => ({
+      ...prev,
+      brightness: 10,
+      contrast: 20,
+      saturation: 15,
+      filter: prev.filter || 'contrast(110%) saturate(110%)'
+    }));
+  };
+
   const handleSave = () => {
     updateAdjustments(photo.id, adjustments);
     onClose();
@@ -39,6 +53,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
 
   const photoStyle = {
     filter: `${adjustments.filter || ''} brightness(${100 + adjustments.brightness}%) contrast(${100 + adjustments.contrast}%) saturate(${100 + adjustments.saturation}%)`,
+    transform: `rotate(${adjustments.rotation || 0}deg)`,
   };
 
   return (
@@ -55,16 +70,43 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
 
       {/* Canvas */}
       <main className="flex-grow flex items-center justify-center p-4 overflow-hidden">
-        <img 
-          src={url} 
-          alt={photo.alt} 
-          className="max-w-full max-h-full object-contain transition-all duration-300"
-          style={photoStyle}
-        />
+        <div className="relative w-full h-full flex items-center justify-center">
+          <img 
+            src={url} 
+            alt={photo.alt} 
+            className="max-w-full max-h-full object-contain transition-all duration-300"
+            style={photoStyle}
+          />
+        </div>
       </main>
 
       {/* Adjustments Workspace */}
       <div className="bg-surface/90 backdrop-blur-xl border-t border-outline-variant/30 overflow-hidden flex flex-col">
+        {/* Quick Tools Row (Magic, Crop, Rotate) */}
+        <div className="flex justify-around items-center py-4 border-b border-outline-variant/10">
+          <button 
+            onClick={handleMagic}
+            className="flex flex-col items-center gap-1 group active:scale-95 transition-transform"
+          >
+            <span className="material-symbols-outlined text-primary material-symbols-fill">auto_fix_high</span>
+            <span className="text-[10px] font-bold text-on-surface">Magic</span>
+          </button>
+          <button 
+            onClick={() => alert('Recadrage bientôt disponible !')}
+            className="flex flex-col items-center gap-1 group active:scale-95 transition-transform opacity-50"
+          >
+            <span className="material-symbols-outlined text-on-surface-variant">crop</span>
+            <span className="text-[10px] font-bold text-on-surface-variant">Crop</span>
+          </button>
+          <button 
+            onClick={handleRotate}
+            className="flex flex-col items-center gap-1 group active:scale-95 transition-transform"
+          >
+            <span className="material-symbols-outlined text-primary">rotate_right</span>
+            <span className="text-[10px] font-bold text-on-surface">Rotate</span>
+          </button>
+        </div>
+
         {/* Filters Scroll */}
         <div className="w-full border-b border-outline-variant/20 py-4">
           <div className="flex gap-4 px-6 overflow-x-auto hide-scrollbar">

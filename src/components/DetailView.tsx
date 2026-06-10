@@ -24,6 +24,7 @@ const DetailView: React.FC<DetailViewProps> = ({ photo, onClose, onEdit, onToggl
 
   const photoStyle = photo.adjustments ? {
     filter: `${photo.adjustments.filter || ''} brightness(${100 + photo.adjustments.brightness}%) contrast(${100 + photo.adjustments.contrast}%) saturate(${100 + photo.adjustments.saturation}%)`,
+    transform: `rotate(${photo.adjustments.rotation || 0}deg)`,
   } : {};
 
   return (

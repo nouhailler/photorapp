@@ -28,6 +28,7 @@ export interface PhotoAdjustments {
   brightness: number;
   contrast: number;
   saturation: number;
+  rotation?: number;
   filter?: string;
 }
 
