@@ -10,9 +10,12 @@ interface DetailViewProps {
   onToggleFavorite: () => void;
 }
 
-const DetailView: React.FC<DetailViewProps> = ({ photo, onClose, onEdit, onToggleFavorite }) => {
+const DetailView: React.FC<DetailViewProps> = ({ photo: initialPhoto, onClose, onEdit, onToggleFavorite }) => {
   const [showInfo, setShowInfo] = useState(false);
-  const { deletePhoto } = usePhotos();
+  const { deletePhoto, photos } = usePhotos();
+  
+  // Use the photo from context to get reactive updates (like favorite toggle)
+  const photo = photos.find(p => p.id === initialPhoto.id) || initialPhoto;
   const url = usePhotoUrl(photo);
 
   const handleDelete = () => {
