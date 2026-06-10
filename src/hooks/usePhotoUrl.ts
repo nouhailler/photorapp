@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePhotos } from '../context/PhotoContext';
-import { Photo } from '../types/types';
+import type { Photo } from '../types/types';
 
 export const usePhotoUrl = (photo: Photo) => {
   const { getPhotoUrl } = usePhotos();

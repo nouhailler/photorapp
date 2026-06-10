@@ -11,24 +11,28 @@ const TopAppBar: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const newPhotos: Photo[] = Array.from(files).map((file, index) => ({
-        id: Date.now().toString() + index,
-        url: URL.createObjectURL(file),
-        alt: file.name,
-        date: new Date().toISOString().split('T')[0],
-        isFavorite: false,
-        albumIds: [],
-        tags: [],
-        metadata: {
-          device: 'Uploaded File',
-          resolution: 'Unknown',
-          date: new Date().toLocaleString(),
-        }
-      }));
-      addPhotos(newPhotos);
+      const newItems = Array.from(files).map((file, index) => {
+        const photo: Photo = {
+          id: Date.now().toString() + index,
+          url: '', // Handled by getPhotoUrl
+          alt: file.name,
+          date: new Date().toISOString().split('T')[0],
+          isFavorite: false,
+          albumIds: [],
+          tags: [],
+          storage: 'local',
+          metadata: {
+            device: 'Uploaded File',
+            resolution: 'Unknown',
+            date: new Date().toLocaleString(),
+          }
+        };
+        return { photo, blob: file };
+      });
+      await addPhotos(newItems);
     }
   };
 

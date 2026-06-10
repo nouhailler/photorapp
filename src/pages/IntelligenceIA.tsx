@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
-import { fetchFreeModels, AIModel } from '../utils/openrouter';
+import { fetchFreeModels } from '../utils/openrouter';
+import type { AIModel } from '../utils/openrouter';
 import { usePhotos } from '../context/PhotoContext';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import type { Photo } from '../types/types';
