@@ -10,6 +10,7 @@ interface PhotoContextType {
   updateAdjustments: (id: string, adjustments: PhotoAdjustments) => void;
   addPhotos: (newItems: { photo: Photo, blob?: Blob }[]) => Promise<void>;
   deletePhoto: (id: string) => Promise<void>;
+  deletePhotos: (ids: string[]) => Promise<void>;
   createAlbum: (title: string) => void;
   deleteAlbum: (id: string) => void;
   addPhotosToAlbum: (photoIds: string[], albumId: string) => void;
@@ -83,6 +84,16 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPhotos(prev => prev.filter(p => p.id !== id));
   };
 
+  const deletePhotos = async (ids: string[]) => {
+    for (const id of ids) {
+      const photo = photos.find(p => p.id === id);
+      if (photo?.storage === 'local') {
+        await deletePhotoBlob(id);
+      }
+    }
+    setPhotos(prev => prev.filter(p => !ids.includes(p.id)));
+  };
+
   const createAlbum = (title: string) => {
     const newAlbum: Album = {
       id: Date.now().toString(),
@@ -136,6 +147,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updateAdjustments, 
       addPhotos, 
       deletePhoto, 
+      deletePhotos,
       createAlbum,
       deleteAlbum,
       addPhotosToAlbum,

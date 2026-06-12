@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import Editor from './Editor';
 import { usePhotos } from '../context/PhotoContext';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
-import React from 'react';
+import type { Photo } from '../types/types';
 
 // Mock the hooks
 vi.mock('../context/PhotoContext', () => ({
@@ -14,7 +14,7 @@ vi.mock('../hooks/usePhotoUrl', () => ({
   usePhotoUrl: vi.fn(),
 }));
 
-const mockPhoto = {
+const mockPhoto: Photo = {
   id: '1',
   url: 'test-url.jpg',
   alt: 'Test Photo',

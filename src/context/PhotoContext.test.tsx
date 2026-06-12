@@ -87,6 +87,19 @@ describe('PhotoContext', () => {
     expect(result.current.photos.find(p => p.id === firstPhotoId)).toBeUndefined();
   });
 
+  it('should delete multiple photos', async () => {
+    const { result } = renderHook(() => usePhotos(), { wrapper });
+    const idsToDelete = [result.current.photos[0].id, result.current.photos[1].id];
+    const initialCount = result.current.photos.length;
+
+    await act(async () => {
+      await result.current.deletePhotos(idsToDelete);
+    });
+
+    expect(result.current.photos.length).toBe(initialCount - 2);
+    expect(result.current.photos.find(p => idsToDelete.includes(p.id))).toBeUndefined();
+  });
+
   it('should create an album', () => {
     const { result } = renderHook(() => usePhotos(), { wrapper });
     const initialAlbumCount = result.current.albums.length;
