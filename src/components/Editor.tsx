@@ -161,6 +161,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
                   type="range" 
                   min="-100" 
                   max="100" 
+                  aria-label={item.label}
                   value={adjustments[item.key as keyof PhotoAdjustments] as number}
                   onChange={(e) => handleSliderChange(item.key as keyof PhotoAdjustments, parseInt(e.target.value))}
                   className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer accent-primary"
