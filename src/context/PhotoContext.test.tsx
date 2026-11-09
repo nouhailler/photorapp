@@ -13,8 +13,14 @@ vi.mock('../utils/db', () => ({
   deletePhotoMeta: vi.fn().mockResolvedValue(undefined),
   saveAlbumMeta: vi.fn().mockResolvedValue(undefined),
   deleteAlbumMeta: vi.fn().mockResolvedValue(undefined),
+  deletePhotoAtomic: vi.fn().mockResolvedValue(undefined),
+  deletePhotosAtomic: vi.fn().mockResolvedValue(undefined),
   migrateFromLocalStorage: vi.fn().mockImplementation((fallbackPhotos, fallbackAlbums) =>
-    Promise.resolve({ photos: fallbackPhotos, albums: fallbackAlbums })
+    Promise.resolve({
+      photos: fallbackPhotos,
+      albums: fallbackAlbums,
+      report: { photosMigrated: 0, albumsMigrated: 0, photosSkipped: 0, albumsSkipped: 0 },
+    })
   ),
   openDB: vi.fn(),
 }));

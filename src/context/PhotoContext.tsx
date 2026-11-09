@@ -4,13 +4,14 @@ import { INITIAL_PHOTOS, INITIAL_ALBUMS } from '../assets/data/mockData';
 import {
   getPhotoBlob,
   savePhotoBlob,
-  deletePhotoBlob,
   savePhotoMeta,
-  deletePhotoMeta,
   saveAlbumMeta,
   deleteAlbumMeta,
+  deletePhotoAtomic,
+  deletePhotosAtomic,
   migrateFromLocalStorage,
 } from '../utils/db';
+import type { MigrationReport } from '../utils/db';
 import { analyzeImageQuality } from '../services/qualityService';
 import { PhotoContext } from './photoContextDef';
 
@@ -46,6 +47,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [migrationReport, setMigrationReport] = useState<MigrationReport | null>(null);
   const localUrlsRef = useRef<Record<string, string>>({});
 
   // Initialize and migrate IndexedDB on mount
@@ -58,6 +60,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (isMounted) {
           setPhotos(result.photos);
           setAlbums(result.albums);
+          setMigrationReport(result.report);
         }
       } catch (e) {
         console.warn('IndexedDB migration error:', e);
@@ -79,7 +82,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  // Sync to localStorage as an instant cache
+  // Sync to localStorage as a lightweight secondary mirror (IndexedDB is source of truth)
   useEffect(() => {
     try {
       localStorage.setItem('gallery_pro_photos', JSON.stringify(photos));
@@ -181,43 +184,96 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPhotos((prev) => [...newItems.map((i) => i.photo), ...prev]);
   }, []);
 
-  const deletePhoto = useCallback(async (id: string) => {
-    const photo = photos.find((p) => p.id === id);
-    if (photo?.storage === 'local') {
-      await deletePhotoBlob(id);
+  const deletePhoto = useCallback(
+    async (id: string) => {
+      const photoToDelete = photos.find((p) => p.id === id);
+      const isLocal = photoToDelete?.storage === 'local';
+
+      // 1. Calculate updated albums if cover photo was deleted
+      const updatedAlbums: Album[] = [];
+      const newAlbumsState = albums.map((album) => {
+        if (album.coverPhotoId === id) {
+          // Find replacement cover from remaining photos in this album
+          const remainingInAlbum = photos.filter(
+            (p) => p.id !== id && p.albumIds.includes(album.id)
+          );
+          const updatedAlbum: Album = {
+            ...album,
+            coverPhotoId: remainingInAlbum[0]?.id || '',
+            updatedAt: new Date().toISOString(),
+          };
+          updatedAlbums.push(updatedAlbum);
+          return updatedAlbum;
+        }
+        return album;
+      });
+
+      // 2. Perform safe atomic deletion (metadata + album covers in 1 transaction, then blob)
+      await deletePhotoAtomic(id, updatedAlbums, isLocal);
+
+      // 3. Clean up URL cache
       if (localUrlsRef.current[id]) {
-        URL.revokeObjectURL(localUrlsRef.current[id]);
+        try {
+          URL.revokeObjectURL(localUrlsRef.current[id]);
+        } catch {
+          // Ignore
+        }
         delete localUrlsRef.current[id];
       }
-    }
-    await deletePhotoMeta(id);
 
-    setPhotos((prev) => prev.filter((p) => p.id !== id));
-    // Clean up album references
-    setAlbums((prev) =>
-      prev.map((a) => (a.coverPhotoId === id ? { ...a, coverPhotoId: '' } : a))
-    );
-  }, [photos]);
+      // 4. Update memory state
+      setPhotos((prev) => prev.filter((p) => p.id !== id));
+      setAlbums(newAlbumsState);
+    },
+    [photos, albums]
+  );
 
-  const deletePhotos = useCallback(async (ids: string[]) => {
-    const idsSet = new Set(ids);
-    for (const id of ids) {
-      const photo = photos.find((p) => p.id === id);
-      if (photo?.storage === 'local') {
-        await deletePhotoBlob(id);
+  const deletePhotos = useCallback(
+    async (ids: string[]) => {
+      const idsSet = new Set(ids);
+      const localIds = photos
+        .filter((p) => idsSet.has(p.id) && p.storage === 'local')
+        .map((p) => p.id);
+
+      // 1. Calculate updated albums if any cover was deleted
+      const updatedAlbums: Album[] = [];
+      const newAlbumsState = albums.map((album) => {
+        if (idsSet.has(album.coverPhotoId)) {
+          const remainingInAlbum = photos.filter(
+            (p) => !idsSet.has(p.id) && p.albumIds.includes(album.id)
+          );
+          const updatedAlbum: Album = {
+            ...album,
+            coverPhotoId: remainingInAlbum[0]?.id || '',
+            updatedAt: new Date().toISOString(),
+          };
+          updatedAlbums.push(updatedAlbum);
+          return updatedAlbum;
+        }
+        return album;
+      });
+
+      // 2. Perform safe atomic bulk deletion
+      await deletePhotosAtomic(ids, updatedAlbums, localIds);
+
+      // 3. Clean up URL cache
+      for (const id of ids) {
         if (localUrlsRef.current[id]) {
-          URL.revokeObjectURL(localUrlsRef.current[id]);
+          try {
+            URL.revokeObjectURL(localUrlsRef.current[id]);
+          } catch {
+            // Ignore
+          }
           delete localUrlsRef.current[id];
         }
       }
-      await deletePhotoMeta(id);
-    }
 
-    setPhotos((prev) => prev.filter((p) => !idsSet.has(p.id)));
-    setAlbums((prev) =>
-      prev.map((a) => (idsSet.has(a.coverPhotoId) ? { ...a, coverPhotoId: '' } : a))
-    );
-  }, [photos]);
+      // 4. Update memory state
+      setPhotos((prev) => prev.filter((p) => !idsSet.has(p.id)));
+      setAlbums(newAlbumsState);
+    },
+    [photos, albums]
+  );
 
   const createAlbum = useCallback(
     (title: string, description?: string, isSmart?: boolean, smartCriteria?: SmartAlbumCriteria): Album => {
@@ -417,6 +473,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         photos,
         albums,
         isLoading,
+        migrationReport,
         toggleFavorite,
         updateAdjustments,
         resetAdjustments,

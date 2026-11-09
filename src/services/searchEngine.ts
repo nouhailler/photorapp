@@ -10,6 +10,10 @@ export interface SearchFilters {
   location?: string;
   device?: string;
   isBlurry?: boolean;
+  dateRange?: {
+    start?: string;
+    end?: string;
+  };
 }
 
 export interface AvailableFilters {
@@ -140,7 +144,14 @@ export function filterPhotos(
 
     // 9. Blurry filter
     if (filters.isBlurry !== undefined) {
-      if (photo.metadata?.analysis?.isBlurry !== filters.isBlurry) return false;
+      if (Boolean(photo.metadata?.analysis?.isBlurry) !== filters.isBlurry) return false;
+    }
+
+    // 10. Date range filter
+    if (filters.dateRange) {
+      const photoDate = photo.date || '';
+      if (filters.dateRange.start && photoDate < filters.dateRange.start) return false;
+      if (filters.dateRange.end && photoDate > filters.dateRange.end) return false;
     }
 
     return true;

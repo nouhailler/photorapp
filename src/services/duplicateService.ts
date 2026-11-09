@@ -28,23 +28,18 @@ export function getDHashDistance(hashA: string, hashB: string): number {
 }
 
 /**
- * Identifies exact duplicates using SHA-256 hash or fallback exact alt & size.
+ * Identifies exact duplicates using verified cryptographic SHA-256 hash only.
+ * Photos without a cryptographic hash are not grouped to prevent accidental data loss.
  */
 export function findExactDuplicates(photos: Photo[]): DuplicateGroup[] {
   const hashMap = new Map<string, Photo[]>();
 
   for (const photo of photos) {
     const hash = photo.metadata?.hash;
-    if (hash) {
+    if (hash && hash.trim().length > 0) {
       const list = hashMap.get(hash) || [];
       list.push(photo);
       hashMap.set(hash, list);
-    } else {
-      // Fallback: group by file name + file size if available
-      const key = `${photo.alt}-${photo.metadata?.fileSize || photo.date}`;
-      const list = hashMap.get(key) || [];
-      list.push(photo);
-      hashMap.set(key, list);
     }
   }
 
@@ -111,4 +106,11 @@ export function findSimilarPhotos(photos: Photo[], threshold = 6): DuplicateGrou
   }
 
   return groups;
+}
+
+/**
+ * Returns photos that lack a cryptographic SHA-256 hash.
+ */
+export function getUnverifiedPhotos(photos: Photo[]): Photo[] {
+  return photos.filter((p) => !p.metadata?.hash);
 }

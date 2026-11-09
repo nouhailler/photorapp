@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePhotos } from '../context/usePhotos';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
+import { getSmartAlbumPhotos, isCriteriaValid } from '../services/smartAlbumService';
 import type { Album, Photo, SmartAlbumCriteria } from '../types/types';
 
 interface AlbumCardProps {
@@ -14,7 +15,12 @@ interface AlbumCardProps {
 
 const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhoto, photoCount, onDelete, onRename }) => {
   const navigate = useNavigate();
-  const url = usePhotoUrl(coverPhoto || ({ url: 'https://images.unsplash.com/photo-1518128958364-65859d70aa41?auto=format&fit=crop&q=80&w=400' } as Photo));
+  const url = usePhotoUrl(
+    coverPhoto ||
+      ({
+        url: 'https://images.unsplash.com/photo-1518128958364-65859d70aa41?auto=format&fit=crop&q=80&w=400',
+      } as Photo)
+  );
 
   return (
     <div className="group relative flex flex-col gap-3">
@@ -57,7 +63,11 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhoto, photoCount, on
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (window.confirm(`Supprimer l'album "${album.title}" ? (Les photos seront conservées dans la bibliothèque)`)) {
+                if (
+                  window.confirm(
+                    `Supprimer l'album "${album.title}" ? (Les photos seront conservées dans la bibliothèque)`
+                  )
+                ) {
                   onDelete(album.id);
                 }
               }}
@@ -70,8 +80,12 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhoto, photoCount, on
 
           {album.isSmart && (
             <div className="absolute top-3 right-3 bg-tertiary-container/90 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-              <span className="material-symbols-outlined text-on-tertiary-container text-[14px] material-symbols-fill">auto_awesome</span>
-              <span className="text-[10px] font-bold text-on-tertiary-container uppercase tracking-wider">Intelligent</span>
+              <span className="material-symbols-outlined text-on-tertiary-container text-[14px] material-symbols-fill">
+                auto_awesome
+              </span>
+              <span className="text-[10px] font-bold text-on-tertiary-container uppercase tracking-wider">
+                Intelligent
+              </span>
             </div>
           )}
         </div>
@@ -104,14 +118,28 @@ const Albums: React.FC = () => {
   const [albumTitle, setAlbumTitle] = useState('');
   const [albumDesc, setAlbumDesc] = useState('');
   const [isSmartAlbum, setIsSmartAlbum] = useState(false);
-  const [smartType, setSmartType] = useState<'favorites' | 'year' | 'gps' | 'custom'>('favorites');
+
+  // Smart criteria form fields
+  const [smartType, setSmartType] = useState<
+    'favorites' | 'year' | 'month' | 'gps' | 'tag' | 'location' | 'blurry' | 'dateRange'
+  >('favorites');
   const [smartYear, setSmartYear] = useState<number>(new Date().getFullYear());
+  const [smartMonth, setSmartMonth] = useState<number>(new Date().getMonth() + 1);
+  const [smartTag, setSmartTag] = useState('');
+  const [smartLocation, setSmartLocation] = useState('');
+  const [smartDateStart, setSmartDateStart] = useState('');
+  const [smartDateEnd, setSmartDateEnd] = useState('');
 
   const openCreateModal = () => {
     setEditingAlbum(null);
     setAlbumTitle('');
     setAlbumDesc('');
     setIsSmartAlbum(false);
+    setSmartType('favorites');
+    setSmartTag('');
+    setSmartLocation('');
+    setSmartDateStart('');
+    setSmartDateEnd('');
     setIsModalOpen(true);
   };
 
@@ -123,9 +151,53 @@ const Albums: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  // Build smart criteria based on inputs
+  const currentSmartCriteria = useMemo((): SmartAlbumCriteria | undefined => {
+    if (!isSmartAlbum) return undefined;
+    switch (smartType) {
+      case 'favorites':
+        return { isFavorite: true };
+      case 'gps':
+        return { hasGps: true };
+      case 'year':
+        return { year: smartYear };
+      case 'month':
+        return { month: smartMonth };
+      case 'tag':
+        return smartTag.trim() ? { tag: smartTag.trim() } : undefined;
+      case 'location':
+        return smartLocation.trim() ? { location: smartLocation.trim() } : undefined;
+      case 'blurry':
+        return { isBlurry: true };
+      case 'dateRange':
+        return smartDateStart || smartDateEnd
+          ? { dateRange: { start: smartDateStart, end: smartDateEnd } }
+          : undefined;
+      default:
+        return undefined;
+    }
+  }, [
+    isSmartAlbum,
+    smartType,
+    smartYear,
+    smartMonth,
+    smartTag,
+    smartLocation,
+    smartDateStart,
+    smartDateEnd,
+  ]);
+
+  const isFormValid = useMemo(() => {
+    if (!albumTitle.trim()) return false;
+    if (isSmartAlbum && !editingAlbum) {
+      return isCriteriaValid(currentSmartCriteria);
+    }
+    return true;
+  }, [albumTitle, isSmartAlbum, editingAlbum, currentSmartCriteria]);
+
   const handleSaveModal = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!albumTitle.trim()) return;
+    if (!isFormValid) return;
 
     if (editingAlbum) {
       updateAlbum({
@@ -134,29 +206,17 @@ const Albums: React.FC = () => {
         description: albumDesc.trim(),
       });
     } else {
-      let smartCriteria: SmartAlbumCriteria | undefined;
-      if (isSmartAlbum) {
-        if (smartType === 'favorites') smartCriteria = { isFavorite: true };
-        if (smartType === 'year') smartCriteria = { year: smartYear };
-        if (smartType === 'gps') smartCriteria = { hasGps: true };
-      }
-      createAlbum(albumTitle.trim(), albumDesc.trim(), isSmartAlbum, smartCriteria);
+      createAlbum(albumTitle.trim(), albumDesc.trim(), isSmartAlbum, currentSmartCriteria);
     }
 
     setIsModalOpen(false);
   };
 
-  // Compute photos belonging to each album
+  // Compute photos belonging to each album using centralized smartAlbumService
   const getAlbumPhotos = React.useCallback(
     (album: Album): Photo[] => {
       if (album.isSmart && album.smartCriteria) {
-        const criteria = album.smartCriteria;
-        return photos.filter((p) => {
-          if (criteria.isFavorite && !p.isFavorite) return false;
-          if (criteria.year && parseInt((p.date || '').substring(0, 4), 10) !== criteria.year) return false;
-          if (criteria.hasGps && (typeof p.metadata?.latitude !== 'number' || typeof p.metadata?.longitude !== 'number')) return false;
-          return true;
-        });
+        return getSmartAlbumPhotos(photos, album.smartCriteria);
       }
       return photos.filter((p) => p.albumIds.includes(album.id));
     },
@@ -174,7 +234,6 @@ const Albums: React.FC = () => {
       const countB = getAlbumPhotos(b).length;
       if (sortBy === 'count') return countB - countA;
       if (sortBy === 'title') return a.title.localeCompare(b.title);
-      // recent: by creation date or id
       return (b.createdAt || b.id).localeCompare(a.createdAt || a.id);
     });
 
@@ -289,7 +348,12 @@ const Albums: React.FC = () => {
             </div>
             <button
               onClick={() => {
-                createAlbum('Mes Favoris', 'Album intelligent regroupant toutes vos photos favorites', true, { isFavorite: true });
+                createAlbum(
+                  'Mes Favoris',
+                  'Album intelligent regroupant toutes vos photos favorites',
+                  true,
+                  { isFavorite: true }
+                );
               }}
               className="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-sm font-bold active:scale-95"
             >
@@ -305,12 +369,16 @@ const Albums: React.FC = () => {
               </div>
               <div>
                 <h4 className="text-headline-sm font-bold text-on-surface">Photos Géolocalisées</h4>
-                <p className="text-label-sm text-on-surface-variant">{gpsPhotosCount} photos avec coordonnées GPS</p>
+                <p className="text-label-sm text-on-surface-variant">
+                  {gpsPhotosCount} photos avec coordonnées GPS
+                </p>
               </div>
             </div>
             <button
               onClick={() => {
-                createAlbum('Carnet de voyage', 'Photos disposant de coordonnées GPS', true, { hasGps: true });
+                createAlbum('Carnet de voyage', 'Photos disposant de coordonnées GPS', true, {
+                  hasGps: true,
+                });
               }}
               className="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-sm font-bold active:scale-95"
             >
@@ -320,10 +388,10 @@ const Albums: React.FC = () => {
         </div>
       </section>
 
-      {/* Create / Edit Album Modal (No window.prompt!) */}
+      {/* Create / Edit Album Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-md w-full p-6 shadow-2xl">
+          <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-md w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-headline-sm font-bold text-on-surface">
                 {editingAlbum ? 'Renommer l\'album' : 'Nouvel album'}
@@ -377,34 +445,107 @@ const Albums: React.FC = () => {
                     <div>
                       <span className="text-label-md font-bold text-on-surface">Album Intelligent</span>
                       <p className="text-[11px] text-on-surface-variant">
-                        Mise à jour automatique basée sur des critères
+                        Mise à jour automatique sans dupliquer les fichiers
                       </p>
                     </div>
                   </label>
 
                   {isSmartAlbum && (
-                    <div className="space-y-2 pt-2 border-t border-outline-variant/20">
+                    <div className="space-y-3 pt-2 border-t border-outline-variant/20">
                       <label className="block text-label-xs font-semibold text-on-surface-variant">
-                        Critère de sélection :
+                        Critère d'appartenance automatique :
                       </label>
                       <select
                         value={smartType}
-                        onChange={(e) => setSmartType(e.target.value as 'favorites' | 'year' | 'gps' | 'custom')}
+                        onChange={(e) =>
+                          setSmartType(
+                            e.target.value as
+                              | 'favorites'
+                              | 'year'
+                              | 'month'
+                              | 'gps'
+                              | 'tag'
+                              | 'location'
+                              | 'blurry'
+                              | 'dateRange'
+                          )
+                        }
                         className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
                       >
-                        <option value="favorites">Toutes les photos favorites</option>
-                        <option value="gps">Toutes les photos avec géolocalisation</option>
-                        <option value="year">Toutes les photos d'une année précise</option>
+                        <option value="favorites">Photos favorites uniquement</option>
+                        <option value="gps">Photos géolocalisées (coordonnées GPS)</option>
+                        <option value="year">Photos d'une année précise</option>
+                        <option value="month">Photos d'un mois précis (1 à 12)</option>
+                        <option value="tag">Photos associées à un mot-clé (tag)</option>
+                        <option value="location">Photos d'un lieu / ville</option>
+                        <option value="blurry">Photos floues (à trier / nettoyer)</option>
+                        <option value="dateRange">Période personnalisée (début - fin)</option>
                       </select>
 
                       {smartType === 'year' && (
                         <input
                           type="number"
                           value={smartYear}
-                          onChange={(e) => setSmartYear(parseInt(e.target.value, 10))}
+                          min={1970}
+                          max={2100}
+                          onChange={(e) => setSmartYear(parseInt(e.target.value, 10) || new Date().getFullYear())}
                           className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
                           placeholder="Ex : 2024"
                         />
+                      )}
+
+                      {smartType === 'month' && (
+                        <select
+                          value={smartMonth}
+                          onChange={(e) => setSmartMonth(parseInt(e.target.value, 10))}
+                          className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
+                        >
+                          {[
+                            'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                            'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+                          ].map((monthName, idx) => (
+                            <option key={idx + 1} value={idx + 1}>
+                              {monthName} ({idx + 1})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+
+                      {smartType === 'tag' && (
+                        <input
+                          type="text"
+                          value={smartTag}
+                          onChange={(e) => setSmartTag(e.target.value)}
+                          className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
+                          placeholder="Ex : Voyage, Famille, Portrait..."
+                        />
+                      )}
+
+                      {smartType === 'location' && (
+                        <input
+                          type="text"
+                          value={smartLocation}
+                          onChange={(e) => setSmartLocation(e.target.value)}
+                          className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
+                          placeholder="Ex : Paris, Bretagne, Tokyo..."
+                        />
+                      )}
+
+                      {smartType === 'dateRange' && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="date"
+                            value={smartDateStart}
+                            onChange={(e) => setSmartDateStart(e.target.value)}
+                            className="w-full h-10 px-2 bg-surface border border-outline-variant/40 rounded-xl text-label-xs"
+                          />
+                          <input
+                            type="date"
+                            value={smartDateEnd}
+                            onChange={(e) => setSmartDateEnd(e.target.value)}
+                            className="w-full h-10 px-2 bg-surface border border-outline-variant/40 rounded-xl text-label-xs"
+                          />
+                        </div>
                       )}
                     </div>
                   )}
@@ -421,7 +562,7 @@ const Albums: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={!albumTitle.trim()}
+                  disabled={!isFormValid}
                   className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-label-md active:scale-95 disabled:opacity-50"
                 >
                   {editingAlbum ? 'Mettre à jour' : 'Créer l\'album'}

@@ -74,17 +74,17 @@ describe('Editor Component', () => {
     expect(screen.getByText('50')).toBeInTheDocument();
   });
 
-  it('applies magic adjustments', () => {
+  it('applies auto adjustments preset', () => {
     render(<Editor photo={mockPhoto} onClose={mockOnClose} />);
 
-    const magicButton = screen.getByText(/Magic/i).closest('button');
-    expect(magicButton).not.toBeNull();
-    fireEvent.click(magicButton!);
+    const autoButton = screen.getByText(/Auto-Ajustement/i).closest('button');
+    expect(autoButton).not.toBeNull();
+    fireEvent.click(autoButton!);
 
-    // Magic applies 10 brightness, 20 contrast, 15 saturation
+    // Auto-ajustement applies brightness 10, contrast 20, saturation 15
     expect(screen.getByText('10')).toBeInTheDocument();
     expect(screen.getByText('20')).toBeInTheDocument();
-    expect(screen.getByText('15')).toBeInTheDocument();
+    expect(screen.getAllByText('15').length).toBeGreaterThanOrEqual(1);
   });
 
   it('calls updateAdjustments and onClose when saving', () => {

@@ -6,6 +6,7 @@ import DetailView from '../components/DetailView';
 import Editor from '../components/Editor';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { exportPhotosToZip } from '../services/exportService';
+import { getSmartAlbumPhotos } from '../services/smartAlbumService';
 import type { Photo } from '../types/types';
 
 const SelectablePhotoItem: React.FC<{ photo: Photo; isSelected: boolean; onClick: () => void }> = ({
@@ -59,17 +60,11 @@ const AlbumDetail: React.FC = () => {
 
   const album = albums.find((a) => a.id === id);
 
-  // Get photos in album
+  // Get photos in album using centralized smartAlbumService
   const albumPhotos = React.useMemo(() => {
     if (!album) return [];
     if (album.isSmart && album.smartCriteria) {
-      const criteria = album.smartCriteria;
-      return photos.filter((p) => {
-        if (criteria.isFavorite && !p.isFavorite) return false;
-        if (criteria.year && parseInt((p.date || '').substring(0, 4), 10) !== criteria.year) return false;
-        if (criteria.hasGps && (typeof p.metadata?.latitude !== 'number' || typeof p.metadata?.longitude !== 'number')) return false;
-        return true;
-      });
+      return getSmartAlbumPhotos(photos, album.smartCriteria);
     }
     return photos.filter((p) => p.albumIds.includes(album.id));
   }, [album, photos]);

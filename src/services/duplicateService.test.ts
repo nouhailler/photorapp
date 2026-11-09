@@ -133,4 +133,32 @@ describe('duplicateService', () => {
     expect(similar).toHaveLength(1);
     expect(similar[0].photos.map((p) => p.id)).toEqual(['s1', 's2']);
   });
+
+  it('never falsely groups photos without cryptographic hash even if names/dates match', () => {
+    const photos: Photo[] = [
+      {
+        id: 'u1',
+        url: 'u1',
+        alt: 'IMG_001.jpg',
+        date: '2024-01-01',
+        isFavorite: false,
+        albumIds: [],
+        tags: [],
+        metadata: { device: 'Cam', resolution: '100x100', fileSize: 1024, date: '2024-01-01' },
+      },
+      {
+        id: 'u2',
+        url: 'u2',
+        alt: 'IMG_001.jpg',
+        date: '2024-01-01',
+        isFavorite: false,
+        albumIds: [],
+        tags: [],
+        metadata: { device: 'Cam', resolution: '100x100', fileSize: 1024, date: '2024-01-01' },
+      },
+    ];
+
+    const duplicates = findExactDuplicates(photos);
+    expect(duplicates).toHaveLength(0);
+  });
 });

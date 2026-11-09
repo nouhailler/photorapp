@@ -9,6 +9,7 @@ import {
   createFullLibraryBackup,
   restoreFullLibraryBackup,
 } from '../services/exportService';
+import type { BackupResult, RestoreResult, ZipExportResult } from '../services/exportService';
 import { diagnoseStorage, cleanupOrphanedBlobs } from '../utils/db';
 import type { StorageDiagnostic } from '../types/types';
 
@@ -28,6 +29,11 @@ const Sharing: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatusText, setExportStatusText] = useState('');
   const [exportProgressPct, setExportProgressPct] = useState(0);
+
+  // Detailed Operation Reports
+  const [backupReport, setBackupReport] = useState<BackupResult | null>(null);
+  const [restoreReport, setRestoreReport] = useState<RestoreResult | null>(null);
+  const [zipExportReport, setZipExportReport] = useState<ZipExportResult | null>(null);
 
   // Diagnostics
   const [diagnostic, setDiagnostic] = useState<StorageDiagnostic | null>(null);
@@ -91,17 +97,16 @@ const Sharing: React.FC = () => {
     setExportStatusText('Préparation de la sauvegarde...');
 
     try {
-      await createFullLibraryBackup(photos, albums, (pct, status) => {
+      const res = await createFullLibraryBackup(photos, albums, (pct, status) => {
         setExportProgressPct(pct);
         setExportStatusText(status);
       });
+      setBackupReport(res);
     } catch (err) {
       console.error('Backup error:', err);
     } finally {
-      setTimeout(() => {
-        setIsExporting(false);
-        setExportStatusText('');
-      }, 1500);
+      setIsExporting(false);
+      setExportStatusText('');
     }
   };
 
@@ -115,17 +120,17 @@ const Sharing: React.FC = () => {
     setExportStatusText('Vérification de l\'archive de sauvegarde...');
 
     try {
-      await restoreFullLibraryBackup(file, (pct, status) => {
+      const res = await restoreFullLibraryBackup(file, (pct, status) => {
         setExportProgressPct(pct);
         setExportStatusText(status);
       });
-      // Force reload or refresh
-      window.location.reload();
+      setRestoreReport(res);
     } catch (err) {
       console.error('Restore error:', err);
-      setExportStatusText(`Erreur lors de la restauration : ${err instanceof Error ? err.message : 'Inconnue'}`);
-      setTimeout(() => setIsExporting(false), 3000);
+      alert(`Erreur de restauration : ${err instanceof Error ? err.message : 'Fichier non valide'}`);
     } finally {
+      setIsExporting(false);
+      setExportStatusText('');
       if (restoreInputRef.current) restoreInputRef.current.value = '';
     }
   };
@@ -137,17 +142,16 @@ const Sharing: React.FC = () => {
     setExportProgressPct(10);
     setExportStatusText('Compression de toutes les photos...');
     try {
-      await exportPhotosToZip(photos, 'photorapp_toutes_photos.zip', (pct, name) => {
+      const res = await exportPhotosToZip(photos, 'photorapp_toutes_photos.zip', (pct, name) => {
         setExportProgressPct(pct);
         setExportStatusText(`Ajout : ${name}`);
       });
+      setZipExportReport(res);
     } catch (e) {
       console.error('Zip export error:', e);
     } finally {
-      setTimeout(() => {
-        setIsExporting(false);
-        setExportStatusText('');
-      }, 1000);
+      setIsExporting(false);
+      setExportStatusText('');
     }
   };
 
@@ -239,7 +243,7 @@ const Sharing: React.FC = () => {
             <div>
               <p className="text-headline-sm font-bold text-on-surface">Restaurer une sauvegarde (.zip)</p>
               <p className="text-label-xs text-on-surface-variant mt-0.5">
-                Réinjectez une archive complète exportée depuis Gallery Pro.
+                Réinjectez une archive complète exportée depuis Gallery Pro avec vérification d'intégrité.
               </p>
             </div>
           </button>
@@ -263,7 +267,7 @@ const Sharing: React.FC = () => {
             <div>
               <h4 className="text-label-lg font-bold text-on-surface">Sauvegarde intégrale (.zip)</h4>
               <p className="text-[11px] text-on-surface-variant mt-1">
-                Génère une archive contenant tous vos originaux et la base de données de métadonnées.
+                Génère une archive avec manifeste versionné v2, empreintes SHA-256 et métadonnées.
               </p>
             </div>
             <span className="text-label-xs font-bold text-primary inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
@@ -372,6 +376,110 @@ const Sharing: React.FC = () => {
           </div>
         )}
       </section>
+
+      {/* Backup Summary Modal */}
+      {backupReport && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-primary">
+              <span className="material-symbols-outlined text-3xl">verified</span>
+              <h3 className="text-headline-sm font-bold text-on-surface">Sauvegarde terminée</h3>
+            </div>
+            <div className="space-y-2 text-body-sm text-on-surface-variant">
+              <p>Total photos : <strong className="text-on-surface">{backupReport.totalPhotos}</strong></p>
+              <p>Originaux locaux sauvegardés : <strong className="text-primary">{backupReport.localSaved}</strong></p>
+              <p>Fichiers distants référencés : <strong className="text-on-surface">{backupReport.remoteReferences}</strong></p>
+              {backupReport.missingLocal > 0 && (
+                <p className="text-amber-600 font-semibold">
+                  Fichiers locaux manquants : {backupReport.missingLocal}
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setBackupReport(null)}
+                className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore Summary Modal */}
+      {restoreReport && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-primary">
+              <span className="material-symbols-outlined text-3xl">task_alt</span>
+              <h3 className="text-headline-sm font-bold text-on-surface">Restauration terminée</h3>
+            </div>
+            <div className="space-y-2 text-body-sm text-on-surface-variant">
+              <p>Photos restaurées : <strong className="text-primary">{restoreReport.restoredPhotos}</strong></p>
+              <p>Albums restaurés : <strong className="text-on-surface">{restoreReport.restoredAlbums}</strong></p>
+              {restoreReport.skippedPhotos > 0 && (
+                <p>Photos ignorées : {restoreReport.skippedPhotos}</p>
+              )}
+              {restoreReport.integrityErrors.length > 0 && (
+                <p className="text-error font-semibold">
+                  {restoreReport.integrityErrors.length} anomalie(s) d'intégrité détectée(s)
+                </p>
+              )}
+              {restoreReport.missingBlobs.length > 0 && (
+                <p className="text-amber-600 font-semibold">
+                  {restoreReport.missingBlobs.length} fichier(s) photo manquant(s)
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setRestoreReport(null)}
+                className="px-5 py-2.5 rounded-xl border border-outline-variant/40 text-on-surface font-semibold text-label-md"
+              >
+                Fermer
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
+              >
+                Actualiser la galerie
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Zip Export Summary Modal */}
+      {zipExportReport && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-primary">
+              <span className="material-symbols-outlined text-3xl">folder_zip</span>
+              <h3 className="text-headline-sm font-bold text-on-surface">Exportation ZIP</h3>
+            </div>
+            <div className="space-y-2 text-body-sm text-on-surface-variant">
+              <p>Photos exportées : <strong className="text-primary">{zipExportReport.exported} / {zipExportReport.total}</strong></p>
+              {zipExportReport.failed.length > 0 && (
+                <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 text-label-xs text-amber-700 space-y-1 max-h-32 overflow-y-auto">
+                  <p className="font-bold">{zipExportReport.failed.length} avertissement(s) :</p>
+                  {zipExportReport.failed.map((f, i) => (
+                    <p key={i}>• {f.name} : {f.reason}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setZipExportReport(null)}
+                className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Import Modal */}
       <ImportModal

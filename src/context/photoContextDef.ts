@@ -1,10 +1,12 @@
 import { createContext } from 'react';
 import type { Photo, Album, PhotoAdjustments, SmartAlbumCriteria } from '../types/types';
+import type { MigrationReport } from '../utils/db';
 
 export interface PhotoContextType {
   photos: Photo[];
   albums: Album[];
   isLoading: boolean;
+  migrationReport?: MigrationReport | null;
   toggleFavorite: (id: string) => void;
   updateAdjustments: (id: string, adjustments: PhotoAdjustments) => void;
   resetAdjustments: (id: string) => void;
