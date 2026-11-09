@@ -7,6 +7,7 @@ import Albums from './pages/Albums';
 import IntelligenceIA from './pages/IntelligenceIA';
 import Search from './pages/Search';
 import Sharing from './pages/Sharing';
+import AlbumDetail from './pages/AlbumDetail';
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<Gallery />} />
             <Route path="/albums" element={<Albums />} />
+            <Route path="/albums/:id" element={<AlbumDetail />} />
             <Route path="/ia" element={<IntelligenceIA />} />
             <Route path="/search" element={<Search />} />
             <Route path="/sharing" element={<Sharing />} />

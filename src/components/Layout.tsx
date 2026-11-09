@@ -1,11 +1,18 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { usePhotos } from '../context/PhotoContext';
-import type { Photo } from '../types/types';
+import { usePhotos } from '../context/usePhotos';
+import { processPhotosImport } from '../services/importService';
+import type { ImportProgress, ImportResult } from '../services/importService';
+import { ImportModal } from './ImportModal';
 
 const TopAppBar: React.FC = () => {
-  const { addPhotos } = usePhotos();
+  const { photos, addPhotos } = usePhotos();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
@@ -13,58 +20,72 @@ const TopAppBar: React.FC = () => {
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
-      const newItems = Array.from(files).map((file, index) => {
-        const photo: Photo = {
-          id: Date.now().toString() + index,
-          url: '', // Handled by getPhotoUrl
-          alt: file.name,
-          date: new Date().toISOString().split('T')[0],
-          isFavorite: false,
-          albumIds: [],
-          tags: [],
-          storage: 'local',
-          metadata: {
-            device: 'Uploaded File',
-            resolution: 'Unknown',
-            date: new Date().toLocaleString(),
-          }
-        };
-        return { photo, blob: file };
+    if (!files || files.length === 0) return;
+
+    setIsProcessing(true);
+    setShowModal(true);
+    setImportResult(null);
+
+    try {
+      const result = await processPhotosImport(files, photos, (progress) => {
+        setImportProgress(progress);
       });
-      await addPhotos(newItems);
+
+      // Update in-memory state
+      if (result.importedPhotos.length > 0) {
+        await addPhotos(result.importedPhotos.map((p) => ({ photo: p })));
+      }
+      setImportResult(result);
+    } catch (err) {
+      console.error('Import error:', err);
+    } finally {
+      setIsProcessing(false);
+      // Reset input value to allow selecting same file again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl shadow-sm h-16 flex justify-between items-center px-container-padding">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/30 active:scale-95 duration-200 ease-in-out cursor-pointer">
-          <img 
-            alt="User Profile" 
-            className="w-full h-full object-cover" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjkNhuI9ob5G7EK5DQ0ZiDXrwRgN6dNjhPS9mRAU0yoaJtJTPFesNMTu9eWp8ZeHf0d2_LiecwV-LqqrRvGmX_QFsW7jUrkwcyS8mHNSWrRKu2zvNu-RUQdw_3ta2xethFJgx05O9EFw_8bwbs5f8Il57zJazgBkljmWWVYMKYaV2GUHI02sTKe0qFAfPNjOxJ83MjvjSHTgnjz-dDaluSy8z5tKPcu90oudChh3MFcXKTdBWEmarTtF0jbdwlq9hpPkw_-hRxiOs" 
-          />
+    <>
+      <header className="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl shadow-sm h-16 flex justify-between items-center px-container-padding">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white shadow-md">
+            <span className="material-symbols-outlined text-[22px]">photo_library</span>
+          </div>
+          <div>
+            <h1 className="text-headline-md font-bold tracking-tight text-on-surface">Gallery Pro</h1>
+            <p className="text-[10px] text-on-surface-variant font-medium -mt-1">Photothèque Privée & Locale</p>
+          </div>
         </div>
-        <h1 className="text-headline-md font-bold tracking-tight text-on-surface">Gallery Pro</h1>
-      </div>
-      <div className="flex items-center gap-2">
-        <input 
-          type="file" 
-          multiple 
-          accept="image/*" 
-          className="hidden" 
-          ref={fileInputRef} 
-          onChange={handleFileChange}
-        />
-        <button 
-          onClick={handleImportClick}
-          className="bg-primary text-on-primary text-label-md font-semibold px-4 py-2 rounded-xl active:scale-95 duration-200 ease-in-out transition-colors hover:bg-primary-container"
-        >
-          Import
-        </button>
-      </div>
-    </header>
+        <div className="flex items-center gap-2">
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+          />
+          <button
+            onClick={handleImportClick}
+            className="flex items-center gap-1.5 bg-primary text-on-primary text-label-md font-semibold px-4 py-2 rounded-xl active:scale-95 duration-200 ease-in-out transition-colors hover:bg-primary-container shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+            <span>Importer</span>
+          </button>
+        </div>
+      </header>
+
+      <ImportModal
+        isOpen={showModal}
+        progress={importProgress}
+        result={importResult}
+        isProcessing={isProcessing}
+        onClose={() => setShowModal(false)}
+      />
+    </>
   );
 };
 
@@ -72,9 +93,9 @@ const BottomNavBar: React.FC = () => {
   const navItems = [
     { label: 'Photos', icon: 'photo_library', path: '/' },
     { label: 'Albums', icon: 'collections_bookmark', path: '/albums' },
-    { label: 'IA', icon: 'auto_awesome', path: '/ia' },
+    { label: 'IA & Qualité', icon: 'auto_awesome', path: '/ia' },
     { label: 'Recherche', icon: 'search', path: '/search' },
-    { label: 'Partage', icon: 'group', path: '/sharing' },
+    { label: 'Sauvegarde', icon: 'cloud_sync', path: '/sharing' },
   ];
 
   return (
@@ -84,9 +105,9 @@ const BottomNavBar: React.FC = () => {
           key={item.path}
           to={item.path}
           className={({ isActive }) =>
-            `flex flex-col items-center justify-center px-4 py-1 active:scale-90 duration-200 transition-all cursor-pointer ${
-              isActive 
-                ? 'text-primary bg-primary-container/20 rounded-xl' 
+            `flex flex-col items-center justify-center px-3 py-1 active:scale-90 duration-200 transition-all cursor-pointer ${
+              isActive
+                ? 'text-primary bg-primary-container/20 rounded-xl'
                 : 'text-on-surface-variant hover:text-primary'
             }`
           }
@@ -111,11 +132,9 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background text-on-background">
       <TopAppBar />
-      <main className="pt-20 pb-24 flex-grow">
-        {children}
-      </main>
+      <main className="pt-20 pb-24 flex-grow">{children}</main>
       <BottomNavBar />
     </div>
   );

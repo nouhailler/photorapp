@@ -1,165 +1,440 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { Photo, Album, PhotoAdjustments } from '../types/types';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import type { Photo, Album, PhotoAdjustments, SmartAlbumCriteria } from '../types/types';
 import { INITIAL_PHOTOS, INITIAL_ALBUMS } from '../assets/data/mockData';
-import { getPhotoBlob, savePhotoBlob, deletePhotoBlob } from '../utils/db';
-
-interface PhotoContextType {
-  photos: Photo[];
-  albums: Album[];
-  toggleFavorite: (id: string) => void;
-  updateAdjustments: (id: string, adjustments: PhotoAdjustments) => void;
-  addPhotos: (newItems: { photo: Photo, blob?: Blob }[]) => Promise<void>;
-  deletePhoto: (id: string) => Promise<void>;
-  deletePhotos: (ids: string[]) => Promise<void>;
-  createAlbum: (title: string) => void;
-  deleteAlbum: (id: string) => void;
-  addPhotosToAlbum: (photoIds: string[], albumId: string) => void;
-  getPhotoUrl: (photo: Photo) => Promise<string>;
-}
-
-const PhotoContext = createContext<PhotoContextType | undefined>(undefined);
+import {
+  getPhotoBlob,
+  savePhotoBlob,
+  deletePhotoBlob,
+  savePhotoMeta,
+  deletePhotoMeta,
+  saveAlbumMeta,
+  deleteAlbumMeta,
+  migrateFromLocalStorage,
+} from '../utils/db';
+import { analyzeImageQuality } from '../services/qualityService';
+import { PhotoContext } from './photoContextDef';
 
 export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [photos, setPhotos] = useState<Photo[]>(() => {
-    const saved = localStorage.getItem('gallery_pro_photos');
-    const initial = saved ? JSON.parse(saved) : INITIAL_PHOTOS;
-    return initial.map((p: Photo) => ({ ...p, storage: p.storage || 'remote' }));
+    try {
+      const saved = localStorage.getItem('gallery_pro_photos');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading photos from localStorage cache:', e);
+    }
+    return INITIAL_PHOTOS.map((p) => ({ ...p, storage: p.storage || 'remote' }));
   });
 
   const [albums, setAlbums] = useState<Album[]>(() => {
-    const saved = localStorage.getItem('gallery_pro_albums');
-    return saved ? JSON.parse(saved) : INITIAL_ALBUMS;
+    try {
+      const saved = localStorage.getItem('gallery_pro_albums');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading albums from localStorage cache:', e);
+    }
+    return INITIAL_ALBUMS;
   });
 
-  const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const localUrlsRef = useRef<Record<string, string>>({});
 
+  // Initialize and migrate IndexedDB on mount
   useEffect(() => {
-    localStorage.setItem('gallery_pro_photos', JSON.stringify(photos));
+    let isMounted = true;
+    const currentUrls = localUrlsRef.current;
+    const initDb = async () => {
+      try {
+        const result = await migrateFromLocalStorage(INITIAL_PHOTOS, INITIAL_ALBUMS);
+        if (isMounted) {
+          setPhotos(result.photos);
+          setAlbums(result.albums);
+        }
+      } catch (e) {
+        console.warn('IndexedDB migration error:', e);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    initDb();
+    return () => {
+      isMounted = false;
+      const urlsToRevoke = Object.values(currentUrls);
+      urlsToRevoke.forEach((url) => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          // Ignore
+        }
+      });
+    };
+  }, []);
+
+  // Sync to localStorage as an instant cache
+  useEffect(() => {
+    try {
+      localStorage.setItem('gallery_pro_photos', JSON.stringify(photos));
+    } catch (e) {
+      console.warn('LocalStorage quota exceeded for photos cache:', e);
+    }
   }, [photos]);
 
   useEffect(() => {
-    localStorage.setItem('gallery_pro_albums', JSON.stringify(albums));
+    try {
+      localStorage.setItem('gallery_pro_albums', JSON.stringify(albums));
+    } catch (e) {
+      console.warn('LocalStorage quota exceeded for albums cache:', e);
+    }
   }, [albums]);
 
   const getPhotoUrl = useCallback(async (photo: Photo): Promise<string> => {
-    if (photo.storage === 'remote') return photo.url;
-    
-    if (localUrls[photo.id]) return localUrls[photo.id];
+    if (photo.storage === 'remote' || !photo.storage) {
+      return photo.url;
+    }
+
+    if (localUrlsRef.current[photo.id]) {
+      return localUrlsRef.current[photo.id];
+    }
 
     const blob = await getPhotoBlob(photo.id);
     if (blob) {
       const url = URL.createObjectURL(blob);
-      setLocalUrls(prev => ({ ...prev, [photo.id]: url }));
+      localUrlsRef.current[photo.id] = url;
       return url;
     }
+
     return photo.url;
-  }, [localUrls]);
+  }, []);
 
-  const toggleFavorite = (id: string) => {
-    setPhotos(prev => prev.map(p => 
-      p.id === id ? { ...p, isFavorite: !p.isFavorite } : p
-    ));
-  };
+  const toggleFavorite = useCallback((id: string) => {
+    setPhotos((prev) =>
+      prev.map((p) => {
+        if (p.id === id) {
+          const updated = { ...p, isFavorite: !p.isFavorite, updatedAt: new Date().toISOString() };
+          savePhotoMeta(updated).catch(console.error);
+          return updated;
+        }
+        return p;
+      })
+    );
+  }, []);
 
-  const updateAdjustments = (id: string, adjustments: PhotoAdjustments) => {
-    setPhotos(prev => prev.map(p => 
-      p.id === id ? { ...p, adjustments } : p
-    ));
-  };
+  const updateAdjustments = useCallback((id: string, adjustments: PhotoAdjustments) => {
+    setPhotos((prev) =>
+      prev.map((p) => {
+        if (p.id === id) {
+          const updated = { ...p, adjustments, updatedAt: new Date().toISOString() };
+          savePhotoMeta(updated).catch(console.error);
+          return updated;
+        }
+        return p;
+      })
+    );
+  }, []);
 
-  const addPhotos = async (newItems: { photo: Photo, blob?: Blob }[]) => {
+  const resetAdjustments = useCallback((id: string) => {
+    setPhotos((prev) =>
+      prev.map((p) => {
+        if (p.id === id) {
+          const updated: Photo = {
+            ...p,
+            adjustments: {
+              brightness: 0,
+              contrast: 0,
+              saturation: 0,
+              exposure: 0,
+              temperature: 0,
+              tint: 0,
+              highlights: 0,
+              shadows: 0,
+              vignette: 0,
+              rotation: 0,
+              aspectRatio: 'original' as const,
+              filter: '',
+            },
+            updatedAt: new Date().toISOString(),
+          };
+          savePhotoMeta(updated).catch(console.error);
+          return updated;
+        }
+        return p;
+      })
+    );
+  }, []);
+
+  const addPhotos = useCallback(async (newItems: { photo: Photo; blob?: Blob }[]) => {
     for (const item of newItems) {
       if (item.blob && item.photo.storage === 'local') {
         await savePhotoBlob({ id: item.photo.id, blob: item.blob });
       }
+      await savePhotoMeta(item.photo);
     }
-    setPhotos(prev => [...newItems.map(i => i.photo), ...prev]);
-  };
+    setPhotos((prev) => [...newItems.map((i) => i.photo), ...prev]);
+  }, []);
 
-  const deletePhoto = async (id: string) => {
-    const photo = photos.find(p => p.id === id);
+  const deletePhoto = useCallback(async (id: string) => {
+    const photo = photos.find((p) => p.id === id);
     if (photo?.storage === 'local') {
       await deletePhotoBlob(id);
+      if (localUrlsRef.current[id]) {
+        URL.revokeObjectURL(localUrlsRef.current[id]);
+        delete localUrlsRef.current[id];
+      }
     }
-    setPhotos(prev => prev.filter(p => p.id !== id));
-  };
+    await deletePhotoMeta(id);
 
-  const deletePhotos = async (ids: string[]) => {
+    setPhotos((prev) => prev.filter((p) => p.id !== id));
+    // Clean up album references
+    setAlbums((prev) =>
+      prev.map((a) => (a.coverPhotoId === id ? { ...a, coverPhotoId: '' } : a))
+    );
+  }, [photos]);
+
+  const deletePhotos = useCallback(async (ids: string[]) => {
+    const idsSet = new Set(ids);
     for (const id of ids) {
-      const photo = photos.find(p => p.id === id);
+      const photo = photos.find((p) => p.id === id);
       if (photo?.storage === 'local') {
         await deletePhotoBlob(id);
+        if (localUrlsRef.current[id]) {
+          URL.revokeObjectURL(localUrlsRef.current[id]);
+          delete localUrlsRef.current[id];
+        }
       }
+      await deletePhotoMeta(id);
     }
-    setPhotos(prev => prev.filter(p => !ids.includes(p.id)));
-  };
 
-  const createAlbum = (title: string) => {
-    const newAlbum: Album = {
-      id: Date.now().toString(),
-      title,
-      coverPhotoId: '',
-      photoCount: 0,
-      isShared: false,
-      isPrivate: true,
-      type: 'personal'
-    };
-    setAlbums(prev => [newAlbum, ...prev]);
-  };
+    setPhotos((prev) => prev.filter((p) => !idsSet.has(p.id)));
+    setAlbums((prev) =>
+      prev.map((a) => (idsSet.has(a.coverPhotoId) ? { ...a, coverPhotoId: '' } : a))
+    );
+  }, [photos]);
 
-  const deleteAlbum = (id: string) => {
-    setAlbums(prev => prev.filter(a => a.id !== id));
-    // Also remove the album reference from all photos
-    setPhotos(prev => prev.map(p => ({
-      ...p,
-      albumIds: p.albumIds.filter(aid => aid !== id)
-    })));
-  };
+  const createAlbum = useCallback(
+    (title: string, description?: string, isSmart?: boolean, smartCriteria?: SmartAlbumCriteria): Album => {
+      const newAlbum: Album = {
+        id: `album-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        title,
+        description,
+        coverPhotoId: '',
+        photoCount: 0,
+        isShared: false,
+        isPrivate: true,
+        type: 'personal',
+        isSmart: Boolean(isSmart),
+        smartCriteria,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setAlbums((prev) => [newAlbum, ...prev]);
+      saveAlbumMeta(newAlbum).catch(console.error);
+      return newAlbum;
+    },
+    []
+  );
 
-  const addPhotosToAlbum = (photoIds: string[], albumId: string) => {
-    setPhotos(prev => prev.map(p => {
-      if (photoIds.includes(p.id)) {
-        const newAlbumIds = p.albumIds.includes(albumId) ? p.albumIds : [...p.albumIds, albumId];
-        return { ...p, albumIds: newAlbumIds };
+  const updateAlbum = useCallback((album: Album) => {
+    const updated = { ...album, updatedAt: new Date().toISOString() };
+    setAlbums((prev) => prev.map((a) => (a.id === album.id ? updated : a)));
+    saveAlbumMeta(updated).catch(console.error);
+  }, []);
+
+  const deleteAlbum = useCallback((id: string) => {
+    setAlbums((prev) => prev.filter((a) => a.id !== id));
+    deleteAlbumMeta(id).catch(console.error);
+
+    // Remove the album reference from all photos
+    setPhotos((prev) =>
+      prev.map((p) => {
+        if (p.albumIds.includes(id)) {
+          const updated = {
+            ...p,
+            albumIds: p.albumIds.filter((aid) => aid !== id),
+            updatedAt: new Date().toISOString(),
+          };
+          savePhotoMeta(updated).catch(console.error);
+          return updated;
+        }
+        return p;
+      })
+    );
+  }, []);
+
+  const addPhotosToAlbum = useCallback((photoIds: string[], albumId: string) => {
+    const idsSet = new Set(photoIds);
+    setPhotos((prev) =>
+      prev.map((p) => {
+        if (idsSet.has(p.id) && !p.albumIds.includes(albumId)) {
+          const updated = { ...p, albumIds: [...p.albumIds, albumId] };
+          savePhotoMeta(updated).catch(console.error);
+          return updated;
+        }
+        return p;
+      })
+    );
+
+    setAlbums((prev) =>
+      prev.map((a) => {
+        if (a.id === albumId) {
+          const cover = a.coverPhotoId || photoIds[0] || '';
+          const updated: Album = {
+            ...a,
+            coverPhotoId: cover,
+            updatedAt: new Date().toISOString(),
+          };
+          saveAlbumMeta(updated).catch(console.error);
+          return updated;
+        }
+        return a;
+      })
+    );
+  }, []);
+
+  const removePhotoFromAlbum = useCallback((photoId: string, albumId: string) => {
+    setPhotos((prev) =>
+      prev.map((p) => {
+        if (p.id === photoId && p.albumIds.includes(albumId)) {
+          const updated = {
+            ...p,
+            albumIds: p.albumIds.filter((id) => id !== albumId),
+            updatedAt: new Date().toISOString(),
+          };
+          savePhotoMeta(updated).catch(console.error);
+          return updated;
+        }
+        return p;
+      })
+    );
+
+    setAlbums((prev) =>
+      prev.map((a) => {
+        if (a.id === albumId && a.coverPhotoId === photoId) {
+          const remainingPhotos = photos.filter(
+            (p) => p.id !== photoId && p.albumIds.includes(albumId)
+          );
+          const updated: Album = {
+            ...a,
+            coverPhotoId: remainingPhotos[0]?.id || '',
+            updatedAt: new Date().toISOString(),
+          };
+          saveAlbumMeta(updated).catch(console.error);
+          return updated;
+        }
+        return a;
+      })
+    );
+  }, [photos]);
+
+  const setAlbumCover = useCallback((albumId: string, photoId: string) => {
+    setAlbums((prev) =>
+      prev.map((a) => {
+        if (a.id === albumId) {
+          const updated: Album = {
+            ...a,
+            coverPhotoId: photoId,
+            updatedAt: new Date().toISOString(),
+          };
+          saveAlbumMeta(updated).catch(console.error);
+          return updated;
+        }
+        return a;
+      })
+    );
+  }, []);
+
+  const analyzePhoto = useCallback(
+    async (photoId: string) => {
+      const photo = photos.find((p) => p.id === photoId);
+      if (!photo) return;
+
+      try {
+        let blob: Blob | null = null;
+        if (photo.storage === 'local') {
+          blob = await getPhotoBlob(photo.id);
+        } else {
+          const res = await fetch(photo.url);
+          blob = await res.blob();
+        }
+
+        if (blob) {
+          const analysis = await analyzeImageQuality(blob);
+          setPhotos((prev) =>
+            prev.map((p) => {
+              if (p.id === photoId) {
+                const currentMeta = p.metadata || {
+                  device: 'Unknown',
+                  resolution: 'Unknown',
+                  date: p.date,
+                };
+                const updated: Photo = {
+                  ...p,
+                  metadata: {
+                    ...currentMeta,
+                    analysis,
+                  },
+                  updatedAt: new Date().toISOString(),
+                };
+                savePhotoMeta(updated).catch(console.error);
+                return updated;
+              }
+              return p;
+            })
+          );
+        }
+      } catch (err) {
+        console.warn(`Analysis failed for photo ${photoId}:`, err);
       }
-      return p;
-    }));
+    },
+    [photos]
+  );
 
-    setAlbums(prev => prev.map(a => {
-      if (a.id === albumId) {
-        // Correctly calculate new photo count by checking how many photos were actually added
-        const addedPhotos = photos.filter(p => photoIds.includes(p.id) && !p.albumIds.includes(albumId));
-        return {
-          ...a,
-          photoCount: a.photoCount + addedPhotos.length,
-          coverPhotoId: a.coverPhotoId || photoIds[0]
-        };
+  const analyzeAllPhotos = useCallback(
+    async (onProgress?: (current: number, total: number) => void) => {
+      const unanalyzed = photos.filter((p) => !p.metadata?.analysis);
+      const total = unanalyzed.length;
+
+      for (let i = 0; i < total; i++) {
+        const photo = unanalyzed[i];
+        onProgress?.(i + 1, total);
+        await analyzePhoto(photo.id);
       }
-      return a;
-    }));
-  };
+    },
+    [photos, analyzePhoto]
+  );
 
   return (
-    <PhotoContext.Provider value={{ 
-      photos, 
-      albums, 
-      toggleFavorite, 
-      updateAdjustments, 
-      addPhotos, 
-      deletePhoto, 
-      deletePhotos,
-      createAlbum,
-      deleteAlbum,
-      addPhotosToAlbum,
-      getPhotoUrl
-    }}>
+    <PhotoContext.Provider
+      value={{
+        photos,
+        albums,
+        isLoading,
+        toggleFavorite,
+        updateAdjustments,
+        resetAdjustments,
+        addPhotos,
+        deletePhoto,
+        deletePhotos,
+        createAlbum,
+        updateAlbum,
+        deleteAlbum,
+        addPhotosToAlbum,
+        removePhotoFromAlbum,
+        setAlbumCover,
+        getPhotoUrl,
+        analyzePhoto,
+        analyzeAllPhotos,
+      }}
+    >
       {children}
     </PhotoContext.Provider>
   );
-};
-
-export const usePhotos = () => {
-  const context = useContext(PhotoContext);
-  if (!context) throw new Error('usePhotos must be used within a PhotoProvider');
-  return context;
 };

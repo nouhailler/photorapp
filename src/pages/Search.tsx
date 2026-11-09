@@ -1,75 +1,241 @@
-import React from 'react';
-import { usePhotos } from '../context/PhotoContext';
+import React, { useState, useMemo } from 'react';
+import { usePhotos } from '../context/usePhotos';
 import PhotoGrid from '../components/PhotoGrid';
+import DetailView from '../components/DetailView';
+import Editor from '../components/Editor';
+import { filterPhotos, extractAvailableFilters } from '../services/searchEngine';
+import type { SearchFilters } from '../services/searchEngine';
+import type { Photo } from '../types/types';
 
 const Search: React.FC = () => {
-  const { photos } = usePhotos();
+  const { photos, albums, toggleFavorite } = usePhotos();
+
+  const [query, setQuery] = useState('');
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
+  const [selectedLocation, setSelectedLocation] = useState<string | undefined>(undefined);
+  const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
+  const [selectedDevice, setSelectedDevice] = useState<string | undefined>(undefined);
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const [onlyGps, setOnlyGps] = useState(false);
+
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Extract real dynamic filters from actual library
+  const availableFilters = useMemo(() => {
+    return extractAvailableFilters(photos, albums);
+  }, [photos, albums]);
+
+  // Combined search filters
+  const filters: SearchFilters = useMemo(() => {
+    return {
+      query: [query, selectedTag].filter(Boolean).join(' '),
+      year: selectedYear,
+      location: selectedLocation,
+      device: selectedDevice,
+      isFavorite: onlyFavorites ? true : undefined,
+      hasGps: onlyGps ? true : undefined,
+    };
+  }, [query, selectedTag, selectedYear, selectedLocation, selectedDevice, onlyFavorites, onlyGps]);
+
+  const searchResults = useMemo(() => {
+    return filterPhotos(photos, filters, albums);
+  }, [photos, filters, albums]);
+
+  const hasActiveFilters = Boolean(
+    query || selectedYear || selectedLocation || selectedTag || selectedDevice || onlyFavorites || onlyGps
+  );
+
+  const handleResetFilters = () => {
+    setQuery('');
+    setSelectedYear(undefined);
+    setSelectedLocation(undefined);
+    setSelectedTag(undefined);
+    setSelectedDevice(undefined);
+    setOnlyFavorites(false);
+    setOnlyGps(false);
+  };
 
   return (
-    <div className="px-container-padding space-y-section-margin">
-      {/* AI Search Bar */}
-      <div className="relative mb-6">
-        <div className="group relative flex items-center bg-surface-container-low rounded-2xl p-1 shadow-sm border border-outline-variant/20 hover:border-primary/30 transition-all">
-          <div className="pl-4 pr-2 text-on-surface-variant">
-            <span className="material-symbols-outlined material-symbols-fill text-primary">auto_awesome</span>
+    <div className="px-container-padding space-y-section-margin max-w-6xl mx-auto pb-28">
+      {/* Search Bar */}
+      <div className="relative pt-2">
+        <div className="group relative flex items-center bg-surface-container-low rounded-2xl p-1.5 shadow-sm border border-outline-variant/30 focus-within:border-primary transition-all">
+          <div className="pl-3.5 pr-2 text-on-surface-variant">
+            <span className="material-symbols-outlined text-primary text-[22px]">search</span>
           </div>
-          <input 
-            className="bg-transparent border-none focus:ring-0 w-full py-3 font-body-lg placeholder:text-on-surface-variant/60 outline-none" 
-            placeholder="Search your memories..." 
-            type="text" 
-            defaultValue="Vacation photos in the mountains"
+          <input
+            className="bg-transparent border-none focus:ring-0 w-full py-2.5 font-body-md text-on-surface placeholder:text-on-surface-variant/60 outline-none"
+            placeholder="Rechercher par mot-clé, tag, lieu, appareil, EXIF..."
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
           />
-          <button className="p-2 mr-1 rounded-xl text-primary hover:bg-primary-container/10 transition-colors">
-            <span className="material-symbols-outlined">mic</span>
-          </button>
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="p-2 mr-1 rounded-xl text-on-surface-variant hover:text-on-surface transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          )}
         </div>
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-tertiary rounded-full animate-pulse blur-sm opacity-40"></div>
       </div>
 
-      {/* Filter Chips */}
-      <section className="flex gap-2 overflow-x-auto hide-scrollbar pb-2 -mx-container-padding px-container-padding">
-        <button className="flex items-center gap-1.5 bg-primary-container text-on-primary-container px-4 py-2 rounded-full text-label-md font-semibold whitespace-nowrap shadow-sm">
-          <span className="material-symbols-outlined text-[18px] material-symbols-fill">star</span>
-          Favorites
-        </button>
-        {['Beach', 'Dogs', '2024', 'Family'].map(tag => (
-          <button key={tag} className="bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-label-md font-semibold whitespace-nowrap hover:bg-surface-variant transition-colors">
-            {tag}
-          </button>
-        ))}
-      </section>
-
-      {/* People & Pets */}
-      <section>
-        <div className="flex justify-between items-end mb-4">
-          <h2 className="text-headline-md font-bold">People & Pets</h2>
-          <button className="text-primary text-label-md font-semibold">View all</button>
+      {/* Dynamic Filter Chips Section */}
+      <section className="space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-label-sm font-bold text-on-surface-variant uppercase tracking-wider">
+            Filtres combinables
+          </span>
+          {hasActiveFilters && (
+            <button
+              onClick={handleResetFilters}
+              className="text-label-xs font-bold text-primary hover:underline"
+            >
+              Réinitialiser les filtres
+            </button>
+          )}
         </div>
-        <div className="flex gap-4 overflow-x-auto hide-scrollbar py-1 -mx-container-padding px-container-padding">
-          {[
-            { name: 'Sarah', url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDn2FgST9CON3MqUJbCAglbhCxXlQ3GuSkOSfQBlzWTGHZIiZQjuk4sF6LI4VeKXj4E47-ld1MZqIC3kKnMVAtpzEPbY3ciQPqEfw2YJ2wH9xRvdDmfPsvaTQoaGIcgooLn_9MF0a5os4CqJKRp2rLbcOWkuIxO7juw78jApP-lZJ9X_pKraoDHnzdcYXdZRNpxABGguBVR0eh30LoGu8aPwVoEVY1X7zvoKj3pESg02Ofd4W9g2nk5OWy5TzGZ2S19-2nni7gFjQk' },
-            { name: 'Mark', url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB-n3T1wW6PhKCX2kLluMKwg93fIAxaOjvZfk0FNFrdq4jhu3bEd9byRrDF1i35TfatXqeAJPrwBkLXXXZl7_ZRqdgRNdkpmHu_Sj6yyacD6Q9Gn3fF4D_y47ljXkU82GqfpqLR692nhmRevLti_PkQnVEGHgmIE7G-dghyKgoT9eD0uDv4gUENrPUUlloSi6aERI4gZEnQp9o39XOpHsvYDSnuWR2m8FgwRVpOiRHRR3TIurD0TBpuhlqwfH2mpa5Otj90yS3G_Do' },
-          ].map(person => (
-            <div key={person.name} className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer group">
-              <div className="w-16 h-16 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background overflow-hidden shadow-md transition-transform group-hover:scale-105">
-                <img src={person.url} alt={person.name} className="w-full h-full object-cover" />
-              </div>
-              <span className="text-label-md font-medium">{person.name}</span>
-            </div>
+
+        {/* Primary Filter Row */}
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+          {/* Favorites toggle */}
+          <button
+            onClick={() => setOnlyFavorites(!onlyFavorites)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-label-sm font-semibold whitespace-nowrap transition-all ${
+              onlyFavorites
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px] material-symbols-fill">star</span>
+            <span>Favoris</span>
+          </button>
+
+          {/* GPS toggle */}
+          <button
+            onClick={() => setOnlyGps(!onlyGps)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-label-sm font-semibold whitespace-nowrap transition-all ${
+              onlyGps
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">location_on</span>
+            <span>Avec coordonnées GPS</span>
+          </button>
+
+          {/* Real Years */}
+          {availableFilters.years.map((year) => (
+            <button
+              key={year}
+              onClick={() => setSelectedYear(selectedYear === year ? undefined : year)}
+              className={`px-4 py-2 rounded-full text-label-sm font-semibold whitespace-nowrap transition-all ${
+                selectedYear === year
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'
+              }`}
+            >
+              {year}
+            </button>
           ))}
         </div>
+
+        {/* Real Locations Row (if any) */}
+        {availableFilters.locations.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 text-label-xs">
+            <span className="text-on-surface-variant font-semibold flex items-center gap-1 shrink-0">
+              <span className="material-symbols-outlined text-[14px]">pin_drop</span>
+              Lieux :
+            </span>
+            {availableFilters.locations.map((loc) => (
+              <button
+                key={loc}
+                onClick={() => setSelectedLocation(selectedLocation === loc ? undefined : loc)}
+                className={`px-3 py-1 rounded-lg text-label-xs font-medium whitespace-nowrap transition-all ${
+                  selectedLocation === loc
+                    ? 'bg-primary text-on-primary'
+                    : 'bg-surface-container-low border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant'
+                }`}
+              >
+                {loc}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Real Tags Row (if any) */}
+        {availableFilters.tags.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 text-label-xs">
+            <span className="text-on-surface-variant font-semibold flex items-center gap-1 shrink-0">
+              <span className="material-symbols-outlined text-[14px]">label</span>
+              Tags :
+            </span>
+            {availableFilters.tags.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setSelectedTag(selectedTag === tag ? undefined : tag)}
+                className={`px-3 py-1 rounded-lg text-label-xs font-medium whitespace-nowrap transition-all ${
+                  selectedTag === tag
+                    ? 'bg-primary text-on-primary'
+                    : 'bg-surface-container-low border border-outline-variant/30 text-on-surface-variant hover:bg-surface-variant'
+                }`}
+              >
+                #{tag}
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* Results */}
-      <section>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-headline-md font-bold">Results for "Mountain vacation"</h2>
-          <button className="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
-            <span className="material-symbols-outlined">tune</span>
-          </button>
+      {/* Results Header */}
+      <section className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-headline-md font-bold text-on-surface">
+            {hasActiveFilters
+              ? `${searchResults.length} résultat(s) trouvé(s)`
+              : `Toutes les photos (${searchResults.length})`}
+          </h3>
+          <span className="text-label-sm text-on-surface-variant">
+            {photos.length} photos au total
+          </span>
         </div>
-        <PhotoGrid photos={photos.filter(p => p.tags.includes('mountains'))} />
+
+        {searchResults.length > 0 ? (
+          <PhotoGrid photos={searchResults} onPhotoClick={setSelectedPhoto} />
+        ) : (
+          <div className="py-20 text-center border-2 border-dashed border-outline-variant/50 rounded-3xl flex flex-col items-center">
+            <div className="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center text-on-surface-variant mb-3">
+              <span className="material-symbols-outlined text-4xl">search_off</span>
+            </div>
+            <h4 className="text-headline-sm font-bold text-on-surface">Aucune photo ne correspond</h4>
+            <p className="text-body-sm text-on-surface-variant max-w-sm mt-1">
+              Essayez de modifier vos termes de recherche ou de réinitialiser certains filtres.
+            </p>
+            <button
+              onClick={handleResetFilters}
+              className="mt-4 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
+            >
+              Réinitialiser les filtres
+            </button>
+          </div>
+        )}
       </section>
+
+      {/* Detail & Edit Modals */}
+      {selectedPhoto && (
+        <DetailView
+          photo={selectedPhoto}
+          onClose={() => setSelectedPhoto(null)}
+          onEdit={() => setIsEditing(true)}
+          onToggleFavorite={() => toggleFavorite(selectedPhoto.id)}
+        />
+      )}
+
+      {isEditing && selectedPhoto && (
+        <Editor photo={selectedPhoto} onClose={() => setIsEditing(false)} />
+      )}
     </div>
   );
 };

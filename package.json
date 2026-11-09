@@ -11,7 +11,10 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@types/jszip": "^3.4.0",
     "@types/leaflet": "^1.9.21",
+    "exifreader": "^4.54.0",
+    "jszip": "^3.10.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",

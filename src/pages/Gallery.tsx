@@ -2,51 +2,60 @@ import React, { useState, useMemo } from 'react';
 import PhotoGrid from '../components/PhotoGrid';
 import DetailView from '../components/DetailView';
 import Editor from '../components/Editor';
-import { usePhotos } from '../context/PhotoContext';
+import { usePhotos } from '../context/usePhotos';
+import { exportPhotosToZip } from '../services/exportService';
+import { SlideshowModal } from '../components/SlideshowModal';
 import type { Photo } from '../types/types';
 
 const Gallery: React.FC = () => {
-  const { photos, toggleFavorite, deletePhotos } = usePhotos();
+  const { photos, albums, toggleFavorite, deletePhotos, addPhotosToAlbum, createAlbum } = usePhotos();
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [filterMode, setFilterMode] = useState<'all' | 'favorites' | 'gps'>('all');
+
   // Selection State
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAlbumPicker, setShowAlbumPicker] = useState(false);
+  const [isExportingZip, setIsExportingZip] = useState(false);
+
+  // Slideshow State
+  const [isSlideshowOpen, setIsSlideshowOpen] = useState(false);
 
   const filteredPhotos = useMemo(() => {
-    const query = searchQuery.toLowerCase();
-    return photos.filter(p => 
-      p.alt.toLowerCase().includes(query) || 
-      p.tags.some(t => t.toLowerCase().includes(query)) ||
-      p.metadata?.location?.toLowerCase().includes(query)
-    );
-  }, [photos, searchQuery]);
+    let result = photos;
 
-  // Simple grouping by date
-  const groupedPhotos = useMemo(() => filteredPhotos.reduce((acc, photo) => {
-    const date = photo.date; 
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(photo);
-    return acc;
-  }, {} as Record<string, typeof photos>), [filteredPhotos]);
+    if (filterMode === 'favorites') {
+      result = result.filter((p) => p.isFavorite);
+    } else if (filterMode === 'gps') {
+      result = result.filter((p) => typeof p.metadata?.latitude === 'number');
+    }
 
-  const handlePhotoClick = (photo: Photo) => {
-    setSelectedPhoto(photo);
-  };
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.alt.toLowerCase().includes(q) ||
+          p.tags.some((t) => t.toLowerCase().includes(q)) ||
+          p.metadata?.location?.toLowerCase().includes(q) ||
+          p.metadata?.device?.toLowerCase().includes(q)
+      );
+    }
 
-  const handleCloseDetail = () => {
-    setSelectedPhoto(null);
-  };
+    return result;
+  }, [photos, filterMode, searchQuery]);
 
-  const handleStartEdit = () => {
-    setIsEditing(true);
-  };
-
-  const handleCloseEditor = () => {
-    setIsEditing(false);
-  };
+  // Grouping by Date (Day / Month)
+  const groupedPhotos = useMemo(() => {
+    return filteredPhotos.reduce((acc, photo) => {
+      const date = photo.date || 'Date inconnue';
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(photo);
+      return acc;
+    }, {} as Record<string, Photo[]>);
+  }, [filteredPhotos]);
 
   // Selection Handlers
   const toggleSelectionMode = () => {
@@ -57,21 +66,21 @@ const Gallery: React.FC = () => {
   };
 
   const handleTogglePhotoSelection = (id: string) => {
-    setSelectedPhotoIds(prev => 
-      prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
+    setSelectedPhotoIds((prev) =>
+      prev.includes(id) ? prev.filter((pId) => pId !== id) : [...prev, id]
     );
   };
 
   const handleSelectGroup = (datePhotos: Photo[]) => {
-    const dateIds = datePhotos.map(p => p.id);
-    const allInGroupSelected = dateIds.every(id => selectedPhotoIds.includes(id));
+    const dateIds = datePhotos.map((p) => p.id);
+    const allInGroupSelected = dateIds.every((id) => selectedPhotoIds.includes(id));
 
     if (allInGroupSelected) {
-      setSelectedPhotoIds(prev => prev.filter(id => !dateIds.includes(id)));
+      setSelectedPhotoIds((prev) => prev.filter((id) => !dateIds.includes(id)));
     } else {
-      setSelectedPhotoIds(prev => {
+      setSelectedPhotoIds((prev) => {
         const newIds = [...prev];
-        dateIds.forEach(id => {
+        dateIds.forEach((id) => {
           if (!newIds.includes(id)) newIds.push(id);
         });
         return newIds;
@@ -80,16 +89,15 @@ const Gallery: React.FC = () => {
     if (!isSelectionMode) setIsSelectionMode(true);
   };
 
-  const handleDeleteSelected = async () => {
-    if (window.confirm(`Supprimer ${selectedPhotoIds.length} photos ?`)) {
-      await deletePhotos(selectedPhotoIds);
-      setSelectedPhotoIds([]);
-      setIsSelectionMode(false);
-    }
+  const handleDeleteConfirmed = async () => {
+    await deletePhotos(selectedPhotoIds);
+    setSelectedPhotoIds([]);
+    setIsSelectionMode(false);
+    setShowDeleteConfirm(false);
   };
 
   const handleSelectAll = () => {
-    const allIds = filteredPhotos.map(p => p.id);
+    const allIds = filteredPhotos.map((p) => p.id);
     if (selectedPhotoIds.length === allIds.length) {
       setSelectedPhotoIds([]);
     } else {
@@ -97,65 +105,148 @@ const Gallery: React.FC = () => {
     }
   };
 
+  const handleExportSelectedZip = async () => {
+    const selected = photos.filter((p) => selectedPhotoIds.includes(p.id));
+    if (selected.length === 0) return;
+    setIsExportingZip(true);
+    try {
+      await exportPhotosToZip(selected, `selection_${selected.length}_photos.zip`);
+      setIsSelectionMode(false);
+      setSelectedPhotoIds([]);
+    } catch (e) {
+      console.error('Export zip failed:', e);
+    } finally {
+      setIsExportingZip(false);
+    }
+  };
+
+  const handleAddSelectedToAlbum = (albumId: string) => {
+    addPhotosToAlbum(selectedPhotoIds, albumId);
+    setShowAlbumPicker(false);
+    setIsSelectionMode(false);
+    setSelectedPhotoIds([]);
+  };
+
   return (
-    <div className="space-y-section-margin relative min-h-screen pb-32">
-      {/* Search Section */}
-      <div className="px-container-padding">
-        <div className="relative group">
-          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">auto_awesome</span>
-          <input 
-            className="w-full h-12 bg-surface-container-low border-none rounded-2xl pl-12 pr-4 font-body-lg text-body-lg focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-on-surface-variant/60 outline-none" 
-            placeholder="Search your memories with AI..." 
-            type="text" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+    <div className="space-y-section-margin relative min-h-screen pb-32 max-w-6xl mx-auto">
+      {/* Top Search & Filter Bar */}
+      <div className="px-container-padding space-y-3 pt-2">
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-grow">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
+              search
+            </span>
+            <input
+              className="w-full h-12 bg-surface-container-low border border-outline-variant/30 rounded-2xl pl-12 pr-4 font-body-md text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary outline-none transition-all shadow-sm"
+              placeholder="Rechercher par nom, tag, lieu, appareil..."
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            )}
+          </div>
+
+          {/* Diaporama Button */}
+          {filteredPhotos.length > 0 && (
+            <button
+              onClick={() => setIsSlideshowOpen(true)}
+              className="h-12 px-4 rounded-2xl bg-surface-container-high hover:bg-surface-variant text-on-surface font-semibold text-label-md flex items-center gap-2 active:scale-95 transition-all shadow-sm"
+              title="Lancer le diaporama plein écran"
+            >
+              <span className="material-symbols-outlined text-primary text-[22px] material-symbols-fill">
+                slideshow
+              </span>
+              <span className="hidden sm:inline">Diaporama</span>
+            </button>
+          )}
+        </div>
+
+        {/* Filter Chips */}
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+          <button
+            onClick={() => setFilterMode('all')}
+            className={`px-4 py-1.5 rounded-full text-label-sm font-semibold transition-all ${
+              filterMode === 'all'
+                ? 'bg-primary text-on-primary shadow-sm'
+                : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'
+            }`}
+          >
+            Toutes ({photos.length})
+          </button>
+          <button
+            onClick={() => setFilterMode('favorites')}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-label-sm font-semibold transition-all ${
+              filterMode === 'favorites'
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px] material-symbols-fill">star</span>
+            <span>Favoris ({photos.filter((p) => p.isFavorite).length})</span>
+          </button>
+          <button
+            onClick={() => setFilterMode('gps')}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-label-sm font-semibold transition-all ${
+              filterMode === 'gps'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[16px]">location_on</span>
+            <span>Avec GPS ({photos.filter((p) => typeof p.metadata?.latitude === 'number').length})</span>
+          </button>
         </div>
       </div>
 
-      {/* Selection Mode Header (Optional - Can show count) */}
+      {/* Selection Mode Header Banner */}
       {isSelectionMode && (
-        <div className="px-container-padding flex justify-between items-center bg-primary-container/30 py-2 rounded-xl mx-container-padding">
-          <span className="text-label-md font-bold text-primary">{selectedPhotoIds.length} sélectionnés</span>
-          <button onClick={handleSelectAll} className="text-label-md font-bold text-primary">
-            {selectedPhotoIds.length === filteredPhotos.length ? 'Désélectionner tout' : 'Tout sélectionner'}
+        <div className="mx-container-padding p-3 flex justify-between items-center bg-primary-container/40 border border-primary/30 rounded-2xl">
+          <span className="text-label-md font-bold text-primary">
+            {selectedPhotoIds.length} sélectionnée(s) sur {filteredPhotos.length}
+          </span>
+          <button onClick={handleSelectAll} className="text-label-sm font-bold text-primary hover:underline">
+            {selectedPhotoIds.length === filteredPhotos.length ? 'Tout désélectionner' : 'Tout sélectionner'}
           </button>
         </div>
       )}
 
-      {/* Suggested for you (Horizontal Scroll) */}
-      {!searchQuery && !isSelectionMode && (
-        <section className="px-container-padding">
-          <h3 className="text-label-md font-semibold text-on-surface-variant mb-4 uppercase tracking-widest">Suggested for you</h3>
-          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-container-padding px-container-padding">
-            <div className="relative h-48 w-64 flex-shrink-0 rounded-2xl overflow-hidden bg-surface-container-high group active:scale-95 transition-transform duration-300 shadow-sm cursor-pointer">
-              <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0KOUr7j62hFvipGJTu2S4QlEeZX_e3gF4FfSe0znd7Dx9o072DWbEgqDawucSAj7_qTf0YGYl_GoqBfmfc5viRcCMa5yBhtTn8AKpT7EQi3F6oKjZ1gub12mY5CjTNBm5gf3akL7gKJ509BI3ndLC5ODWeboyYHzY8wxdpqWVkm8NlDcstgOMO8ewF2kNnbiRghsjmTBJUHX_PtCfSDcTNrvUH9-ahJED4SsVN3QpIFfzmZFPDgJwUBY0L7s08qQTCqiD4aWxOaM" alt="Mountain Escape" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
-                <p className="text-white text-headline-md font-bold">Mountain Escape</p>
-                <p className="text-white/80 text-label-sm">48 Photos • 2023</p>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Main Grid */}
+      {/* Main Photo Timeline Grid */}
       {Object.entries(groupedPhotos).length > 0 ? (
         Object.entries(groupedPhotos).map(([date, datePhotos], index) => (
-          <section key={date}>
-            <div className="px-container-padding mb-3 flex justify-between items-end">
-              <h2 className="text-headline-md font-bold text-on-surface">{date === new Date().toISOString().split('T')[0] ? 'Today' : date}</h2>
-              <span 
-                onClick={() => isSelectionMode ? toggleSelectionMode() : handleSelectGroup(datePhotos)}
-                className={`text-label-md font-bold cursor-pointer hover:underline transition-colors ${isSelectionMode && datePhotos.every(p => selectedPhotoIds.includes(p.id)) ? 'text-primary' : 'text-primary/70'}`}
+          <section key={date} className="space-y-2">
+            <div className="px-container-padding flex justify-between items-end">
+              <h3 className="text-headline-md font-bold text-on-surface">
+                {date === new Date().toISOString().split('T')[0] ? "Aujourd'hui" : date}
+              </h3>
+              <span
+                onClick={() =>
+                  isSelectionMode ? toggleSelectionMode() : handleSelectGroup(datePhotos)
+                }
+                className={`text-label-sm font-bold cursor-pointer hover:underline transition-colors ${
+                  isSelectionMode && datePhotos.every((p) => selectedPhotoIds.includes(p.id))
+                    ? 'text-primary'
+                    : 'text-primary/70'
+                }`}
               >
-                {isSelectionMode ? (datePhotos.every(p => selectedPhotoIds.includes(p.id)) ? 'Deselect group' : 'Select group') : 'Select'}
+                {isSelectionMode
+                  ? datePhotos.every((p) => selectedPhotoIds.includes(p.id))
+                    ? 'Désélectionner groupe'
+                    : 'Sélectionner groupe'
+                  : 'Sélectionner'}
               </span>
             </div>
-            <PhotoGrid 
-              photos={datePhotos} 
-              onPhotoClick={handlePhotoClick} 
-              featured={!searchQuery && index === 0 && !isSelectionMode} 
+
+            <PhotoGrid
+              photos={datePhotos}
+              onPhotoClick={setSelectedPhoto}
+              featured={!searchQuery && index === 0 && !isSelectionMode && filterMode === 'all'}
               isSelectionMode={isSelectionMode}
               selectedIds={selectedPhotoIds}
               onToggleSelection={handleTogglePhotoSelection}
@@ -163,66 +254,163 @@ const Gallery: React.FC = () => {
           </section>
         ))
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 px-container-padding text-center">
-          <span className="material-symbols-outlined text-6xl text-outline-variant mb-4">search_off</span>
-          <p className="text-headline-md font-bold text-on-surface">No memories found</p>
-          <p className="text-body-md text-on-surface-variant">Try searching for something else</p>
+        <div className="flex flex-col items-center justify-center py-24 px-container-padding text-center">
+          <div className="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center text-on-surface-variant mb-4">
+            <span className="material-symbols-outlined text-4xl">photo_library</span>
+          </div>
+          <p className="text-headline-md font-bold text-on-surface">Aucune photo trouvée</p>
+          <p className="text-body-sm text-on-surface-variant max-w-sm mt-1">
+            {searchQuery
+              ? 'Aucun résultat ne correspond à votre recherche.'
+              : 'Importez des photos depuis votre appareil ou l\'onglet Sauvegarde.'}
+          </p>
         </div>
       )}
 
-      {/* Bulk Action Bar */}
+      {/* Floating Bulk Action Bar */}
       {isSelectionMode && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-surface-container-highest/90 backdrop-blur-xl border border-outline-variant/30 rounded-full h-16 shadow-2xl z-50 flex items-center justify-around px-6 animate-in slide-in-from-bottom-10">
-          <button onClick={toggleSelectionMode} className="flex flex-col items-center gap-0.5 text-on-surface-variant active:scale-90 transition-transform">
-            <span className="material-symbols-outlined">close</span>
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[92%] max-w-lg bg-surface-container-highest/95 backdrop-blur-2xl border border-outline-variant/40 rounded-full h-16 shadow-2xl z-50 flex items-center justify-around px-6 animate-in slide-in-from-bottom-6">
+          <button
+            onClick={toggleSelectionMode}
+            className="flex flex-col items-center gap-0.5 text-on-surface-variant active:scale-90 transition-transform"
+          >
+            <span className="material-symbols-outlined text-[20px]">close</span>
             <span className="text-[10px] font-bold">Annuler</span>
           </button>
-          <div className="w-px h-8 bg-outline-variant" />
-          <button disabled={selectedPhotoIds.length === 0} className="flex flex-col items-center gap-0.5 text-primary disabled:opacity-30 active:scale-90 transition-transform">
-            <span className="material-symbols-outlined">share</span>
-            <span className="text-[10px] font-bold">Partager</span>
+          <div className="w-px h-8 bg-outline-variant/40" />
+
+          <button
+            disabled={selectedPhotoIds.length === 0 || isExportingZip}
+            onClick={handleExportSelectedZip}
+            className="flex flex-col items-center gap-0.5 text-primary disabled:opacity-30 active:scale-90 transition-transform"
+            title="Télécharger la sélection en archive ZIP"
+          >
+            <span className="material-symbols-outlined text-[20px]">folder_zip</span>
+            <span className="text-[10px] font-bold">Export ZIP</span>
           </button>
-          <button disabled={selectedPhotoIds.length === 0} className="flex flex-col items-center gap-0.5 text-primary disabled:opacity-30 active:scale-90 transition-transform">
-            <span className="material-symbols-outlined">create_new_folder</span>
+
+          <button
+            disabled={selectedPhotoIds.length === 0}
+            onClick={() => setShowAlbumPicker(true)}
+            className="flex flex-col items-center gap-0.5 text-primary disabled:opacity-30 active:scale-90 transition-transform"
+          >
+            <span className="material-symbols-outlined text-[20px]">create_new_folder</span>
             <span className="text-[10px] font-bold">Album</span>
           </button>
-          <button 
-            disabled={selectedPhotoIds.length === 0} 
-            onClick={handleDeleteSelected}
+
+          <button
+            disabled={selectedPhotoIds.length === 0}
+            onClick={() => setShowDeleteConfirm(true)}
             className="flex flex-col items-center gap-0.5 text-error disabled:opacity-30 active:scale-90 transition-transform"
           >
-            <span className="material-symbols-outlined">delete</span>
+            <span className="material-symbols-outlined text-[20px]">delete</span>
             <span className="text-[10px] font-bold">Supprimer</span>
           </button>
         </div>
       )}
 
+      {/* Add To Album Picker Modal */}
+      {showAlbumPicker && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-headline-sm font-bold text-on-surface">Ajouter à l'album</h3>
+              <button
+                onClick={() => setShowAlbumPicker(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/50"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {albums.filter((a) => !a.isSmart).length > 0 ? (
+                albums
+                  .filter((a) => !a.isSmart)
+                  .map((a) => (
+                    <button
+                      key={a.id}
+                      onClick={() => handleAddSelectedToAlbum(a.id)}
+                      className="w-full p-3 rounded-xl bg-surface-container-low hover:bg-primary-container/20 border border-outline-variant/20 flex items-center justify-between text-left transition-colors"
+                    >
+                      <span className="text-label-md font-bold text-on-surface">{a.title}</span>
+                      <span className="material-symbols-outlined text-primary text-[18px]">add</span>
+                    </button>
+                  ))
+              ) : (
+                <p className="text-body-sm text-on-surface-variant text-center py-4">
+                  Aucun album manuel disponible.
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                const title = `Album du ${new Date().toLocaleDateString()}`;
+                const newAlbum = createAlbum(title);
+                handleAddSelectedToAlbum(newAlbum.id);
+              }}
+              className="w-full py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
+            >
+              + Créer un nouvel album avec la sélection
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirm Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-error/10 text-error flex items-center justify-center">
+              <span className="material-symbols-outlined text-[28px]">delete_sweep</span>
+            </div>
+            <div>
+              <h3 className="text-headline-sm font-bold text-on-surface">
+                Supprimer {selectedPhotoIds.length} photo(s) ?
+              </h3>
+              <p className="text-body-sm text-on-surface-variant mt-1">
+                Ces photos seront définitivement retirées de votre photothèque locale.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-5 py-2.5 rounded-xl border border-outline-variant/40 text-on-surface font-semibold text-label-md"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteConfirmed}
+                className="px-6 py-2.5 rounded-xl bg-error text-white font-bold text-label-md active:scale-95"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Detail & Edit Modals */}
       {selectedPhoto && !isSelectionMode && (
-        <DetailView 
-          photo={selectedPhoto} 
-          onClose={handleCloseDetail} 
-          onEdit={handleStartEdit} 
+        <DetailView
+          photo={selectedPhoto}
+          onClose={() => setSelectedPhoto(null)}
+          onEdit={() => setIsEditing(true)}
           onToggleFavorite={() => toggleFavorite(selectedPhoto.id)}
         />
       )}
-      
+
       {isEditing && selectedPhoto && (
-        <Editor 
-          photo={selectedPhoto} 
-          onClose={handleCloseEditor} 
-        />
+        <Editor photo={selectedPhoto} onClose={() => setIsEditing(false)} />
       )}
 
-      {/* Floating Action Button */}
-      {!isSelectionMode && (
-        <button className="fixed bottom-24 right-4 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-all duration-200 z-40 group">
-          <span className="material-symbols-outlined text-2xl group-hover:rotate-90 transition-transform duration-300">add</span>
-        </button>
-      )}
+      {/* Fullscreen Slideshow Modal */}
+      <SlideshowModal
+        photos={filteredPhotos}
+        isOpen={isSlideshowOpen}
+        onClose={() => setIsSlideshowOpen(false)}
+      />
     </div>
   );
 };
-
 
 export default Gallery;

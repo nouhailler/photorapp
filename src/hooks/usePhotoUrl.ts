@@ -1,22 +1,30 @@
 import { useState, useEffect } from 'react';
-import { usePhotos } from '../context/PhotoContext';
+import { usePhotos } from '../context/usePhotos';
 import type { Photo } from '../types/types';
 
-export const usePhotoUrl = (photo: Photo) => {
+export const usePhotoUrl = (photo: Photo): string => {
   const { getPhotoUrl } = usePhotos();
-  const [url, setUrl] = useState<string>(photo.storage === 'remote' ? photo.url : '');
+  const [localUrl, setLocalUrl] = useState<string>('');
 
   useEffect(() => {
     let isMounted = true;
+
     if (photo.storage === 'local') {
-      getPhotoUrl(photo).then(newUrl => {
-        if (isMounted) setUrl(newUrl);
+      getPhotoUrl(photo).then((newUrl) => {
+        if (isMounted) {
+          setLocalUrl(newUrl);
+        }
       });
-    } else {
-      setUrl(photo.url);
     }
-    return () => { isMounted = false; };
+
+    return () => {
+      isMounted = false;
+    };
   }, [photo, getPhotoUrl]);
 
-  return url;
+  if (photo.storage === 'remote' || !photo.storage) {
+    return photo.url;
+  }
+
+  return localUrl || photo.url;
 };

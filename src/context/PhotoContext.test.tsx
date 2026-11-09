@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { PhotoProvider, usePhotos } from './PhotoContext';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { PhotoProvider } from './PhotoContext';
+import { usePhotos } from './usePhotos';
 import React from 'react';
 
 // Mock the DB utilities
@@ -8,6 +9,13 @@ vi.mock('../utils/db', () => ({
   getPhotoBlob: vi.fn(),
   savePhotoBlob: vi.fn(),
   deletePhotoBlob: vi.fn(),
+  savePhotoMeta: vi.fn().mockResolvedValue(undefined),
+  deletePhotoMeta: vi.fn().mockResolvedValue(undefined),
+  saveAlbumMeta: vi.fn().mockResolvedValue(undefined),
+  deleteAlbumMeta: vi.fn().mockResolvedValue(undefined),
+  migrateFromLocalStorage: vi.fn().mockImplementation((fallbackPhotos, fallbackAlbums) =>
+    Promise.resolve({ photos: fallbackPhotos, albums: fallbackAlbums })
+  ),
   openDB: vi.fn(),
 }));
 
@@ -16,9 +24,15 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => { store[key] = value.toString(); },
-    clear: () => { store = {}; },
-    removeItem: (key: string) => { delete store[key]; }
+    setItem: (key: string, value: string) => {
+      store[key] = value.toString();
+    },
+    clear: () => {
+      store = {};
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
   };
 })();
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
@@ -27,19 +41,25 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
   <PhotoProvider>{children}</PhotoProvider>
 );
 
+const renderPhotoHook = async () => {
+  const rendered = renderHook(() => usePhotos(), { wrapper });
+  await waitFor(() => expect(rendered.result.current.isLoading).toBe(false));
+  return rendered;
+};
+
 describe('PhotoContext', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
   });
 
-  it('should initialize with photos', () => {
-    const { result } = renderHook(() => usePhotos(), { wrapper });
+  it('should initialize with photos', async () => {
+    const { result } = await renderPhotoHook();
     expect(result.current.photos.length).toBeGreaterThan(0);
   });
 
-  it('should toggle favorite status', () => {
-    const { result } = renderHook(() => usePhotos(), { wrapper });
+  it('should toggle favorite status', async () => {
+    const { result } = await renderPhotoHook();
     const firstPhotoId = result.current.photos[0].id;
     const initialFavorite = result.current.photos[0].isFavorite;
 
@@ -51,9 +71,9 @@ describe('PhotoContext', () => {
   });
 
   it('should add a new photo', async () => {
-    const { result } = renderHook(() => usePhotos(), { wrapper });
+    const { result } = await renderPhotoHook();
     const initialCount = result.current.photos.length;
-    
+
     const newPhoto = {
       id: 'test-photo-1',
       url: 'test-url',
@@ -63,7 +83,7 @@ describe('PhotoContext', () => {
       albumIds: [],
       tags: [],
       storage: 'remote' as const,
-      metadata: { device: 'Test', resolution: '1x1', date: 'now' }
+      metadata: { device: 'Test', resolution: '1x1', date: 'now' },
     };
 
     await act(async () => {
@@ -75,7 +95,7 @@ describe('PhotoContext', () => {
   });
 
   it('should delete a photo', async () => {
-    const { result } = renderHook(() => usePhotos(), { wrapper });
+    const { result } = await renderPhotoHook();
     const firstPhotoId = result.current.photos[0].id;
     const initialCount = result.current.photos.length;
 
@@ -84,11 +104,11 @@ describe('PhotoContext', () => {
     });
 
     expect(result.current.photos.length).toBe(initialCount - 1);
-    expect(result.current.photos.find(p => p.id === firstPhotoId)).toBeUndefined();
+    expect(result.current.photos.find((p) => p.id === firstPhotoId)).toBeUndefined();
   });
 
   it('should delete multiple photos', async () => {
-    const { result } = renderHook(() => usePhotos(), { wrapper });
+    const { result } = await renderPhotoHook();
     const idsToDelete = [result.current.photos[0].id, result.current.photos[1].id];
     const initialCount = result.current.photos.length;
 
@@ -97,11 +117,11 @@ describe('PhotoContext', () => {
     });
 
     expect(result.current.photos.length).toBe(initialCount - 2);
-    expect(result.current.photos.find(p => idsToDelete.includes(p.id))).toBeUndefined();
+    expect(result.current.photos.find((p) => idsToDelete.includes(p.id))).toBeUndefined();
   });
 
-  it('should create an album', () => {
-    const { result } = renderHook(() => usePhotos(), { wrapper });
+  it('should create an album', async () => {
+    const { result } = await renderPhotoHook();
     const initialAlbumCount = result.current.albums.length;
 
     act(() => {
@@ -110,5 +130,51 @@ describe('PhotoContext', () => {
 
     expect(result.current.albums.length).toBe(initialAlbumCount + 1);
     expect(result.current.albums[0].title).toBe('New Test Album');
+  });
+
+  it('should remove a photo from an album without deleting the photo from library', async () => {
+    const { result } = await renderPhotoHook();
+    const photoId = result.current.photos[0].id;
+    const albumId = result.current.albums[0].id;
+
+    // Add photo to album
+    act(() => {
+      result.current.addPhotosToAlbum([photoId], albumId);
+    });
+
+    const photoInAlbum = result.current.photos.find((p) => p.id === photoId);
+    expect(photoInAlbum?.albumIds).toContain(albumId);
+
+    // Remove from album
+    act(() => {
+      result.current.removePhotoFromAlbum(photoId, albumId);
+    });
+
+    const photoAfterRemoval = result.current.photos.find((p) => p.id === photoId);
+    expect(photoAfterRemoval).toBeDefined(); // Photo still in library!
+    expect(photoAfterRemoval?.albumIds).not.toContain(albumId);
+  });
+
+  it('should reset photo adjustments', async () => {
+    const { result } = await renderPhotoHook();
+    const photoId = result.current.photos[0].id;
+
+    act(() => {
+      result.current.updateAdjustments(photoId, {
+        brightness: 45,
+        contrast: 30,
+        saturation: 20,
+        rotation: 90,
+      });
+    });
+
+    expect(result.current.photos.find((p) => p.id === photoId)?.adjustments?.brightness).toBe(45);
+
+    act(() => {
+      result.current.resetAdjustments(photoId);
+    });
+
+    expect(result.current.photos.find((p) => p.id === photoId)?.adjustments?.brightness).toBe(0);
+    expect(result.current.photos.find((p) => p.id === photoId)?.adjustments?.rotation).toBe(0);
   });
 });
