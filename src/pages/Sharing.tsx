@@ -12,6 +12,7 @@ import {
 import type { BackupResult, RestoreResult, ZipExportResult } from '../services/exportService';
 import { diagnoseStorage, cleanupOrphanedBlobs } from '../utils/db';
 import type { StorageDiagnostic } from '../types/types';
+import { HelpTooltip } from '../components/HelpTooltip';
 
 const Sharing: React.FC = () => {
   const { photos, albums, addPhotos } = usePhotos();
@@ -190,7 +191,10 @@ const Sharing: React.FC = () => {
 
       {/* Header */}
       <section className="pt-2">
-        <h2 className="text-headline-lg font-bold text-on-surface">Sauvegarde & Exportation</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-headline-lg font-bold text-on-surface">Sauvegarde & Exportation</h2>
+          <HelpTooltip text="Gallery Pro fonctionne 100% en local dans votre navigateur. Utilisez cette page pour exporter des sauvegardes sécurisées sur votre disque dur ou restaurer vos albums." />
+        </div>
         <p className="text-body-sm text-on-surface-variant mt-1">
           Centre de gestion des transferts, sauvegardes intégrales et santé de votre stockage local.
         </p>
@@ -214,9 +218,12 @@ const Sharing: React.FC = () => {
 
       {/* Import Section */}
       <section className="space-y-4">
-        <h3 className="text-label-md font-bold text-primary uppercase tracking-wider">
-          Importer des photos
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-label-md font-bold text-primary uppercase tracking-wider">
+            Importer des photos
+          </h3>
+          <HelpTooltip text="Sélectionnez des fichiers photo depuis votre ordinateur ou smartphone. Vos photos restent sur votre appareil et ne sont jamais transmises à des tiers." />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -252,9 +259,12 @@ const Sharing: React.FC = () => {
 
       {/* Export Section */}
       <section className="space-y-4">
-        <h3 className="text-label-md font-bold text-primary uppercase tracking-wider">
-          Sauvegarde & Archives
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-label-md font-bold text-primary uppercase tracking-wider">
+            Sauvegarde & Archives
+          </h3>
+          <HelpTooltip text="Sauvegardez l'ensemble de votre bibliothèque dans un fichier zip sécurisé avec un manifeste certifié SHA-256." />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Backup Full Library */}
           <div

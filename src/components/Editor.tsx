@@ -3,6 +3,7 @@ import { usePhotos } from '../context/usePhotos';
 import type { Photo, PhotoAdjustments } from '../types/types';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { exportSinglePhoto } from '../services/exportService';
+import { HelpTooltip } from './HelpTooltip';
 
 interface EditorProps {
   photo: Photo;
@@ -217,17 +218,20 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
 
         <div className="flex items-center gap-2">
           {/* Compare Button */}
-          <button
-            onMouseDown={() => setIsComparing(true)}
-            onMouseUp={() => setIsComparing(false)}
-            onTouchStart={() => setIsComparing(true)}
-            onTouchEnd={() => setIsComparing(false)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-label-sm font-semibold active:scale-95 select-none"
-            title="Maintenez pour voir l'original"
-          >
-            <span className="material-symbols-outlined text-[16px]">compare</span>
-            <span>{isComparing ? 'Original' : 'Comparer'}</span>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onMouseDown={() => setIsComparing(true)}
+              onMouseUp={() => setIsComparing(false)}
+              onTouchStart={() => setIsComparing(true)}
+              onTouchEnd={() => setIsComparing(false)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-label-sm font-semibold active:scale-95 select-none"
+              title="Maintenez pour voir l'original"
+            >
+              <span className="material-symbols-outlined text-[16px]">compare</span>
+              <span>{isComparing ? 'Original' : 'Comparer'}</span>
+            </button>
+            <HelpTooltip text="Maintenez ce bouton enfoncé pour afficher la photo brute originale sans aucun filtre ni retouche." />
+          </div>
 
           {/* Reset Button */}
           <button
@@ -323,42 +327,49 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
       <div className="bg-surface/95 backdrop-blur-2xl border-t border-outline-variant/30 flex flex-col max-h-[45%] overflow-y-auto">
         {/* Quick Tools Header */}
         <div className="flex justify-around items-center py-3 border-b border-outline-variant/10 shrink-0">
-          <button
-            onClick={handleAutoAdjust}
-            className="flex flex-col items-center gap-1 group active:scale-95 transition-transform"
-            title="Optimisation automatique des couleurs et de la lumière"
-          >
-            <span className="material-symbols-outlined text-primary material-symbols-fill">auto_fix_high</span>
-            <span className="text-[10px] font-bold text-on-surface">Auto-Ajustement</span>
-          </button>
-          <button
-            onClick={handleRotate}
-            className="flex flex-col items-center gap-1 group active:scale-95 transition-transform"
-          >
-            <span className="material-symbols-outlined text-primary">rotate_right</span>
-            <span className="text-[10px] font-bold text-on-surface">Pivoter (+90°)</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleAutoAdjust}
+              className="flex flex-col items-center gap-1 group active:scale-95 transition-transform"
+              title="Optimisation automatique des couleurs et de la lumière"
+            >
+              <span className="material-symbols-outlined text-primary material-symbols-fill">auto_fix_high</span>
+              <span className="text-[10px] font-bold text-on-surface">Auto-Ajustement</span>
+            </button>
+            <HelpTooltip text="Applique un équilibrage automatique doux du contraste, de l'exposition et de la saturation pour embellir instantanément la photo." />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleRotate}
+              className="flex flex-col items-center gap-1 group active:scale-95 transition-transform"
+            >
+              <span className="material-symbols-outlined text-primary">rotate_right</span>
+              <span className="text-[10px] font-bold text-on-surface">Pivoter (+90°)</span>
+            </button>
+            <HelpTooltip text="Fait tourner la photo d'un quart de tour dans le sens horaire." />
+          </div>
         </div>
 
         {/* Tab 1: Adjustments Sliders */}
         {activeTab === 'adjust' && (
           <div className="p-6 space-y-5 max-w-md mx-auto w-full">
             {[
-              { label: 'Brightness', key: 'brightness', icon: 'brightness_6', min: -100, max: 100 },
-              { label: 'Contrast', key: 'contrast', icon: 'contrast', min: -100, max: 100 },
-              { label: 'Saturation', key: 'saturation', icon: 'palette', min: -100, max: 100 },
-              { label: 'Exposition', key: 'exposure', icon: 'wb_sunny', min: -100, max: 100 },
-              { label: 'Température', key: 'temperature', icon: 'thermostat', min: -100, max: 100 },
-              { label: 'Teinte', key: 'tint', icon: 'color_lens', min: -100, max: 100 },
-              { label: 'Hautes Lumières', key: 'highlights', icon: 'light_mode', min: -100, max: 100 },
-              { label: 'Ombres', key: 'shadows', icon: 'dark_mode', min: -100, max: 100 },
-              { label: 'Vignettage', key: 'vignette', icon: 'vignette', min: 0, max: 100 },
+              { label: 'Luminosité', key: 'brightness', icon: 'brightness_6', min: -100, max: 100, desc: "Ajuste la clarté générale de l'image." },
+              { label: 'Contraste', key: 'contrast', icon: 'contrast', min: -100, max: 100, desc: 'Renforce ou adoucit la différence entre zones claires et sombres.' },
+              { label: 'Saturation', key: 'saturation', icon: 'palette', min: -100, max: 100, desc: "Rend les couleurs plus vives ou plus sobres (jusqu'au noir et blanc)." },
+              { label: 'Exposition', key: 'exposure', icon: 'wb_sunny', min: -100, max: 100, desc: 'Simule un apport lumineux plus ou moins intense du capteur.' },
+              { label: 'Température', key: 'temperature', icon: 'thermostat', min: -100, max: 100, desc: 'Réchauffe (tons ambrés) ou refroidit (tons bleutés) la tonalité.' },
+              { label: 'Teinte', key: 'tint', icon: 'color_lens', min: -100, max: 100, desc: 'Bascule la balance des teintes entre nuances vertes et magenta.' },
+              { label: 'Hautes Lumières', key: 'highlights', icon: 'light_mode', min: -100, max: 100, desc: 'Recouvre des détails dans le ciel ou les zones très claires.' },
+              { label: 'Ombres', key: 'shadows', icon: 'dark_mode', min: -100, max: 100, desc: 'Éclaircit les sous-bois ou zones ombragées pour révéler les détails.' },
+              { label: 'Vignettage', key: 'vignette', icon: 'vignette', min: 0, max: 100, desc: 'Crée un halo sombre subtil sur le pourtour pour concentrer l’œil.' },
             ].map((item) => (
               <div key={item.key} className="space-y-1.5">
                 <div className="flex justify-between items-center text-on-surface">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px] text-primary">{item.icon}</span>
                     <span className="text-label-md font-semibold">{item.label}</span>
+                    <HelpTooltip text={item.desc} />
                   </div>
                   <span className="text-label-md font-bold text-primary">
                     {(adjustments[item.key as keyof PhotoAdjustments] as number) || 0}

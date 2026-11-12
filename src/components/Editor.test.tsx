@@ -62,13 +62,13 @@ describe('Editor Component', () => {
 
     expect(screen.getByAltText('Test Photo')).toBeInTheDocument();
     expect(screen.getByText('Enregistrer')).toBeInTheDocument();
-    expect(screen.getByText('Brightness')).toBeInTheDocument();
+    expect(screen.getAllByText(/Luminosité|Brightness/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it('updates brightness slider', () => {
     render(<Editor photo={mockPhoto} onClose={mockOnClose} />);
 
-    const slider = screen.getByLabelText(/Brightness/i);
+    const slider = screen.getByLabelText(/Luminosité|Brightness/i);
     fireEvent.change(slider, { target: { value: '50' } });
 
     expect(screen.getByText('50')).toBeInTheDocument();

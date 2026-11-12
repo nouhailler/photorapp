@@ -5,6 +5,7 @@ import DetailView from '../components/DetailView';
 import Editor from '../components/Editor';
 import { filterPhotos, extractAvailableFilters } from '../services/searchEngine';
 import type { SearchFilters } from '../services/searchEngine';
+import { HelpTooltip } from '../components/HelpTooltip';
 import type { Photo } from '../types/types';
 
 const Search: React.FC = () => {
@@ -103,7 +104,13 @@ const Search: React.FC = () => {
     <div className="px-container-padding space-y-section-margin max-w-6xl mx-auto pb-28">
       {/* Header */}
       <section className="pt-2">
-        <h2 className="text-headline-lg font-bold text-on-surface">Recherche Avancée & Filtres</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-headline-lg font-bold text-on-surface">Recherche Avancée & Filtres</h2>
+          <HelpTooltip
+            title="Recherche & Filtres"
+            text="Filtrez instantanément vos clichés par mot-clé, tags, statut favori, coordonnées GPS, mois et qualité d'image sans appel réseau."
+          />
+        </div>
         <p className="text-body-sm text-on-surface-variant mt-1">
           Explorez votre photothèque locale avec des filtres combinables précis et instantanés.
         </p>
@@ -121,6 +128,11 @@ const Search: React.FC = () => {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+          />
+          <HelpTooltip
+            className="mr-2"
+            title="Mots-clés acceptés"
+            text="Recherchez un titre, un nom d'appareil (ex: Sony, iPhone), un nom de ville ou un tag associé."
           />
           {query && (
             <button

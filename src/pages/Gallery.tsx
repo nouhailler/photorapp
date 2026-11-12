@@ -5,6 +5,7 @@ import Editor from '../components/Editor';
 import { usePhotos } from '../context/usePhotos';
 import { exportPhotosToZip } from '../services/exportService';
 import { SlideshowModal } from '../components/SlideshowModal';
+import { HelpTooltip } from '../components/HelpTooltip';
 import type { Photo } from '../types/types';
 
 const Gallery: React.FC = () => {
@@ -155,21 +156,31 @@ const Gallery: React.FC = () => {
 
           {/* Diaporama Button */}
           {filteredPhotos.length > 0 && (
-            <button
-              onClick={() => setIsSlideshowOpen(true)}
-              className="h-12 px-4 rounded-2xl bg-surface-container-high hover:bg-surface-variant text-on-surface font-semibold text-label-md flex items-center gap-2 active:scale-95 transition-all shadow-sm"
-              title="Lancer le diaporama plein écran"
-            >
-              <span className="material-symbols-outlined text-primary text-[22px] material-symbols-fill">
-                slideshow
-              </span>
-              <span className="hidden sm:inline">Diaporama</span>
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsSlideshowOpen(true)}
+                className="h-12 px-4 rounded-2xl bg-surface-container-high hover:bg-surface-variant text-on-surface font-semibold text-label-md flex items-center gap-2 active:scale-95 transition-all shadow-sm"
+                title="Lancer le diaporama plein écran"
+              >
+                <span className="material-symbols-outlined text-primary text-[22px] material-symbols-fill">
+                  slideshow
+                </span>
+                <span className="hidden sm:inline">Diaporama</span>
+              </button>
+              <HelpTooltip
+                title="Diaporama plein écran"
+                text="Lance la lecture automatisée de vos photos avec réglage de vitesse et lecture aléatoire."
+              />
+            </div>
           )}
         </div>
 
         {/* Filter Chips */}
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
+          <HelpTooltip
+            title="Filtres rapides"
+            text="Filtrez en un clic pour afficher toutes les photos, uniquement les clichés favoris ou ceux munis de coordonnées GPS."
+          />
           <button
             onClick={() => setFilterMode('all')}
             className={`px-4 py-1.5 rounded-full text-label-sm font-semibold transition-all ${

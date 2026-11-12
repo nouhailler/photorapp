@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePhotos } from '../context/usePhotos';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { getSmartAlbumPhotos, isCriteriaValid } from '../services/smartAlbumService';
+import { HelpTooltip } from '../components/HelpTooltip';
 import type { Album, Photo, SmartAlbumCriteria } from '../types/types';
 
 interface AlbumCardProps {
@@ -252,18 +253,30 @@ const Albums: React.FC = () => {
       {/* Header and Controls */}
       <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-headline-lg font-bold text-on-surface">Collections & Albums</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-headline-lg font-bold text-on-surface">Collections & Albums</h2>
+            <HelpTooltip
+              title="Collections & Albums"
+              text="Organisez vos clichés dans des albums manuels ou intelligents. Les albums intelligents se mettent à jour automatiquement sans dupliquer vos fichiers."
+            />
+          </div>
           <p className="text-body-sm text-on-surface-variant">
             {albums.length} albums organisés · Classement intelligent et manuel
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-2xl font-bold text-label-md shadow-md active:scale-95 transition-transform"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          <span>Nouvel album</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={openCreateModal}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-2xl font-bold text-label-md shadow-md active:scale-95 transition-transform"
+          >
+            <span className="material-symbols-outlined text-[20px]">add</span>
+            <span>Nouvel album</span>
+          </button>
+          <HelpTooltip
+            title="Créer un album"
+            text="Créez un album standard pour y ajouter des photos manuellement, ou un album intelligent filtré par année, lieu, favoris, etc."
+          />
+        </div>
       </section>
 
       {/* Search and Sort Toolbar */}
@@ -282,7 +295,10 @@ const Albums: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 self-end sm:self-auto text-label-sm font-medium text-on-surface-variant">
-          <span>Trier par :</span>
+          <div className="flex items-center gap-1">
+            <span>Trier par :</span>
+            <HelpTooltip text="Triez vos albums par date de création, nombre de photos ou ordre alphabétique." />
+          </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'title' | 'count' | 'recent')}

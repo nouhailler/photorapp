@@ -1,40 +1,72 @@
-# Project Context: Gallery Pro
+# Project Context: Gallery Pro (v2.4.0)
 
-This document provides essential information for continuing development on the Gallery Pro application.
+Ce document récapitule l'état architectural, les services opérationnels, les conventions de données et les flux d'exécution de l'application **Gallery Pro**.
 
-## 🏗 Current Architecture
+---
 
-- **State Management:** Centralized `PhotoContext` in `src/context/PhotoContext.tsx`. It handles the photo library state, favorites, and adjustment metadata.
-- **Persistence:** All data is currently persisted in `LocalStorage` under the key `gallery_pro_photos`. This mimics a backend for a static deployment.
-- **Data Model:** Defined in `src/types/types.ts`. Photos have nested metadata (EXIF) and adjustment objects.
-- **Routing:** Handled by `React Router` in `src/App.tsx`. All main views (Gallery, Albums, IA, Search, Sharing) are modularized in `src/pages`.
+## 🏗️ Architecture Globale & Philosophie
 
-## 🎨 Design System Implementation
+Gallery Pro est une application **Local-First** conçue avec React 19, TypeScript et Vite.
+Toutes les données photographiques, albums, tags, coordonnées GPS et ajustements sont stockés localement sur le poste ou l'appareil de l'utilisateur via **IndexedDB** (`GalleryProDB`).
 
-- **Tailwind Config:** The `tailwind.config.js` file contains the custom color palette (Indigo-based) and spacing tokens from the "Gallery Pro" design spec.
-- **Glassmorphism:** Standardized via the `.glass` utility class in `src/index.css`.
-- **Icons:** Uses Google's `Material Symbols Outlined`. Note the use of `.material-symbols-fill` for active states.
+### 1. Persistance & Données (`src/utils/db.ts`)
+- **Base IndexedDB :** Nommée `GalleryProDB` (v2).
+- **Stores principaux :**
+  - `photos` : Métadonnées complètes, scoring, tags, ajustements, chemins d'accès ou clés de blobs.
+  - `blobs` : Blobs binaires des fichiers photo originaux importés.
+  - `albums` : Définitions des collections (manuelles ou dynamiques avec règles).
+  - `metadata` : Préférences globales, historique de migration et statut d'intégrité.
+- **Migration LocalStorage sécurisée :** Fonction `migrateFromLocalStorage()` idempotente, vérifiant les identifiants déjà présents, ne supprimant jamais les données d'origine avant validation et générant un rapport de migration exhaustif.
+- **Diagnostic & Nettoyage :** Fonction `diagnoseStorage()` estimant la taille occupée et identifiant les blobs orphelins, avec fonction de nettoyage `cleanupOrphanedBlobs()`.
 
-## 📍 Where we are (v0.1.0)
+---
 
-1.  **UI/UX:** All major screens from the design phase have been converted to functional React components.
-2.  **Functionality:**
-    *   Chronological photo grouping is implemented.
-    *   Detail view and non-destructive editor are functional.
-    *   Favorites toggle works and persists.
-    *   AI Intelligence pages are implemented as high-fidelity UI mocks ready for integration.
-3.  **Backend:** Currently "Mocked". Integration with a real backend (e.g., Supabase or Cloudinary) would be the next major step.
+## 📦 Services Métier Opérationnels
 
-## 🚀 Next Steps
+- **`src/services/importService.ts` :**
+  - Traitement par lot avec extraction des métadonnées EXIF (date, dimensions, appareil, focale, ISO, exposition) et coordonnées GPS décimales.
+  - Détection automatique des doublons dès l'importation.
+  - Support des formats JPEG, PNG, WEBP, AVIF et HEIC.
+- **`src/services/exportService.ts` :**
+  - Sauvegarde intégrale `createFullLibraryBackup()` : Archive ZIP incluant un manifeste versionné v2, empreintes d'intégrité SHA-256, albums et fichiers originaux.
+  - Restauration certifiée `restoreFullLibraryBackup()` : Extraction, contrôle d'intégrité SHA-256 et réinjection transactionnelle dans IndexedDB.
+  - Export unitaire ou global au format ZIP avec recadrage et filtres non destructifs appliqués via Canvas.
+- **`src/services/duplicateService.ts` :**
+  - Détection de doublons stricts (taille, résolution, nom, hash) et de quasi-doublons / prises de vue en rafale (proximité temporelle et similitude visuelle).
+- **`src/services/qualityService.ts` :**
+  - Scoring automatique de netteté, résolution, balance des lumières et qualité globale (0 à 100%).
+- **`src/services/searchEngine.ts` :**
+  - Moteur de recherche multicritère : texte intégral, favoris, période chronologique, localisation géographique, tags multiples, score de qualité minimal et appareil photo.
+- **`src/services/smartAlbumService.ts` :**
+  - Évaluation de critères dynamiques pour l'auto-remplissage des albums (ex: "Mes meilleures photos", "Photos de vacances 2026", "Photos géolocalisées").
+- **`src/services/updateService.ts` :**
+  - Gestion de version (`v2.4.0`), date de sortie (`10 Novembre 2026`), vérification manuelle via Service Worker & en-têtes réseau, mise à jour forcée (purge du CacheStorage sans impacter IndexedDB) et routine périodique de mise à jour automatique en arrière-plan.
 
-- **Backend Integration:** Replace LocalStorage with a persistent database.
-- **Image Uploads:** Implement real file uploads in `src/pages/Sharing.tsx`.
-- **AI Logic:** Integrate real AI services for face detection and object recognition.
-- **Performance:** Add image virtualization (e.g., `react-window`) for extremely large libraries.
-- **PWA:** Add a service worker for offline viewing and "Add to Home Screen" support.
+---
 
-## 🛠 Useful Commands
+## 🎨 Interface Utilisateur, Menu Hamburger & Onboarding
 
-- `npm run dev`: Start development server.
-- `npm run build`: Production build (verifies types and vite build).
-- `npm run lint`: ESLint check.
+- **`src/components/HamburgerMenu.tsx` :**
+  Tiroir latéral classé en 4 catégories :
+  1. *Photothèque & Souvenirs* (Galerie, Albums, Recherche Avancée)
+  2. *Outils Intelligents & Qualité* (Intelligence IA, Doublons & Similitudes, Carte GPS)
+  3. *Gestion des Données* (Sauvegardes & Restauration, Importer des photos, Santé du stockage)
+  4. *Système & Préférences* (Paramètres Système, Guide Novice, Mentions Légales)
+- **`src/context/HelpContext.tsx` & `src/components/HelpTooltip.tsx` :**
+  - Contexte global gérant le mode novice `isHelpModeActive` (activé par défaut) et le statut d'acceptation des mentions légales.
+  - Infobulles contextuelles animées (badges `?` interactifs) sur les champs, sliders de retouche et boutons clés.
+- **`src/components/OnboardingModal.tsx` :**
+  - Modale d'accueil guidant le premier usage et soumettant la clause contractuelle de décharge de responsabilité légale relative aux données utilisateur.
+- **`src/pages/SystemSettings.tsx` (`/settings`) :**
+  - Écran complet des paramètres système : version, date de sortie, horodatage de dernière vérification, bouton « Vérifier les mises à jour », bouton « Forcer la mise à jour », et interrupteur du vérificateur en arrière-plan.
+- **`src/hooks/usePWAInstall.ts` & `src/components/PWAInstallButton.tsx` :**
+  - Gestion native de l'événement `beforeinstallprompt`, détection du mode autonome (standalone) et guide pas-à-pas pour les utilisateurs iOS Safari.
+
+---
+
+## ⚖️ Mentions Légales & Responsabilité des Données
+
+L'application stipule formellement que :
+1. Les données photographiques et métadonnées sont traitées et conservées exclusivement sur l'équipement terminal de l'utilisateur.
+2. L'auteur et l'éditeur de l'application déclinent toute responsabilité en cas de perte de données, de défaillance matérielle ou logicielle du navigateur, ou d'incompatibilité de fichiers.
+3. L'acceptation de ces conditions est recueillie lors du premier lancement et consignée de manière permanente.

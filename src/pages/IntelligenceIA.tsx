@@ -5,6 +5,7 @@ import type { DuplicateGroup } from '../services/duplicateService';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { fetchFreeModels } from '../utils/openrouter';
 import type { AIModel } from '../utils/openrouter';
+import { HelpTooltip } from '../components/HelpTooltip';
 import type { Photo } from '../types/types';
 
 // Lazy load MapComponent to avoid SSR/window issues
@@ -94,6 +95,10 @@ const IntelligenceIA: React.FC = () => {
               <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container text-[11px] font-bold uppercase tracking-wider">
                 100% Local
               </span>
+              <HelpTooltip
+                title="Intelligence & Vision par Ordinateur"
+                text="Les analyses de flou, d'exposition et de similarité s'exécutent entièrement sur votre appareil sans envoyer vos photos sur aucun serveur."
+              />
             </div>
             <p className="text-body-sm text-on-surface-variant mt-1">
               Analyses scientifiques exécutées localement dans votre navigateur : détection de flou, doublons et exposition.
