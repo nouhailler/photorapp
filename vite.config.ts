@@ -13,7 +13,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icon.svg', 'icons.svg'],
+      includeAssets: ['favicon.svg', 'icon.svg', 'icons.svg', 'app_preview.svg'],
       manifest: {
         name: 'Gallery Pro',
         short_name: 'GalleryPro',

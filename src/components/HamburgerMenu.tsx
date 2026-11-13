@@ -41,7 +41,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       items: [
         {
           label: 'Galerie Principale',
-          path: '/',
+          path: '/gallery',
           icon: 'grid_view',
           description: 'Mur chronologique de tous vos clichés',
         },
@@ -148,6 +148,12 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           icon: 'gavel',
           description: 'Décharge de responsabilité sur les données',
         },
+        {
+          label: 'Page de présentation publique',
+          path: '/',
+          icon: 'public',
+          description: 'Revenir à la vitrine produit Gallery Pro',
+        },
       ],
     },
   ];
@@ -208,6 +214,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
                       <NavLink
                         key={itemIdx}
                         to={item.path}
+                        end={item.path === '/'}
                         onClick={onClose}
                         className={({ isActive }) =>
                           `flex items-start gap-3 p-2.5 rounded-2xl transition-all ${

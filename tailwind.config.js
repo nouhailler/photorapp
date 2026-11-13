@@ -71,6 +71,9 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
+        landing: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['Fraunces', 'Georgia', 'serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
     },
   },

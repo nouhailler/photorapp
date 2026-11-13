@@ -1,15 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gallery Pro - Your Visual Legacy</title>
-    <meta name="description" content="Photothèque intelligente, locale, privée et complète avec gestion EXIF, albums intelligents, détection de flou et doublons, et sauvegardes intégrales." />
-    <meta property="og:title" content="Gallery Pro - Your Visual Legacy" />
-    <meta property="og:description" content="Photothèque intelligente, locale, privée et complète avec gestion EXIF, albums intelligents, détection de flou et doublons, et sauvegardes intégrales." />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <title>Gallery Pro — Votre photothèque personnelle, privée et intelligente</title>
+    <meta
+      name="description"
+      content="Organisez, retrouvez, retouchez et sauvegardez vos photographies en local dans votre navigateur avec Gallery Pro, sans compte obligatoire ni cloud imposé."
+    />
+    <link rel="canonical" href="https://photorapp.swinux.ch/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Gallery Pro" />
+    <meta property="og:url" content="https://photorapp.swinux.ch/" />
+    <meta property="og:title" content="Gallery Pro — Votre photothèque personnelle, privée et intelligente" />
+    <meta
+      property="og:description"
+      content="Gestion de photothèque personnelle Local-First : albums intelligents, recherche photographique, retouche non destructive et sauvegarde intégrale .gpro.zip."
+    />
+    <meta property="og:image" content="https://photorapp.swinux.ch/app_preview.svg" />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gallery Pro — Votre photothèque personnelle, privée et intelligente" />
+    <meta
+      name="twitter:description"
+      content="Organisez, retrouvez, retouchez et préservez vos photographies localement dans votre navigateur. Sans compte ni cloud imposé."
+    />
+    <meta name="twitter:image" content="https://photorapp.swinux.ch/app_preview.svg" />
+
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Gallery Pro",
+        "alternateName": "Photorapp",
+        "url": "https://photorapp.swinux.ch/",
+        "applicationCategory": "PhotographyApplication",
+        "operatingSystem": "Web, PWA",
+        "softwareVersion": "2.5.0",
+        "description": "Application web progressive Local-First de gestion de photothèque personnelle : organisation chronologique, albums intelligents, recherche par critères, retouche non destructive et sauvegardes .gpro.zip vérifiées par SHA-256."
+      }
+    </script>
+
+    <!-- Fonts (système de repli graceful hors ligne) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body class="bg-background text-on-background">
     <div id="root"></div>

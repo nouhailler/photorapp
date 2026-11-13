@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { usePhotos } from '../context/usePhotos';
 import { useHelp } from '../context/useHelp';
 import { processPhotosImport } from '../services/importService';
@@ -42,7 +42,7 @@ const TopAppBar: React.FC<TopAppBarProps> = ({
         </button>
 
         {/* Brand & Logo */}
-        <div className="flex items-center gap-2.5 cursor-pointer">
+        <Link to="/gallery" className="flex items-center gap-2.5 cursor-pointer">
           <div className="w-9 h-9 rounded-2xl bg-primary flex items-center justify-center text-white shadow-md">
             <span className="material-symbols-outlined text-[20px]">photo_library</span>
           </div>
@@ -56,7 +56,7 @@ const TopAppBar: React.FC<TopAppBarProps> = ({
             </div>
             <p className="text-[10px] text-on-surface-variant font-medium -mt-1">Photothèque Privée & Locale</p>
           </div>
-        </div>
+        </Link>
       </div>
 
       <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ const TopAppBar: React.FC<TopAppBarProps> = ({
 
 const BottomNavBar: React.FC = () => {
   const navItems = [
-    { label: 'Photos', icon: 'photo_library', path: '/' },
+    { label: 'Photos', icon: 'photo_library', path: '/gallery' },
     { label: 'Albums', icon: 'collections_bookmark', path: '/albums' },
     { label: 'IA & Qualité', icon: 'auto_awesome', path: '/ia' },
     { label: 'Recherche', icon: 'search', path: '/search' },

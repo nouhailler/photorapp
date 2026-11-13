@@ -7,9 +7,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;
+  color: #18191d;
+  background-color: #faf9f6;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -38,4 +38,34 @@ body {
 
 .material-symbols-fill {
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Landing page editorial transitions (compositor-only, reduced-motion safe) */
+.reveal-section {
+  transition: opacity 550ms cubic-bezier(0.16, 1, 0.3, 1), transform 550ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-section[data-visible='false'] {
+  opacity: 0.92;
+  transform: translateY(10px);
+}
+
+.reveal-section[data-visible='true'] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  .reveal-section,
+  .reveal-section[data-visible='false'],
+  .reveal-section[data-visible='true'] {
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
 }
