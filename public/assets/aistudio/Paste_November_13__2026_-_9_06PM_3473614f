@@ -1,0 +1,917 @@
+# Photorapp — Refonte complète de la documentation : README.md, CHANGELOG.md et CONTEXT.md
+
+**Dépôt :** https://github.com/nouhailler/photorapp  
+**Application :** Gallery Pro — Your Visual Legacy  
+**Version annoncée :** 2.5.0  
+**Branche :** main
+
+## 1. Objectif de la mission
+
+Réaliser une refonte approfondie et cohérente des trois fichiers documentaires principaux du projet :
+
+- `README.md`
+- `CHANGELOG.md`
+- `CONTEXT.md`
+
+Cette documentation doit refléter fidèlement l'état actuel de l'application et devenir une véritable référence pour comprendre, utiliser, présenter et faire évoluer Photorapp.
+
+Le README doit notamment pouvoir servir ultérieurement de matière première à la création d'une landing page professionnelle.
+
+Il doit donc présenter clairement :
+- Le positionnement de l'application.
+- Les problèmes auxquels elle répond.
+- Ses fonctionnalités réelles.
+- Ses avantages distinctifs.
+- Son fonctionnement local et sa politique de confidentialité.
+- Son architecture technique.
+- Les possibilités offertes aux utilisateurs.
+- Les modalités d'installation et d'utilisation.
+- Les limites actuelles du produit.
+
+**Il ne s'agit pas de faire une simple correction rédactionnelle. Il faut d'abord comprendre l'application dans son état réel, puis reconstruire une documentation complète, structurée et cohérente.**
+
+---
+
+# 2. PHASE 1 — Audit exhaustif de l'application
+
+Avant de modifier les fichiers, examiner le dépôt dans son intégralité.
+
+Ne pas se limiter au README ou au CHANGELOG existants.
+
+## 2.1 Audit fonctionnel
+
+Examiner notamment :
+
+- Toutes les pages et routes.
+- Les composants principaux.
+- Les menus et systèmes de navigation.
+- Les services métier.
+- Les hooks React.
+- Les contextes.
+- Les modèles de données.
+- Les paramètres système.
+- Les mécanismes d'importation et d'exportation.
+- Les sauvegardes et restaurations.
+- Les fonctions de recherche.
+- Les fonctionnalités IA.
+- Les traitements photographiques.
+- La gestion des albums.
+- Les fonctions de maintenance.
+- Les mécanismes PWA.
+
+Pour chaque fonctionnalité, déterminer précisément :
+
+1. Son objectif.
+2. Son emplacement dans l'application.
+3. Son fonctionnement réel.
+4. Les données qu'elle utilise.
+5. Ses éventuelles dépendances.
+6. Ses limites.
+7. Son état d'implémentation.
+
+Classer les fonctionnalités selon les catégories suivantes :
+
+- **Opérationnelle :** le comportement est implémenté et son fonctionnement est confirmé.
+- **Implémentée :** le code existe, mais son fonctionnement complet n'a pas été validé.
+- **Partielle :** seule une partie du comportement attendu existe.
+- **Expérimentale :** fonctionnalité encore limitée ou dont les résultats doivent être interprétés avec prudence.
+- **Non disponible :** fonctionnalité absente.
+
+Ne pas confondre présence de code et validation effective.
+
+## 2.2 Audit des fonctionnalités de la version 2.5.0
+
+Porter une attention particulière aux nouveautés annoncées :
+
+### Intelligence photographique
+- `aiVisionService.ts`
+- `naturalSearchService.ts`
+- `souvenirService.ts`
+- `faceService.ts`
+
+Vérifier notamment si la classification d'images repose sur un véritable modèle IA ou sur des algorithmes heuristiques de traitement d'image.
+
+Ne pas présenter une classification heuristique comme une reconnaissance par intelligence artificielle avancée.
+
+Vérifier les capacités réelles de la recherche en langage naturel : intentions reconnues, critères interprétés, limites et exemples valides.
+
+Examiner précisément les mécanismes de détection et de regroupement des visages. Ne pas annoncer de reconnaissance biométrique ou d'identification automatique si le code ne le permet pas.
+
+### Performances
+- IndexedDB v3.
+- Store `thumbnails`.
+- Génération des miniatures.
+- Virtualisation de `PhotoGrid.tsx`.
+- Gestion des grandes bibliothèques.
+- `benchmarkService.ts`.
+
+Vérifier les seuils de virtualisation et les mesures réellement obtenues.
+
+Ne pas affirmer que l'application garantit 60 fps ou gère 20 000 photos de manière optimale sans preuve expérimentale.
+
+Distinguer :
+- Capacité prévue.
+- Capacité testée.
+- Résultats mesurés.
+
+### Fiabilité
+- Simulation de restauration.
+- Sauvegarde ZIP.
+- Vérification SHA-256.
+- Réparation des miniatures.
+- Nettoyage des fichiers orphelins.
+- Centre d'activité.
+- Annulation des tâches.
+
+Décrire les garanties réellement assurées et les éventuelles limites.
+
+## 2.3 Audit technique
+
+Examiner :
+- `package.json`
+- `vite.config.ts`
+- `tsconfig.json`
+- `src/utils/db.ts`
+- Les types et interfaces.
+- Les services.
+- Les routes.
+- Les tests.
+- Les fichiers de configuration.
+- Les ressources publiques.
+- Les icônes et captures d'écran.
+
+Identifier les versions réelles des dépendances et les scripts disponibles.
+
+Vérifier notamment les commandes réellement utilisables :
+- Installation.
+- Développement.
+- Compilation.
+- Lint.
+- Tests.
+
+Ne pas documenter une commande qui n'existe pas.
+
+## 2.4 Audit de cohérence documentaire
+
+Comparer les trois fichiers existants et identifier :
+- Les informations obsolètes.
+- Les fonctionnalités annoncées mais absentes.
+- Les versions incohérentes.
+- Les descriptions contradictoires.
+- Les chemins de fichiers incorrects.
+- Les captures d'écran inexistantes.
+- Les affirmations marketing excessives.
+- Les informations techniques manquantes.
+
+Produire une courte synthèse d'audit avant de commencer la réécriture.
+
+---
+
+# 3. PHASE 2 — Refonte du README.md
+
+Le README doit devenir la présentation de référence du produit.
+
+Il doit être compréhensible par un utilisateur non technique, tout en fournissant suffisamment d'informations aux développeurs.
+
+Il doit également permettre à une future landing page de reprendre facilement les arguments, les fonctionnalités, les bénéfices et les visuels du produit.
+
+## 3.1 En-tête et identité du produit
+
+Créer une introduction visuellement soignée.
+
+Inclure :
+- Logo officiel.
+- Nom : Gallery Pro.
+- Signature : Your Visual Legacy.
+- Description courte et mémorisable.
+- Badges pertinents.
+- Version réellement disponible.
+- Lien vers l'application déployée si son URL est confirmée dans le dépôt.
+- Lien vers le dépôt GitHub.
+
+Proposer une phrase de positionnement forte, sans exagération.
+
+Exemple d'orientation rédactionnelle :
+
+« Votre photothèque personnelle. Intelligente, privée et indépendante du cloud. »
+
+L'objectif est de faire comprendre immédiatement ce qui distingue Photorapp des services de stockage photographique traditionnels.
+
+## 3.2 Présentation du produit
+
+Créer une section expliquant :
+- Ce qu'est Gallery Pro.
+- À qui s'adresse l'application.
+- Quel problème elle résout.
+- Pourquoi une photothèque personnelle mérite un outil indépendant.
+- Pourquoi le stockage local est important.
+- Comment l'application associe organisation, recherche, retouche et préservation.
+
+Présenter le produit comme une véritable application de gestion de photothèque, et non comme une simple galerie d'images.
+
+Adopter un ton professionnel, accessible et convaincant.
+
+## 3.3 Présentation visuelle
+
+Valoriser les ressources graphiques réellement disponibles dans le dépôt.
+
+Examiner notamment :
+- `/public/logo.svg`
+- `/public/app_preview.svg`
+- Les éventuelles captures d'écran.
+- Les illustrations et icônes.
+
+Utiliser les chemins relatifs compatibles avec GitHub.
+
+Si des captures d'écran supplémentaires sont nécessaires mais inexistantes, les signaler dans le rapport final. Ne pas inventer de captures.
+
+Prévoir une organisation qui permettra ultérieurement d'intégrer facilement :
+- Une capture de la galerie.
+- Une capture des albums.
+- Une capture de la recherche.
+- Une capture de l'éditeur.
+- Une capture du module IA.
+- Une capture des paramètres et sauvegardes.
+
+## 3.4 Fonctionnalités détaillées
+
+Organiser les fonctionnalités en grandes familles cohérentes.
+
+### A. Photothèque personnelle
+Présenter :
+- Galerie chronologique.
+- Importation de photos.
+- Organisation.
+- Gestion des métadonnées.
+- Favoris.
+- Consultation des photos.
+- Navigation dans les collections.
+
+### B. Albums et organisation intelligente
+Présenter :
+- Albums manuels.
+- Albums dynamiques.
+- Critères de sélection.
+- Organisation par dates, lieux et caractéristiques.
+- Gestion des collections.
+
+### C. Recherche avancée et intelligente
+Présenter :
+- Recherche textuelle.
+- Recherche multicritère.
+- Filtres temporels.
+- Recherche par métadonnées.
+- Recherche par GPS.
+- Recherche par qualité.
+- Recherche en langage naturel si elle est effectivement opérationnelle.
+- Mots-clés automatiques si leur fonctionnement est confirmé.
+
+Fournir quelques exemples réalistes de requêtes.
+
+Préciser les limites du moteur de recherche.
+
+### D. Intelligence photographique
+Présenter précisément les capacités réellement disponibles :
+- Classification des scènes.
+- Catégorisation.
+- Mots-clés automatiques.
+- Analyse des visages.
+- Regroupement des personnes.
+- Options de confidentialité.
+- Contrôle et suppression des données calculées.
+
+Distinguer clairement les algorithmes de traitement d'image, les heuristiques et les modèles d'intelligence artificielle réellement intégrés.
+
+### E. Souvenirs photographiques
+Présenter :
+- Rétrospectives temporelles.
+- Photos prises à la même période.
+- Souvenirs annuels.
+- Sélections de photos oubliées.
+- Suggestions fondées sur les données réelles.
+
+### F. Retouche photographique
+Décrire les réglages disponibles :
+- Luminosité.
+- Contraste.
+- Saturation.
+- Exposition.
+- Température.
+- Teinte.
+- Rotation.
+- Recadrage.
+- Filtres.
+- Autres ajustements effectivement présents.
+
+Expliquer la distinction entre original et version modifiée.
+
+Ne pas annoncer de fonctions de retouche avancées absentes.
+
+### G. Qualité et détection des doublons
+Présenter :
+- Détection des doublons exacts.
+- Détection des similitudes.
+- Analyse de netteté.
+- Analyse d'exposition.
+- Évaluation de la qualité.
+
+Expliquer que les analyses sont des indicateurs et ne remplacent pas le jugement de l'utilisateur.
+
+### H. Géolocalisation
+Présenter :
+- Extraction des coordonnées GPS EXIF.
+- Affichage cartographique.
+- Navigation géographique.
+- Limites liées à l'absence de coordonnées GPS.
+
+Préciser les éventuelles dépendances réseau des fonds cartographiques.
+
+### I. Sauvegarde et préservation
+Cette section doit être particulièrement développée.
+
+Présenter :
+- Stockage des originaux.
+- IndexedDB.
+- Sauvegardes ZIP.
+- Manifestes.
+- Empreintes SHA-256.
+- Simulation de restauration.
+- Vérification d'intégrité.
+- Réparation.
+- Export des données.
+
+Expliquer pourquoi il est important de conserver également une sauvegarde externe de ses photographies.
+
+Ne jamais laisser entendre que le stockage dans le navigateur remplace une stratégie de sauvegarde indépendante.
+
+### J. Performance
+Présenter :
+- Miniatures dédiées.
+- Chargement différé.
+- Virtualisation de la galerie.
+- Traitements asynchrones.
+- Benchmark intégré.
+
+Ne pas transformer des objectifs de performance en garanties chiffrées non démontrées.
+
+### K. PWA et expérience utilisateur
+Présenter :
+- Installation sur ordinateur et mobile.
+- Fonctionnement hors ligne réellement supporté.
+- Interface responsive.
+- Aide contextuelle.
+- Onboarding.
+- Centre d'activité.
+- Paramètres système.
+
+Préciser les éventuelles limites selon les navigateurs.
+
+## 3.5 Confidentialité et architecture Local-First
+
+Créer une section majeure expliquant le fonctionnement de la confidentialité.
+
+Présenter clairement :
+- Où sont stockées les photos.
+- Où sont stockées les métadonnées.
+- Comment fonctionne IndexedDB.
+- Le rôle des miniatures.
+- Les traitements locaux.
+- Les éventuels accès réseau.
+- Les dépendances externes.
+- Le comportement en mode hors ligne.
+
+Éviter les formulations absolues telles que « aucune donnée ne quitte jamais votre appareil » si certaines fonctions effectuent des requêtes réseau.
+
+Distinguer les données photographiques des ressources réseau éventuellement nécessaires à l'application.
+
+Expliquer également que les données stockées dans IndexedDB sont liées au navigateur et à son profil local : elles peuvent être perdues en cas de suppression des données du navigateur, de panne ou de défaillance matérielle.
+
+La sauvegarde externe reste indispensable.
+
+## 3.6 Tableau comparatif des caractéristiques
+
+Ajouter un tableau synthétique :
+
+| Caractéristique | Gallery Pro |
+|---|---|
+| Stockage photographique local | Selon implémentation vérifiée |
+| Compte obligatoire | Selon implémentation vérifiée |
+| Fonctionnement hors ligne | Selon capacités réellement validées |
+| Recherche avancée | Selon implémentation vérifiée |
+| Recherche en langage naturel | Selon implémentation vérifiée |
+| Analyse photographique locale | Selon implémentation vérifiée |
+| Albums intelligents | Selon implémentation vérifiée |
+| Sauvegarde exportable | Selon implémentation vérifiée |
+| PWA installable | Selon implémentation vérifiée |
+
+Remplacer les mentions de vérification par des réponses précises après audit.
+
+Ne pas remplir le tableau avec des promesses commerciales.
+
+## 3.7 Installation et prise en main
+
+Fournir une procédure complète :
+
+- Prérequis.
+- Clonage.
+- Installation des dépendances.
+- Démarrage local.
+- Compilation.
+- Tests.
+- Prévisualisation de production.
+
+Utiliser uniquement les scripts existants dans `package.json`.
+
+Ajouter une section de première utilisation :
+1. Ouvrir l'application.
+2. Accepter les conditions si nécessaire.
+3. Importer des photographies.
+4. Créer un album.
+5. Explorer la recherche.
+6. Effectuer une première sauvegarde.
+
+## 3.8 Architecture technique
+
+Présenter la stack réelle :
+- React.
+- TypeScript.
+- Vite.
+- Tailwind CSS.
+- React Router.
+- IndexedDB.
+- Leaflet.
+- Bibliothèques complémentaires.
+
+Ajouter un schéma Mermaid illustrant l'architecture générale :
+
+Interface React → Services métier → IndexedDB → Stockage des originaux et miniatures.
+
+Représenter également les traitements asynchrones et les éventuels accès réseau lorsqu'ils existent.
+
+## 3.9 Organisation du code
+
+Ajouter une présentation de l'arborescence principale du projet.
+
+Ne présenter que les répertoires et fichiers effectivement présents.
+
+Expliquer le rôle des principaux modules :
+- `components`
+- `pages`
+- `services`
+- `context`
+- `hooks`
+- `utils`
+- `types`
+
+Adapter les noms à l'organisation réelle du dépôt.
+
+## 3.10 Compatibilité et limites
+
+Documenter :
+- Navigateurs testés si des tests existent.
+- Navigateurs théoriquement compatibles.
+- Compatibilité mobile.
+- Dépendance à IndexedDB.
+- Limites de stockage du navigateur.
+- Dépendance à WebGPU si concerné.
+- Limites des analyses automatiques.
+- Dépendances réseau éventuelles.
+
+Ne jamais annoncer une compatibilité qui n'a pas été vérifiée.
+
+## 3.11 FAQ
+
+Ajouter une FAQ répondant notamment aux questions suivantes :
+
+- Mes photos sont-elles envoyées sur un serveur ?
+- Ai-je besoin d'un compte ?
+- Puis-je utiliser Gallery Pro hors ligne ?
+- Où sont stockées mes photos ?
+- Que se passe-t-il si je change de navigateur ?
+- Comment sauvegarder ma photothèque ?
+- Puis-je restaurer mes photos sur un autre ordinateur ?
+- Les modifications détruisent-elles les originaux ?
+- La recherche intelligente nécessite-t-elle une API ?
+- L'application fonctionne-t-elle sur smartphone ?
+- Que se passe-t-il si je désinstalle la PWA ?
+
+Adapter les réponses au fonctionnement réel.
+
+## 3.12 Roadmap
+
+Ajouter une roadmap concise et honnête.
+
+Distinguer :
+- Fonctionnalités disponibles.
+- Améliorations envisagées.
+- Fonctionnalités expérimentales.
+- Pistes de développement futures.
+
+Ne pas annoncer comme prochaines évolutions des fonctionnalités déjà présentes.
+
+Ne pas présenter une fonctionnalité comme planifiée si aucune décision de développement ne l'indique.
+
+## 3.13 Conclusion
+
+Terminer avec une présentation claire du projet et des liens utiles :
+- Application.
+- Dépôt.
+- Documentation.
+- Releases.
+- Contribution.
+- Signalement de problèmes.
+
+---
+
+# 4. PHASE 3 — Refonte du CHANGELOG.md
+
+Le CHANGELOG doit être fiable, chronologique et conforme à Keep a Changelog.
+
+## 4.1 Principes
+
+- Conserver l'historique des versions.
+- Ne pas inventer de modifications.
+- Ne pas supprimer des informations historiques pertinentes.
+- Corriger les erreurs et incohérences.
+- Harmoniser le vocabulaire.
+- Utiliser les catégories standards :
+  - Added.
+  - Changed.
+  - Deprecated.
+  - Removed.
+  - Fixed.
+  - Security.
+
+Rédiger les descriptions en français.
+
+## 4.2 Vérification de la version 2.5.0
+
+Examiner les commits et les différences introduites depuis la version 2.4.0.
+
+Vérifier les fonctionnalités de la version 2.5.0 dans le code.
+
+Documenter :
+- Les nouveautés IA.
+- La recherche naturelle.
+- Les souvenirs.
+- Les fonctions de regroupement des visages.
+- IndexedDB v3.
+- Le stockage des miniatures.
+- La virtualisation.
+- Le benchmark.
+- La simulation de restauration.
+- Les outils de maintenance.
+- Le centre d'activité.
+
+Ne retenir que les changements réellement présents.
+
+Si une fonction est partielle ou expérimentale, le signaler.
+
+## 4.3 Cohérence des versions
+
+Vérifier :
+- La version affichée dans l'application.
+- La version dans les paramètres système.
+- La version dans le CHANGELOG.
+- Les éventuels tags Git.
+- La date réelle de sortie.
+
+Identifier les divergences.
+
+Ne pas modifier arbitrairement la version du projet pour faire correspondre les documents.
+
+Conserver l'historique des versions 2.4.0, 2.3.0 et 0.1.0 en corrigeant uniquement les erreurs factuelles ou rédactionnelles.
+
+---
+
+# 5. PHASE 4 — Refonte du CONTEXT.md
+
+Le fichier CONTEXT.md doit être une documentation technique de référence destinée aux développeurs, à Codex et aux futurs contributeurs.
+
+Il doit être plus technique que le README.
+
+## 5.1 Présentation générale
+
+Documenter :
+- Objectifs du projet.
+- Principes architecturaux.
+- Organisation générale.
+- Principes Local-First.
+- Contraintes de confidentialité.
+- Conventions de développement.
+
+## 5.2 Architecture détaillée
+
+Décrire :
+- Architecture React.
+- Gestion des routes.
+- Gestion de l'état.
+- Contextes.
+- Hooks.
+- Services métier.
+- Utilitaires.
+- Types.
+- Persistance.
+
+Ajouter un schéma Mermaid des interactions principales.
+
+## 5.3 Modèle de données
+
+Documenter précisément les stores IndexedDB :
+
+- `photos`
+- `blobs`
+- `thumbnails`
+- `albums`
+- `persons`
+- `metadata`
+
+Pour chacun :
+- Rôle.
+- Structure des données.
+- Clés primaires.
+- Index.
+- Relations.
+- Contraintes.
+- Opérations principales.
+
+Vérifier le code réel de `db.ts`.
+
+Documenter également :
+- Versions de schéma.
+- Migrations.
+- Stratégie de compatibilité.
+- Gestion des erreurs.
+- Suppression.
+- Nettoyage.
+- Intégrité.
+
+## 5.4 Catalogue des services
+
+Créer un catalogue structuré des services réellement présents.
+
+Pour chaque service :
+- Chemin.
+- Responsabilité.
+- Fonctions publiques principales.
+- Dépendances.
+- Données manipulées.
+- Effets secondaires.
+- Particularités.
+- Limites connues.
+
+Inclure notamment les services de stockage, importation, exportation, miniatures, recherche, analyse photographique, souvenirs, visages, doublons, qualité, albums intelligents, benchmark et activité si ces modules existent.
+
+Ne pas recopier aveuglément les descriptions de l'ancien CONTEXT.md.
+
+## 5.5 Parcours et flux de données
+
+Documenter les flux suivants :
+
+1. Importation d'une photo.
+2. Extraction des métadonnées EXIF.
+3. Génération de miniatures.
+4. Persistance des originaux.
+5. Consultation dans la galerie.
+6. Modification dans l'éditeur.
+7. Recherche.
+8. Analyse photographique.
+9. Création d'un album intelligent.
+10. Sauvegarde complète.
+11. Simulation de restauration.
+12. Restauration effective.
+13. Nettoyage et réparation du stockage.
+
+Utiliser des diagrammes Mermaid lorsque cela clarifie les interactions.
+
+## 5.6 Intelligence photographique
+
+Documenter précisément les algorithmes utilisés.
+
+Distinguer :
+- Traitement d'image traditionnel.
+- Heuristiques.
+- Classification.
+- Modèles IA éventuels.
+- Recherche naturelle.
+- Regroupement des visages.
+
+Préciser les données calculées, leur stockage et leur suppression.
+
+Ne pas employer des termes techniques incorrects pour embellir la documentation.
+
+## 5.7 Performance et traitements asynchrones
+
+Documenter :
+- Stratégie de miniatures.
+- Virtualisation.
+- Seuils utilisés.
+- Gestion mémoire.
+- Web Workers si présents.
+- File d'activité.
+- Annulation.
+- Benchmark.
+- Limites identifiées.
+
+Ne pas documenter des Workers ou des optimisations qui n'existent pas.
+
+## 5.8 Tests et qualité
+
+Présenter :
+- Frameworks utilisés.
+- Organisation des tests.
+- Commandes disponibles.
+- Couverture fonctionnelle connue.
+- Scénarios critiques.
+- Limites des tests.
+
+Distinguer les tests réellement existants des tests souhaitables.
+
+## 5.9 Conventions pour les futurs développements
+
+Documenter les règles à respecter :
+- Préserver les originaux.
+- Éviter les pertes de données.
+- Ne pas introduire de backend obligatoire.
+- Préserver le fonctionnement local.
+- Gérer les erreurs IndexedDB.
+- Maintenir la compatibilité PWA.
+- Ajouter des tests pour les services critiques.
+- Ne pas introduire de dépendance payante sans justification.
+- Ne pas envoyer les photos à des services externes sans consentement explicite.
+
+## 5.10 État actuel et points de vigilance
+
+Terminer par :
+- Version documentée.
+- État de l'architecture.
+- Fonctionnalités sensibles.
+- Limitations connues.
+- Dette technique identifiée.
+- Points de vigilance pour les prochains développements.
+
+---
+
+# 6. PHASE 5 — Cohérence entre les trois documents
+
+Les trois fichiers doivent avoir des rôles complémentaires :
+
+| Fichier | Public cible | Objectif |
+|---|---|---|
+| README.md | Utilisateurs, visiteurs, développeurs | Présenter et expliquer le produit |
+| CHANGELOG.md | Utilisateurs et développeurs | Suivre les évolutions |
+| CONTEXT.md | Développeurs et agents IA | Comprendre l'architecture et intervenir dans le code |
+
+Vérifier que :
+- Les versions sont identiques.
+- Les dates sont cohérentes.
+- Les fonctionnalités ne sont pas décrites différemment.
+- Les chemins de fichiers sont corrects.
+- Les commandes sont identiques.
+- Les liens fonctionnent.
+- Les schémas correspondent à l'architecture réelle.
+
+Le README doit rester accessible et orienté utilisateur.
+
+Le CONTEXT doit rester technique et suffisamment précis pour aider un développeur à modifier le projet.
+
+Le CHANGELOG doit rester chronologique et factuel.
+
+---
+
+# 7. Exigences rédactionnelles et visuelles
+
+La documentation doit être professionnelle et agréable à parcourir sur GitHub.
+
+Respecter les règles suivantes :
+
+- Français naturel et précis.
+- Ton professionnel, sans langage publicitaire excessif.
+- Titres hiérarchisés.
+- Sommaire avec ancres correctes.
+- Tableaux lorsque cela facilite la lecture.
+- Listes courtes et structurées.
+- Émojis avec modération.
+- Extraits de code exacts.
+- Liens relatifs corrects.
+- Diagrammes Mermaid lisibles.
+- Pas de répétitions inutiles.
+- Pas de sections artificiellement longues.
+
+Le README doit pouvoir être utilisé comme base éditoriale d'une future landing page.
+
+Les informations doivent donc être suffisamment riches pour permettre de construire ensuite :
+- Une section Hero.
+- Une présentation des bénéfices.
+- Des sections fonctionnelles.
+- Une section confidentialité.
+- Une section architecture.
+- Des visuels produit.
+- Une FAQ.
+- Des appels à l'action.
+
+Ne pas développer la landing page dans cette mission.
+
+---
+
+# 8. Critères d'acceptation
+
+La mission sera considérée comme terminée lorsque :
+
+- Le README présente fidèlement l'application actuelle.
+- Le README permet à un nouvel utilisateur de comprendre le produit.
+- Les fonctionnalités sont décrites à partir du code réel.
+- Les limites sont explicites.
+- Le CHANGELOG est cohérent avec les commits et les versions.
+- Le CONTEXT décrit correctement l'architecture existante.
+- Les versions sont cohérentes dans les trois fichiers.
+- Les commandes documentées existent réellement.
+- Les liens et images référencés sont vérifiés.
+- Aucun chemin inexistant n'est présenté comme valide.
+- Aucun modèle IA ou mécanisme technique fictif n'est annoncé.
+- Aucune promesse de performance non mesurée n'est formulée.
+- Les trois fichiers sont complémentaires et non redondants.
+
+---
+
+# 9. Vérifications finales obligatoires
+
+Après les modifications :
+
+1. Vérifier les liens Markdown.
+2. Vérifier les ancres du sommaire.
+3. Vérifier les chemins des images.
+4. Vérifier les exemples de commandes.
+5. Vérifier les versions.
+6. Vérifier les dates.
+7. Vérifier les diagrammes Mermaid.
+8. Vérifier la cohérence des trois documents.
+9. Vérifier que les fichiers ne contiennent pas de sections obsolètes.
+10. Vérifier que le README est lisible sur GitHub.
+
+Exécuter les vérifications techniques disponibles :
+- `npm run lint`
+- `npm run test -- --run`
+- `npm run build`
+
+Ces commandes doivent être exécutées uniquement si elles existent dans le projet.
+
+Une modification documentaire ne doit pas introduire de régression dans le code.
+
+---
+
+# 10. Rapport final attendu
+
+À la fin, fournir un rapport contenant :
+
+### A. Audit initial
+- État de la documentation existante.
+- Incohérences détectées.
+- Informations obsolètes.
+- Fonctionnalités mal décrites.
+
+### B. README.md
+- Sections créées.
+- Sections réorganisées.
+- Améliorations apportées.
+- Ressources visuelles utilisées.
+- Informations restant à compléter.
+
+### C. CHANGELOG.md
+- Versions vérifiées.
+- Modifications documentées.
+- Corrections effectuées.
+- Éventuelles incertitudes.
+
+### D. CONTEXT.md
+- Architecture documentée.
+- Services répertoriés.
+- Modèle de données décrit.
+- Flux documentés.
+- Points de vigilance.
+
+### E. Vérifications
+- Liens.
+- Images.
+- Commandes.
+- Tests.
+- Build.
+- Éventuelles vérifications non exécutées.
+
+### F. Préparation de la future landing page
+Fournir une synthèse éditoriale contenant :
+- Proposition de valeur principale.
+- Public cible.
+- 5 à 8 bénéfices majeurs.
+- 6 à 10 fonctionnalités à mettre en avant.
+- Arguments de confidentialité.
+- Arguments de différenciation.
+- Captures d'écran nécessaires.
+- FAQ recommandée.
+- Appels à l'action suggérés.
+
+**Important : ne pas modifier les fonctionnalités de l'application dans cette mission. Le périmètre concerne la documentation uniquement.**
+
+Ne pas se contenter de proposer des modifications : modifier réellement les trois fichiers dans le dépôt.
+
+Le résultat attendu est une documentation de qualité professionnelle, cohérente avec la version réelle de Photorapp et suffisamment complète pour servir de fondation à la future landing page de Gallery Pro.
