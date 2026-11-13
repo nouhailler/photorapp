@@ -8,8 +8,11 @@ import {
   exportMetadataJson,
   createFullLibraryBackup,
   restoreFullLibraryBackup,
+  simulateRestoreBackup,
 } from '../services/exportService';
-import type { BackupResult, RestoreResult, ZipExportResult } from '../services/exportService';
+import type { BackupResult, RestoreResult, ZipExportResult, RestoreSimulationResult } from '../services/exportService';
+import { RestoreSimulationModal } from '../components/RestoreSimulationModal';
+import { regenerateAllMissingThumbnails } from '../services/thumbnailService';
 import { diagnoseStorage, cleanupOrphanedBlobs } from '../utils/db';
 import type { StorageDiagnostic } from '../types/types';
 import { HelpTooltip } from '../components/HelpTooltip';
@@ -31,6 +34,10 @@ const Sharing: React.FC = () => {
   const [exportStatusText, setExportStatusText] = useState('');
   const [exportProgressPct, setExportProgressPct] = useState(0);
 
+  // Restore Simulation
+  const [restoreSimulation, setRestoreSimulation] = useState<RestoreSimulationResult | null>(null);
+  const [restorePendingFile, setRestorePendingFile] = useState<File | null>(null);
+
   // Detailed Operation Reports
   const [backupReport, setBackupReport] = useState<BackupResult | null>(null);
   const [restoreReport, setRestoreReport] = useState<RestoreResult | null>(null);
@@ -40,6 +47,8 @@ const Sharing: React.FC = () => {
   const [diagnostic, setDiagnostic] = useState<StorageDiagnostic | null>(null);
   const [diagnosticLoading, setDiagnosticLoading] = useState(false);
   const [cleanupMessage, setCleanupMessage] = useState('');
+  const [isRegeneratingThumbs, setIsRegeneratingThumbs] = useState(false);
+
 
   const loadDiagnostic = async () => {
     setDiagnosticLoading(true);
@@ -111,30 +120,70 @@ const Sharing: React.FC = () => {
     }
   };
 
-  // Full Library Restore
+  // Full Library Restore Simulation Trigger
   const handleRestoreLibrary = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsExporting(true);
-    setExportProgressPct(10);
-    setExportStatusText('Vérification de l\'archive de sauvegarde...');
+    setExportProgressPct(20);
+    setExportStatusText("Analyse et simulation de l'archive de sauvegarde...");
 
     try {
-      const res = await restoreFullLibraryBackup(file, (pct, status) => {
-        setExportProgressPct(pct);
-        setExportStatusText(status);
-      });
-      setRestoreReport(res);
+      const sim = await simulateRestoreBackup(file);
+      setRestoreSimulation(sim);
+      setRestorePendingFile(file);
     } catch (err) {
-      console.error('Restore error:', err);
-      alert(`Erreur de restauration : ${err instanceof Error ? err.message : 'Fichier non valide'}`);
+      console.error('Simulation restore error:', err);
+      alert(`Erreur de lecture de l'archive : ${err instanceof Error ? err.message : 'Fichier non valide'}`);
     } finally {
       setIsExporting(false);
       setExportStatusText('');
       if (restoreInputRef.current) restoreInputRef.current.value = '';
     }
   };
+
+  // Confirmed Full Library Restore Execution
+  const handleConfirmRestore = async () => {
+    if (!restorePendingFile) return;
+
+    setIsExporting(true);
+    setExportProgressPct(10);
+    setExportStatusText('Restauration sécurisée en cours...');
+
+    try {
+      const res = await restoreFullLibraryBackup(restorePendingFile, (pct, status) => {
+        setExportProgressPct(pct);
+        setExportStatusText(status);
+      });
+      setRestoreReport(res);
+      setRestoreSimulation(null);
+      setRestorePendingFile(null);
+      loadDiagnostic();
+    } catch (err) {
+      console.error('Restore error:', err);
+      alert(`Erreur lors de la restauration : ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+    } finally {
+      setIsExporting(false);
+      setExportStatusText('');
+    }
+  };
+
+  // Regenerate missing thumbnails
+  const handleRegenerateThumbnails = async () => {
+    setIsRegeneratingThumbs(true);
+    try {
+      const res = await regenerateAllMissingThumbnails(photos);
+      setCleanupMessage(`${res.generated} miniature(s) générée(s) avec succès.`);
+      setTimeout(() => setCleanupMessage(''), 3000);
+      loadDiagnostic();
+    } catch (err) {
+      console.error('Thumbnails regeneration error:', err);
+    } finally {
+      setIsRegeneratingThumbs(false);
+    }
+  };
+
 
   // Export All ZIP
   const handleExportAllZip = async () => {
@@ -359,8 +408,8 @@ const Sharing: React.FC = () => {
                 <span className="text-[11px] text-on-surface-variant">Fichiers stockés localement</span>
               </div>
               <div className="p-3 bg-surface rounded-xl border border-outline-variant/20">
-                <span className="block text-headline-sm font-bold text-on-surface">{diagnostic.totalAlbums}</span>
-                <span className="text-[11px] text-on-surface-variant">Albums créés</span>
+                <span className="block text-headline-sm font-bold text-on-surface">{diagnostic.thumbnailsCount ?? 0}</span>
+                <span className="text-[11px] text-on-surface-variant">Miniatures optimisées</span>
               </div>
               <div className="p-3 bg-surface rounded-xl border border-outline-variant/20">
                 <span className="block text-headline-sm font-bold text-on-surface">
@@ -369,6 +418,32 @@ const Sharing: React.FC = () => {
                 <span className="text-[11px] text-on-surface-variant">Stockage navigateur estimé</span>
               </div>
             </div>
+
+            {/* Missing thumbnails notice & repair */}
+            {(diagnostic.missingThumbnailsCount ?? 0) > 0 && (
+              <div className="flex items-center justify-between p-3 bg-primary/10 rounded-xl text-label-sm border border-primary/20">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[20px]">photo_size_select_actual</span>
+                  <span className="text-primary font-semibold">
+                    {diagnostic.missingThumbnailsCount} photo(s) sans miniature optimisée (rendu plus lent).
+                  </span>
+                </div>
+                <button
+                  onClick={handleRegenerateThumbnails}
+                  disabled={isRegeneratingThumbs}
+                  className="px-3 py-1 bg-primary text-on-primary rounded-lg text-label-xs font-bold active:scale-95 disabled:opacity-50 flex items-center gap-1"
+                >
+                  {isRegeneratingThumbs ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-[14px]">sync</span>
+                      <span>Génération...</span>
+                    </>
+                  ) : (
+                    <span>Générer</span>
+                  )}
+                </button>
+              </div>
+            )}
 
             {diagnostic.orphanedBlobsCount > 0 && (
               <div className="flex items-center justify-between p-3 bg-amber-500/10 rounded-xl text-label-sm border border-amber-500/20">
@@ -490,6 +565,18 @@ const Sharing: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Restore Simulation Modal */}
+      <RestoreSimulationModal
+        simulation={restoreSimulation}
+        fileName={restorePendingFile?.name || ''}
+        isRestoring={isExporting}
+        onConfirm={handleConfirmRestore}
+        onCancel={() => {
+          setRestoreSimulation(null);
+          setRestorePendingFile(null);
+        }}
+      />
 
       {/* Import Modal */}
       <ImportModal

@@ -6,7 +6,9 @@ import { usePhotos } from '../context/usePhotos';
 import { exportPhotosToZip } from '../services/exportService';
 import { SlideshowModal } from '../components/SlideshowModal';
 import { HelpTooltip } from '../components/HelpTooltip';
-import type { Photo } from '../types/types';
+import { SouvenirsCarousel } from '../components/SouvenirsCarousel';
+import type { Photo, PhotoSouvenir } from '../types/types';
+
 
 const Gallery: React.FC = () => {
   const { photos, albums, toggleFavorite, deletePhotos, addPhotosToAlbum, createAlbum } = usePhotos();
@@ -14,6 +16,7 @@ const Gallery: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'favorites' | 'gps'>('all');
+  const [activeSouvenir, setActiveSouvenir] = useState<PhotoSouvenir | null>(null);
 
   // Selection State
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -26,7 +29,7 @@ const Gallery: React.FC = () => {
   const [isSlideshowOpen, setIsSlideshowOpen] = useState(false);
 
   const filteredPhotos = useMemo(() => {
-    let result = photos;
+    let result = activeSouvenir ? activeSouvenir.photos : photos;
 
     if (filterMode === 'favorites') {
       result = result.filter((p) => p.isFavorite);
@@ -46,7 +49,8 @@ const Gallery: React.FC = () => {
     }
 
     return result;
-  }, [photos, filterMode, searchQuery]);
+  }, [photos, activeSouvenir, filterMode, searchQuery]);
+
 
   // Grouping by Date (Day / Month)
   const groupedPhotos = useMemo(() => {
@@ -215,6 +219,58 @@ const Gallery: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Active Souvenir Focus Banner */}
+      {activeSouvenir && (
+        <div className="mx-container-padding p-4 bg-gradient-to-r from-primary-container/60 to-tertiary-container/60 rounded-3xl border border-primary/20 flex flex-wrap items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-primary text-on-primary flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider">
+                  Souvenir • {activeSouvenir.periodLabel}
+                </span>
+                <span className="text-[12px] text-on-surface-variant">
+                  {activeSouvenir.photos.length} photos
+                </span>
+              </div>
+              <h3 className="text-title-md font-bold text-on-surface mt-0.5">
+                {activeSouvenir.title}
+              </h3>
+              <p className="text-[12px] text-on-surface-variant">
+                {activeSouvenir.subtitle}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsSlideshowOpen(true)}
+              className="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-sm font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+            >
+              <span className="material-symbols-outlined text-[16px] material-symbols-fill">slideshow</span>
+              <span>Lancer le diaporama</span>
+            </button>
+            <button
+              onClick={() => setActiveSouvenir(null)}
+              className="p-2 rounded-xl bg-surface hover:bg-surface-variant text-on-surface-variant hover:text-on-surface transition-colors"
+              title="Fermer ce souvenir et revenir à toute la galerie"
+            >
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Retrospective Souvenirs Carousel */}
+      {!activeSouvenir && !searchQuery.trim() && filterMode === 'all' && (
+        <SouvenirsCarousel
+          photos={photos}
+          onSelectSouvenir={(souvenir) => setActiveSouvenir(souvenir)}
+        />
+      )}
+
 
       {/* Selection Mode Header Banner */}
       {isSelectionMode && (

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { usePhotos } from '../context/usePhotos';
 import { findExactDuplicates, findSimilarPhotos } from '../services/duplicateService';
 import type { DuplicateGroup } from '../services/duplicateService';
@@ -6,7 +6,16 @@ import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { fetchFreeModels } from '../utils/openrouter';
 import type { AIModel } from '../utils/openrouter';
 import { HelpTooltip } from '../components/HelpTooltip';
-import type { Photo } from '../types/types';
+import {
+  isFaceGroupingEnabled,
+  setFaceGroupingEnabled,
+  getSavedPersonGroups,
+  clusterPhotosIntoPersonGroups,
+  updatePersonGroupName,
+  clearAllFaceData,
+} from '../services/faceService';
+import type { Photo, PersonGroup } from '../types/types';
+
 
 // Lazy load MapComponent to avoid SSR/window issues
 const MapComponent = React.lazy(() => import('../components/MapComponent'));
@@ -25,6 +34,25 @@ const IntelligenceIA: React.FC = () => {
 
   // Review Modals
   const [activeReview, setActiveReview] = useState<'blurry' | 'duplicates' | null>(null);
+
+  // Face / People Grouping (Strictly Opt-in, Local)
+  const [facesEnabled, setFacesEnabled] = useState<boolean>(() => isFaceGroupingEnabled());
+  const [personGroups, setPersonGroups] = useState<PersonGroup[]>([]);
+  const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
+  const [editingPersonName, setEditingPersonName] = useState('');
+  const [faceMessage, setFaceMessage] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    if (facesEnabled) {
+      getSavedPersonGroups().then((groups) => {
+        if (active) setPersonGroups(groups);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [facesEnabled]);
 
   // OpenRouter Config (Optional External LLM)
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('openrouter_api_key') || '');
@@ -45,6 +73,23 @@ const IntelligenceIA: React.FC = () => {
     () => photos.filter((p) => p.metadata?.analysis !== undefined),
     [photos]
   );
+
+  const sceneDistribution = useMemo(() => {
+    const counts: Record<string, { label: string; count: number }> = {};
+    for (const p of photos) {
+      for (const st of p.metadata?.analysis?.sceneTags || []) {
+        if (!counts[st.category]) {
+          counts[st.category] = { label: st.label, count: 0 };
+        }
+        counts[st.category].count++;
+      }
+    }
+    return Object.entries(counts).map(([category, info]) => ({
+      category,
+      label: info.label,
+      count: info.count,
+    }));
+  }, [photos]);
 
   const lowQualityPhotos = useMemo(
     () =>
@@ -83,6 +128,46 @@ const IntelligenceIA: React.FC = () => {
     setApiKey(val);
     localStorage.setItem('openrouter_api_key', val);
   };
+
+  const handleToggleFaceGrouping = async (enabled: boolean) => {
+    setFaceGroupingEnabled(enabled);
+    setFacesEnabled(enabled);
+    if (enabled) {
+      const groups = await clusterPhotosIntoPersonGroups(photos);
+      setPersonGroups(groups);
+    } else {
+      setPersonGroups([]);
+    }
+  };
+
+  const handleRescanFaces = async () => {
+    const groups = await clusterPhotosIntoPersonGroups(photos);
+    setPersonGroups(groups);
+    setFaceMessage(`${groups.length} groupe(s) de visages détectés localement.`);
+    setTimeout(() => setFaceMessage(''), 3000);
+  };
+
+  const handleSavePersonName = async (personId: string) => {
+    await updatePersonGroupName(personId, editingPersonName);
+    const refreshed = await getSavedPersonGroups();
+    setPersonGroups(refreshed);
+    setEditingPersonId(null);
+  };
+
+  const handleWipeFaceData = async () => {
+    if (
+      window.confirm(
+        'Voulez-vous vraiment supprimer de manière irréversible tous les groupes de personnes et données de visages locales ? Vos photos originales resteront intactes.'
+      )
+    ) {
+      await clearAllFaceData();
+      setFacesEnabled(false);
+      setPersonGroups([]);
+      setFaceMessage('Toutes les données biométriques locales ont été effacées.');
+      setTimeout(() => setFaceMessage(''), 4000);
+    }
+  };
+
 
   return (
     <div className="px-container-padding space-y-section-margin max-w-6xl mx-auto pb-28">
@@ -197,6 +282,168 @@ const IntelligenceIA: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Vision Locale & Catégories Détectées */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-headline-md font-bold text-on-surface">Classification Sémantique Locale</h3>
+          <HelpTooltip
+            title="Classification Automatique"
+            text="Analyse colorimétrique, géométrique et spatiale exécutée dans votre navigateur pour identifier les paysages, portraits, couchers de soleil ou architectures."
+          />
+        </div>
+
+        {sceneDistribution.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {sceneDistribution.map((item) => (
+              <div
+                key={item.category}
+                className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/20 flex items-center justify-between"
+              >
+                <div>
+                  <p className="text-label-md font-bold text-on-surface">{item.label}</p>
+                  <p className="text-[11px] text-on-surface-variant">{item.count} photo(s)</p>
+                </div>
+                <span className="material-symbols-outlined text-primary/70 text-[22px]">label</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/20 text-body-sm text-on-surface-variant">
+            Cliquez sur <strong>Analyser la bibliothèque</strong> ci-dessus pour classer automatiquement vos scènes (Nature, Portraits, Architecture, Plage, Nuit...).
+          </div>
+        )}
+      </section>
+
+      {/* Groupes de Personnes & Visages (Strictement Opt-In & Local) */}
+      <section className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-3 border-b border-outline-variant/20">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[24px]">face</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-headline-sm font-bold text-on-surface">Regroupement de Visages (Local)</h3>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase">
+                  Strictement privé
+                </span>
+              </div>
+              <p className="text-[12px] text-on-surface-variant">
+                Fonctionnement facultatif sur appareil uniquement. Aucun envoi vers un serveur ou registre tiers.
+              </p>
+            </div>
+          </div>
+
+          <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+            <input
+              type="checkbox"
+              checked={facesEnabled}
+              onChange={(e) => handleToggleFaceGrouping(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            <span className="ml-2 text-label-xs font-bold text-on-surface">
+              {facesEnabled ? 'Activé' : 'Désactivé'}
+            </span>
+          </label>
+        </div>
+
+        {faceMessage && (
+          <div className="p-3 bg-primary-container/30 text-primary rounded-xl text-label-xs font-bold">
+            {faceMessage}
+          </div>
+        )}
+
+        {facesEnabled ? (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <button
+                onClick={handleRescanFaces}
+                className="px-4 py-2 bg-surface-container-high hover:bg-surface-variant text-primary rounded-xl text-label-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
+              >
+                <span className="material-symbols-outlined text-[18px]">person_search</span>
+                <span>Regrouper les portraits analysés</span>
+              </button>
+
+              <button
+                onClick={handleWipeFaceData}
+                className="px-4 py-2 bg-error/10 hover:bg-error/20 text-error rounded-xl text-label-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+                <span>Effacement biométrique irréversible</span>
+              </button>
+            </div>
+
+            {personGroups.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {personGroups.map((group) => {
+                  const cover = photos.find((p) => p.id === group.coverPhotoId);
+                  return (
+                    <div
+                      key={group.id}
+                      className="p-3 bg-surface rounded-2xl border border-outline-variant/20 flex items-center gap-3"
+                    >
+                      {cover ? (
+                        <PhotoThumbnail photo={cover} className="w-12 h-12 rounded-full shrink-0" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-on-surface-variant">person</span>
+                        </div>
+                      )}
+                      <div className="flex-grow min-w-0">
+                        {editingPersonId === group.id ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="text"
+                              value={editingPersonName}
+                              onChange={(e) => setEditingPersonName(e.target.value)}
+                              className="w-full px-2 py-1 text-label-sm bg-surface-container rounded-lg border border-primary outline-none"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleSavePersonName(group.id)}
+                              className="p-1 text-primary hover:bg-primary/10 rounded-lg"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">check</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-label-md font-bold text-on-surface truncate">{group.name}</p>
+                            <button
+                              onClick={() => {
+                                setEditingPersonId(group.id);
+                                setEditingPersonName(group.name);
+                              }}
+                              className="p-1 text-on-surface-variant hover:text-primary rounded-lg"
+                              title="Nommer cette personne"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">edit</span>
+                            </button>
+                          </div>
+                        )}
+                        <p className="text-[11px] text-on-surface-variant">
+                          {group.photoIds.length} portrait(s)
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-[12px] text-on-surface-variant">
+                Aucun groupe de visages créé. Lancez d'abord l'analyse de bibliothèque pour détecter les portraits, puis cliquez sur « Regrouper les portraits analysés ».
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-[12px] text-on-surface-variant">
+            Ce module est désactivé par défaut pour respecter votre vie privée. Activez l'interrupteur ci-dessus uniquement si vous souhaitez organiser vos portraits localement par personne.
+          </p>
+        )}
+      </section>
+
 
       {/* Interactive Map Widget (Real GPS Only) */}
       <section className="space-y-4">

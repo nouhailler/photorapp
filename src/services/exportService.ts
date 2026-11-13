@@ -1,6 +1,14 @@
 import JSZip from 'jszip';
 import type { Photo, Album } from '../types/types';
-import { getPhotoBlob, savePhotoBlob, savePhotoMeta, saveAlbumMeta } from '../utils/db';
+import {
+  getPhotoBlob,
+  savePhotoBlob,
+  savePhotoMeta,
+  saveAlbumMeta,
+  getAllPhotosMeta,
+  saveThumbnailBlob,
+} from '../utils/db';
+import { generateThumbnailBlob } from './thumbnailService';
 
 export interface BackupFileEntry {
   fileName: string;
@@ -32,11 +40,28 @@ export interface BackupResult {
   warnings: string[];
 }
 
+export interface RestoreSimulationResult {
+  valid: boolean;
+  archiveDate?: string;
+  manifestVersion?: number;
+  totalPhotosInArchive: number;
+  totalAlbumsInArchive: number;
+  localFilesCount: number;
+  remoteFilesCount: number;
+  alreadyPresentCount: number;
+  newPhotosCount: number;
+  corruptedBlobsCount: number;
+  missingBlobsCount: number;
+  errors: string[];
+  warnings: string[];
+}
+
 export interface RestoreResult {
   success: boolean;
   restoredPhotos: number;
   restoredAlbums: number;
   skippedPhotos: number;
+  alreadyPresentPhotos: number;
   missingBlobs: string[];
   integrityErrors: string[];
   warnings: string[];
@@ -427,6 +452,159 @@ export async function createFullLibraryBackup(
 }
 
 /**
+ * Previews and simulates a backup archive without writing anything to IndexedDB.
+ * Allows the user to inspect what will be restored, missing files, corrupted checksums,
+ * and already existing photos before taking action.
+ */
+export async function simulateRestoreBackup(
+  backupFile: File
+): Promise<RestoreSimulationResult> {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  let zip: JSZip;
+  try {
+    zip = await JSZip.loadAsync(backupFile);
+  } catch (e) {
+    return {
+      valid: false,
+      totalPhotosInArchive: 0,
+      totalAlbumsInArchive: 0,
+      localFilesCount: 0,
+      remoteFilesCount: 0,
+      alreadyPresentCount: 0,
+      newPhotosCount: 0,
+      corruptedBlobsCount: 0,
+      missingBlobsCount: 0,
+      errors: [`Archive ZIP invalide ou corrompue: ${e instanceof Error ? e.message : 'Erreur'}`],
+      warnings: [],
+    };
+  }
+
+  // 1. Check metadata.json
+  const metadataFile = zip.file('metadata.json');
+  if (!metadataFile) {
+    return {
+      valid: false,
+      totalPhotosInArchive: 0,
+      totalAlbumsInArchive: 0,
+      localFilesCount: 0,
+      remoteFilesCount: 0,
+      alreadyPresentCount: 0,
+      newPhotosCount: 0,
+      corruptedBlobsCount: 0,
+      missingBlobsCount: 0,
+      errors: ['Fichier metadata.json manquant dans l\'archive.'],
+      warnings: [],
+    };
+  }
+
+  let parsedMetadata: { photos?: Photo[]; albums?: Album[] };
+  try {
+    const str = await metadataFile.async('string');
+    parsedMetadata = JSON.parse(str);
+  } catch (e) {
+    return {
+      valid: false,
+      totalPhotosInArchive: 0,
+      totalAlbumsInArchive: 0,
+      localFilesCount: 0,
+      remoteFilesCount: 0,
+      alreadyPresentCount: 0,
+      newPhotosCount: 0,
+      corruptedBlobsCount: 0,
+      missingBlobsCount: 0,
+      errors: [`Format JSON invalide dans metadata.json: ${e instanceof Error ? e.message : 'Erreur'}`],
+      warnings: [],
+    };
+  }
+
+  const archivePhotos = Array.isArray(parsedMetadata.photos) ? parsedMetadata.photos : [];
+  const archiveAlbums = Array.isArray(parsedMetadata.albums) ? parsedMetadata.albums : [];
+
+  // 2. Read manifest
+  const manifestFile = zip.file('backup_manifest.json');
+  let manifest: BackupManifest | null = null;
+  if (manifestFile) {
+    try {
+      const manifestStr = await manifestFile.async('string');
+      manifest = JSON.parse(manifestStr) as BackupManifest;
+    } catch {
+      warnings.push('Manifeste illisible, prévisualisation effectuée via metadata.json.');
+    }
+  }
+
+  // 3. Compare with currently installed photos in IndexedDB
+  const currentPhotos = await getAllPhotosMeta();
+  const currentIds = new Set(currentPhotos.map((p) => p.id));
+
+  let alreadyPresentCount = 0;
+  let newPhotosCount = 0;
+  let localFilesCount = 0;
+  let remoteFilesCount = 0;
+  let missingBlobsCount = 0;
+  let corruptedBlobsCount = 0;
+
+  for (const photo of archivePhotos) {
+    if (!photo || !photo.id) continue;
+
+    if (currentIds.has(photo.id)) {
+      alreadyPresentCount++;
+    } else {
+      newPhotosCount++;
+    }
+
+    if (photo.storage === 'local') {
+      localFilesCount++;
+      const ext = getExtension(photo.metadata?.mimeType, 'jpg');
+      const manifestEntry = manifest?.files?.[photo.id];
+
+      let blobZipFile = zip.file(`photos/${photo.id}.${ext}`);
+      if (!blobZipFile && manifestEntry?.fileName) {
+        blobZipFile = zip.file(`photos/${manifestEntry.fileName}`) || zip.file(manifestEntry.fileName);
+      }
+      if (!blobZipFile) {
+        blobZipFile = zip.file(`photos/${photo.id}.blob`);
+      }
+
+      if (!blobZipFile) {
+        missingBlobsCount++;
+        warnings.push(`Fichier binaire absent dans l'archive pour la photo ${photo.id}`);
+      } else if (manifestEntry?.sha256) {
+        try {
+          const blobData = await blobZipFile.async('blob');
+          const hash = await computeBlobSha256(blobData);
+          if (hash !== manifestEntry.sha256) {
+            corruptedBlobsCount++;
+            errors.push(`Somme de contrôle corrompue pour photo ${photo.id}`);
+          }
+        } catch {
+          corruptedBlobsCount++;
+        }
+      }
+    } else {
+      remoteFilesCount++;
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    archiveDate: manifest?.backupDate,
+    manifestVersion: manifest?.manifest_version || 1,
+    totalPhotosInArchive: archivePhotos.length,
+    totalAlbumsInArchive: archiveAlbums.length,
+    localFilesCount,
+    remoteFilesCount,
+    alreadyPresentCount,
+    newPhotosCount,
+    corruptedBlobsCount,
+    missingBlobsCount,
+    errors,
+    warnings,
+  };
+}
+
+/**
  * Restores a full backup from a ZIP archive with pre-validation and checksum verification.
  */
 export async function restoreFullLibraryBackup(
@@ -473,6 +651,10 @@ export async function restoreFullLibraryBackup(
   const photos = parsedMetadata.photos;
   const albums = Array.isArray(parsedMetadata.albums) ? parsedMetadata.albums : [];
 
+  // Read current existing photos to track duplicates without silent overwriting
+  const existingPhotos = await getAllPhotosMeta();
+  const existingIds = new Set(existingPhotos.map((p) => p.id));
+
   // 2. Read manifest if present
   const manifestFile = zip.file('backup_manifest.json');
   let manifest: BackupManifest | null = null;
@@ -487,6 +669,7 @@ export async function restoreFullLibraryBackup(
 
   let restoredPhotos = 0;
   let skippedPhotos = 0;
+  let alreadyPresentPhotos = 0;
   const missingBlobs: string[] = [];
   const integrityErrors: string[] = [];
   const warnings: string[] = [];
@@ -498,6 +681,10 @@ export async function restoreFullLibraryBackup(
     if (!photo || !photo.id) {
       skippedPhotos++;
       continue;
+    }
+
+    if (existingIds.has(photo.id)) {
+      alreadyPresentPhotos++;
     }
 
     onProgress?.(
@@ -531,6 +718,15 @@ export async function restoreFullLibraryBackup(
           }
 
           await savePhotoBlob({ id: photo.id, blob: blobData });
+
+          // Generate lightweight thumbnail for instant high-performance grid rendering
+          try {
+            const thumbBlob = await generateThumbnailBlob(blobData);
+            await saveThumbnailBlob({ id: photo.id, blob: thumbBlob });
+            photo.hasThumbnail = true;
+          } catch {
+            // Non-fatal
+          }
         } catch (e) {
           missingBlobs.push(photo.id);
           warnings.push(
@@ -562,6 +758,7 @@ export async function restoreFullLibraryBackup(
     restoredPhotos,
     restoredAlbums: albums.length,
     skippedPhotos,
+    alreadyPresentPhotos,
     missingBlobs,
     integrityErrors,
     warnings,

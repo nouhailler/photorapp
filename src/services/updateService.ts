@@ -13,8 +13,8 @@ export interface UpdateStatus {
   statusMessage: string;
 }
 
-export const APP_VERSION = '2.4.0';
-export const APP_RELEASE_DATE = '10 Novembre 2026';
+export const APP_VERSION = '2.5.0';
+export const APP_RELEASE_DATE = '13 Novembre 2026';
 
 const STORAGE_KEYS = {
   AUTO_UPDATE: 'gallery_pro_auto_update_enabled',

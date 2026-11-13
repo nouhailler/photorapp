@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { usePhotos } from '../context/usePhotos';
 import type { Photo } from '../types/types';
 
-export const usePhotoUrl = (photo: Photo): string => {
+export const usePhotoUrl = (photo: Photo, isThumbnail = false): string => {
   const { getPhotoUrl } = usePhotos();
   const [localUrl, setLocalUrl] = useState<string>('');
 
@@ -10,7 +10,7 @@ export const usePhotoUrl = (photo: Photo): string => {
     let isMounted = true;
 
     if (photo.storage === 'local') {
-      getPhotoUrl(photo).then((newUrl) => {
+      getPhotoUrl(photo, isThumbnail).then((newUrl) => {
         if (isMounted) {
           setLocalUrl(newUrl);
         }
@@ -20,7 +20,7 @@ export const usePhotoUrl = (photo: Photo): string => {
     return () => {
       isMounted = false;
     };
-  }, [photo, getPhotoUrl]);
+  }, [photo, isThumbnail, getPhotoUrl]);
 
   if (photo.storage === 'remote' || !photo.storage) {
     return photo.url;

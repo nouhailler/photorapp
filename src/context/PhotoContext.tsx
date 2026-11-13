@@ -13,6 +13,9 @@ import {
 } from '../utils/db';
 import type { MigrationReport } from '../utils/db';
 import { analyzeImageQuality } from '../services/qualityService';
+import { analyzePhotoContent, applyAnalysisToPhoto } from '../services/aiVisionService';
+import { activityService } from '../services/activityService';
+import { getOrCreateThumbnailBlob } from '../services/thumbnailService';
 import { PhotoContext } from './photoContextDef';
 
 export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -99,19 +102,31 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [albums]);
 
-  const getPhotoUrl = useCallback(async (photo: Photo): Promise<string> => {
+  const getPhotoUrl = useCallback(async (photo: Photo, isThumbnail = false): Promise<string> => {
     if (photo.storage === 'remote' || !photo.storage) {
       return photo.url;
     }
 
-    if (localUrlsRef.current[photo.id]) {
-      return localUrlsRef.current[photo.id];
+    const cacheKey = isThumbnail ? `${photo.id}_thumb` : photo.id;
+
+    if (localUrlsRef.current[cacheKey]) {
+      return localUrlsRef.current[cacheKey];
+    }
+
+    // Try thumbnail first if thumbnail requested
+    if (isThumbnail) {
+      const thumbBlob = await getOrCreateThumbnailBlob(photo);
+      if (thumbBlob) {
+        const url = URL.createObjectURL(thumbBlob);
+        localUrlsRef.current[cacheKey] = url;
+        return url;
+      }
     }
 
     const blob = await getPhotoBlob(photo.id);
     if (blob) {
       const url = URL.createObjectURL(blob);
-      localUrlsRef.current[photo.id] = url;
+      localUrlsRef.current[cacheKey] = url;
       return url;
     }
 
@@ -422,20 +437,44 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         if (blob) {
-          const analysis = await analyzeImageQuality(blob);
+          const qualityAnalysis = await analyzeImageQuality(blob);
+          let contentAnalysis = {
+            sceneTags: [] as import('../types/types').PhotoSceneTag[],
+            autoKeywords: [] as string[],
+            dominantColors: [] as string[],
+            detectedFacesCount: 0,
+          };
+          try {
+            contentAnalysis = await analyzePhotoContent(blob);
+          } catch (visionErr) {
+            console.warn(`Scene vision failed for photo ${photoId}:`, visionErr);
+          }
+
           setPhotos((prev) =>
             prev.map((p) => {
               if (p.id === photoId) {
-                const currentMeta = p.metadata || {
-                  device: 'Unknown',
-                  resolution: 'Unknown',
-                  date: p.date,
+                const withContent = applyAnalysisToPhoto(p, contentAnalysis);
+                const mergedAnalysis = {
+                  ...qualityAnalysis,
+                  ...(withContent.metadata?.analysis || {}),
+                  qualityScore: qualityAnalysis.qualityScore,
+                  isBlurry: qualityAnalysis.isBlurry,
+                  isUnderexposed: qualityAnalysis.isUnderexposed,
+                  isOverexposed: qualityAnalysis.isOverexposed,
+                  laplacianVariance: qualityAnalysis.laplacianVariance,
+                  meanLuminance: qualityAnalysis.meanLuminance,
+                  dHash: qualityAnalysis.dHash,
+                  analyzedAt: new Date().toISOString(),
                 };
                 const updated: Photo = {
-                  ...p,
+                  ...withContent,
                   metadata: {
-                    ...currentMeta,
-                    analysis,
+                    ...(withContent.metadata || {
+                      device: 'Unknown',
+                      resolution: 'Unknown',
+                      date: p.date,
+                    }),
+                    analysis: mergedAnalysis,
                   },
                   updatedAt: new Date().toISOString(),
                 };
@@ -455,13 +494,50 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const analyzeAllPhotos = useCallback(
     async (onProgress?: (current: number, total: number) => void) => {
-      const unanalyzed = photos.filter((p) => !p.metadata?.analysis);
+      const unanalyzed = photos.filter((p) => !p.metadata?.analysis || !p.metadata.analysis.sceneTags);
       const total = unanalyzed.length;
+      if (total === 0) return;
 
-      for (let i = 0; i < total; i++) {
-        const photo = unanalyzed[i];
-        onProgress?.(i + 1, total);
-        await analyzePhoto(photo.id);
+      const taskId = activityService.createTask(
+        'ai_analysis',
+        `Analyse IA locale (${total} photos)`,
+        true
+      );
+      const signal = activityService.getAbortSignal(taskId);
+      activityService.updateTask(taskId, {
+        status: 'running',
+        progress: 0,
+        statusMessage: `Initialisation de l'analyse sur ${total} photos...`,
+      });
+
+      try {
+        for (let i = 0; i < total; i++) {
+          if (signal?.aborted) {
+            break;
+          }
+          const photo = unanalyzed[i];
+          onProgress?.(i + 1, total);
+          const pct = Math.round(((i + 1) / total) * 100);
+          activityService.updateTask(taskId, {
+            progress: pct,
+            statusMessage: `Analyse des pixels (${i + 1}/${total}) : ${photo.alt || 'Photo'}`,
+          });
+          await analyzePhoto(photo.id);
+        }
+
+        if (!signal?.aborted) {
+          activityService.updateTask(taskId, {
+            status: 'completed',
+            progress: 100,
+            statusMessage: `${total} photo(s) analysée(s) localement avec succès.`,
+          });
+        }
+      } catch (err) {
+        activityService.updateTask(taskId, {
+          status: 'failed',
+          error: err instanceof Error ? err.message : 'Erreur inconnue',
+          statusMessage: "Échec de l'analyse locale.",
+        });
       }
     },
     [photos, analyzePhoto]

@@ -34,6 +34,12 @@ export interface PhotoExif {
   orientation?: number;
 }
 
+export interface PhotoSceneTag {
+  label: string;
+  confidence: number;
+  category: 'scene' | 'object' | 'nature' | 'urban' | 'portrait' | 'color' | 'event';
+}
+
 export interface PhotoAnalysis {
   qualityScore?: number; // 0-100
   laplacianVariance?: number; // Blur metric
@@ -44,6 +50,9 @@ export interface PhotoAnalysis {
   dHash?: string; // Perceptual hash for similarity
   dominantColors?: string[];
   detectedFacesCount?: number;
+  sceneTags?: PhotoSceneTag[];
+  autoKeywords?: string[];
+  analyzedAt?: string;
 }
 
 export interface PhotoMetadata {
@@ -75,6 +84,7 @@ export interface Photo {
   tags: string[];
   storage?: 'local' | 'remote';
   personIds?: string[];
+  hasThumbnail?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -115,7 +125,24 @@ export interface PersonGroup {
   name: string;
   coverPhotoId?: string;
   photoIds: string[];
+  faceBoundingBox?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
   createdAt: string;
+}
+
+export interface PhotoSouvenir {
+  id: string;
+  title: string;
+  subtitle: string;
+  type: 'on_this_day' | 'past_years' | 'same_season' | 'trip' | 'forgotten_favorites';
+  periodLabel: string;
+  photos: Photo[];
+  coverPhoto: Photo;
+  dateKey: string;
 }
 
 export interface StorageDiagnostic {
@@ -126,6 +153,8 @@ export interface StorageDiagnostic {
   totalSizeEstimatedBytes: number;
   orphanedBlobsCount: number;
   missingBlobsCount: number;
+  thumbnailsCount?: number;
+  missingThumbnailsCount?: number;
   indexedDbSupported: boolean;
 }
 

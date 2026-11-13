@@ -19,7 +19,7 @@ export interface PhotoContextType {
   addPhotosToAlbum: (photoIds: string[], albumId: string) => void;
   removePhotoFromAlbum: (photoId: string, albumId: string) => void;
   setAlbumCover: (albumId: string, photoId: string) => void;
-  getPhotoUrl: (photo: Photo) => Promise<string>;
+  getPhotoUrl: (photo: Photo, isThumbnail?: boolean) => Promise<string>;
   analyzePhoto: (photoId: string) => Promise<void>;
   analyzeAllPhotos: (onProgress?: (current: number, total: number) => void) => Promise<void>;
 }

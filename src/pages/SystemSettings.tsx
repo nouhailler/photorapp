@@ -10,13 +10,29 @@ import {
 } from '../services/updateService';
 import type { UpdateStatus } from '../services/updateService';
 import { useHelp } from '../context/useHelp';
+import { usePhotos } from '../context/usePhotos';
 import { PWAInstallButton } from '../components/PWAInstallButton';
 import { HelpTooltip } from '../components/HelpTooltip';
+import { runFullBenchmarkSuite } from '../services/benchmarkService';
+import type { BenchmarkMeasurement } from '../services/benchmarkService';
+import { regenerateAllMissingThumbnails } from '../services/thumbnailService';
+import { cleanupOrphanedBlobs, cleanupOrphanedThumbnails } from '../utils/db';
 
 export const SystemSettings: React.FC = () => {
   const { isHelpModeActive, toggleHelpMode, openLegalModal } = useHelp();
+  const { photos } = usePhotos();
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>(getUpdateStatus);
   const [feedbackMessage, setFeedbackMessage] = useState<string>('');
+
+  // Benchmark state
+  const [isBenchmarking, setIsBenchmarking] = useState(false);
+  const [benchmarkProgress, setBenchmarkProgress] = useState<string>('');
+  const [benchmarkResults, setBenchmarkResults] = useState<BenchmarkMeasurement[]>([]);
+
+  // Maintenance state
+  const [isMaintaining, setIsMaintaining] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState('');
+
 
   useEffect(() => {
     const unsubscribe = subscribeToUpdates((status) => {
@@ -37,6 +53,43 @@ export const SystemSettings: React.FC = () => {
       await forceAppUpdate();
     }
   };
+
+  const handleRunBenchmark = async () => {
+    setIsBenchmarking(true);
+    setBenchmarkResults([]);
+    try {
+      const results = await runFullBenchmarkSuite((count, idx, total) => {
+        setBenchmarkProgress(`Test de charge en cours : ${count.toLocaleString('fr-FR')} photos (${idx}/${total})...`);
+      });
+      setBenchmarkResults(results);
+      setBenchmarkProgress('');
+    } catch (err) {
+      console.error('Benchmark error:', err);
+      setBenchmarkProgress('Erreur lors du test de performance.');
+    } finally {
+      setIsBenchmarking(false);
+    }
+  };
+
+  const handleRepairThumbnails = async () => {
+    setIsMaintaining(true);
+    setMaintenanceMessage('Génération des miniatures manquantes...');
+    try {
+      const res = await regenerateAllMissingThumbnails(photos);
+      const activeIds = photos.map((p) => p.id);
+      const orphanBlobs = await cleanupOrphanedBlobs(activeIds);
+      const orphanThumbs = await cleanupOrphanedThumbnails(activeIds);
+      setMaintenanceMessage(
+        `Maintenance terminée : ${res.generated} miniature(s) régénérée(s), ${orphanBlobs + orphanThumbs} élément(s) orphelin(s) nettoyé(s).`
+      );
+    } catch (err) {
+      console.error('Maintenance error:', err);
+      setMaintenanceMessage('Erreur lors de la maintenance.');
+    } finally {
+      setIsMaintaining(false);
+    }
+  };
+
 
   const formatDateTime = (isoString: string | null) => {
     if (!isoString) return 'Jamais vérifié';
@@ -260,8 +313,108 @@ export const SystemSettings: React.FC = () => {
           {isHelpModeActive ? 'Activé' : 'Désactivé'}
         </button>
       </section>
+
+      {/* Card 6: Performance & Benchmark Suite (1k to 20k photos) */}
+      <section className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-outline-variant/20">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[24px]">speed</span>
+            <div>
+              <h3 className="text-headline-sm font-bold text-on-surface">
+                Test de Charge & Capacité (1 000 à 20 000 photos)
+              </h3>
+              <p className="text-[12px] text-on-surface-variant">
+                Mesure les performances réelles de votre navigateur : indexation, recherche, regroupement et mémoire.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleRunBenchmark}
+            disabled={isBenchmarking}
+            className="px-4 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-sm flex items-center gap-2 active:scale-95 disabled:opacity-50 transition-all shrink-0"
+          >
+            <span className={`material-symbols-outlined text-[18px] ${isBenchmarking ? 'animate-spin' : ''}`}>
+              {isBenchmarking ? 'sync' : 'play_arrow'}
+            </span>
+            <span>{isBenchmarking ? 'Benchmark en cours...' : 'Lancer le benchmark'}</span>
+          </button>
+        </div>
+
+        {benchmarkProgress && (
+          <div className="p-3 bg-primary-container/20 rounded-xl text-label-xs font-bold text-primary">
+            {benchmarkProgress}
+          </div>
+        )}
+
+        {benchmarkResults.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-[12px]">
+              <thead>
+                <tr className="border-b border-outline-variant/20 text-on-surface-variant">
+                  <th className="py-2 pr-3 font-bold">Volume</th>
+                  <th className="py-2 px-3 font-bold">Chargement</th>
+                  <th className="py-2 px-3 font-bold">Recherche texte</th>
+                  <th className="py-2 px-3 font-bold">Filtres croisés</th>
+                  <th className="py-2 px-3 font-bold">Groupage dates</th>
+                  <th className="py-2 pl-3 font-bold">Mémoire est.</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/10">
+                {benchmarkResults.map((row) => (
+                  <tr key={row.photoCount} className="hover:bg-surface/50">
+                    <td className="py-2.5 pr-3 font-bold text-primary">
+                      {row.photoCount.toLocaleString('fr-FR')} photos
+                    </td>
+                    <td className="py-2.5 px-3 font-semibold text-on-surface">{row.initialLoadMs} ms</td>
+                    <td className="py-2.5 px-3 font-semibold text-on-surface">{row.searchFullTextMs} ms</td>
+                    <td className="py-2.5 px-3 font-semibold text-on-surface">{row.searchFilterMultiCriteriaMs} ms</td>
+                    <td className="py-2.5 px-3 font-semibold text-on-surface">{row.groupingByDateMs} ms</td>
+                    <td className="py-2.5 pl-3 font-semibold text-on-surface">{row.estimatedMemoryMb} Mo</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Card 7: Réparation & Maintenance IndexedDB */}
+      <section className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[24px]">build_circle</span>
+            <div>
+              <h3 className="text-headline-sm font-bold text-on-surface">
+                Réparation & Optimisation des Miniatures
+              </h3>
+              <p className="text-[12px] text-on-surface-variant">
+                Reconstruit les miniatures manquantes et purge les fichiers orphelins pour garantir une fluidité à 60 fps.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleRepairThumbnails}
+            disabled={isMaintaining}
+            className="px-4 py-2.5 bg-surface-container-high hover:bg-surface-variant text-primary rounded-xl font-bold text-label-sm flex items-center gap-2 active:scale-95 disabled:opacity-50 transition-all shrink-0"
+          >
+            <span className={`material-symbols-outlined text-[18px] ${isMaintaining ? 'animate-spin' : ''}`}>
+              {isMaintaining ? 'sync' : 'handyman'}
+            </span>
+            <span>{isMaintaining ? 'Maintenance...' : 'Régénérer & Nettoyer'}</span>
+          </button>
+        </div>
+
+        {maintenanceMessage && (
+          <div className="p-3 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-xl text-label-xs font-bold">
+            {maintenanceMessage}
+          </div>
+        )}
+      </section>
     </div>
   );
 };
 
 export default SystemSettings;
+

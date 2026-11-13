@@ -9,14 +9,23 @@ import { HamburgerMenu } from './HamburgerMenu';
 import { OnboardingModal } from './OnboardingModal';
 import { PWAInstallButton } from './PWAInstallButton';
 import { HelpTooltip } from './HelpTooltip';
+import { ActivityCenterModal } from './ActivityCenterModal';
+import { activityService } from '../services/activityService';
 import { initBackgroundUpdateChecker } from '../services/updateService';
 
 interface TopAppBarProps {
   onOpenMenu: () => void;
   onImportClick: () => void;
+  onOpenActivityCenter: () => void;
+  runningTasksCount: number;
 }
 
-const TopAppBar: React.FC<TopAppBarProps> = ({ onOpenMenu, onImportClick }) => {
+const TopAppBar: React.FC<TopAppBarProps> = ({
+  onOpenMenu,
+  onImportClick,
+  onOpenActivityCenter,
+  runningTasksCount,
+}) => {
   const { isHelpModeActive, toggleHelpMode } = useHelp();
 
   return (
@@ -51,6 +60,23 @@ const TopAppBar: React.FC<TopAppBarProps> = ({ onOpenMenu, onImportClick }) => {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Activity Center Trigger */}
+        <button
+          onClick={onOpenActivityCenter}
+          className="relative w-9 h-9 rounded-xl bg-surface-container-high hover:bg-surface-variant flex items-center justify-center text-on-surface transition-all active:scale-95"
+          title="Centre d'activité et tâches en arrière-plan"
+          aria-label="Centre d'activité"
+        >
+          <span className={`material-symbols-outlined text-[20px] ${runningTasksCount > 0 ? 'text-primary animate-pulse' : ''}`}>
+            pending_actions
+          </span>
+          {runningTasksCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-on-primary text-[10px] font-bold flex items-center justify-center shadow-sm">
+              {runningTasksCount}
+            </span>
+          )}
+        </button>
+
         {/* PWA Install Button */}
         <PWAInstallButton variant="compact" />
 
@@ -130,6 +156,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isActivityOpen, setIsActivityOpen] = useState(false);
+  const [runningTasksCount, setRunningTasksCount] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
@@ -138,7 +166,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Initialisation de la surveillance automatique des mises à jour en arrière-plan
   useEffect(() => {
     const cleanup = initBackgroundUpdateChecker(15 * 60 * 1000);
-    return () => cleanup();
+    const unsubActivity = activityService.subscribe((tasks) => {
+      const active = tasks.filter((t) => t.status === 'running' || t.status === 'pending').length;
+      setRunningTasksCount(active);
+    });
+    return () => {
+      cleanup();
+      unsubActivity();
+    };
   }, []);
 
   const handleImportClick = () => {
@@ -188,6 +223,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <TopAppBar
         onOpenMenu={() => setIsMenuOpen(true)}
         onImportClick={handleImportClick}
+        onOpenActivityCenter={() => setIsActivityOpen(true)}
+        runningTasksCount={runningTasksCount}
       />
 
       {/* Categorized Hamburger Drawer */}
@@ -195,6 +232,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         onImportClick={handleImportClick}
+        onOpenActivityCenter={() => {
+          setIsMenuOpen(false);
+          setIsActivityOpen(true);
+        }}
+      />
+
+      {/* Activity Center Modal */}
+      <ActivityCenterModal
+        isOpen={isActivityOpen}
+        onClose={() => setIsActivityOpen(false)}
       />
 
       {/* Mandatory Onboarding & Legal Disclaimer Modal */}

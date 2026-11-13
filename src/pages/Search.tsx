@@ -3,7 +3,7 @@ import { usePhotos } from '../context/usePhotos';
 import PhotoGrid from '../components/PhotoGrid';
 import DetailView from '../components/DetailView';
 import Editor from '../components/Editor';
-import { filterPhotos, extractAvailableFilters } from '../services/searchEngine';
+import { extractAvailableFilters, smartSearchPhotos } from '../services/searchEngine';
 import type { SearchFilters } from '../services/searchEngine';
 import { HelpTooltip } from '../components/HelpTooltip';
 import type { Photo } from '../types/types';
@@ -40,7 +40,7 @@ const Search: React.FC = () => {
     if (gpsFilter === 'withoutGps') hasGpsValue = false;
 
     return {
-      query: [query, selectedTag].filter(Boolean).join(' '),
+      query: selectedTag ? selectedTag : undefined,
       year: selectedYear,
       month: selectedMonth,
       albumId: selectedAlbumId,
@@ -52,7 +52,6 @@ const Search: React.FC = () => {
       dateRange: dateStart || dateEnd ? { start: dateStart, end: dateEnd } : undefined,
     };
   }, [
-    query,
     selectedTag,
     selectedYear,
     selectedMonth,
@@ -66,9 +65,13 @@ const Search: React.FC = () => {
     dateEnd,
   ]);
 
-  const searchResults = useMemo(() => {
-    return filterPhotos(photos, filters, albums);
-  }, [photos, filters, albums]);
+  // Intelligent Search Outcome (natural language + metadata)
+  const searchOutcome = useMemo(() => {
+    return smartSearchPhotos(photos, query, filters, albums);
+  }, [photos, query, filters, albums]);
+
+  const searchResults = searchOutcome.results;
+
 
   const hasActiveFilters = Boolean(
     query ||
@@ -143,7 +146,50 @@ const Search: React.FC = () => {
             </button>
           )}
         </div>
+
+        {/* Natural Language Semantic Badges */}
+        {(searchOutcome.inferredCategory || searchOutcome.semanticTags.length > 0) && (
+          <div className="flex items-center gap-2 pt-2.5 px-2 flex-wrap text-label-xs animate-in fade-in">
+            <span className="text-primary font-bold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[15px]">psychology</span>
+              Analyse du langage naturel :
+            </span>
+            {searchOutcome.inferredCategory && (
+              <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container font-semibold">
+                Scène : {searchOutcome.inferredCategory}
+              </span>
+            )}
+            {searchOutcome.semanticTags.map((tag) => (
+              <span key={tag} className="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-semibold">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Query Suggestions for novices */}
+        {!query && (
+          <div className="flex items-center gap-1.5 pt-2 px-1 flex-wrap">
+            <span className="text-[11px] text-on-surface-variant/80 font-medium">Exemples :</span>
+            {[
+              'Montagnes en hiver',
+              'Chiens dans un jardin',
+              'Coucher de soleil',
+              'Portraits récents',
+              'Photos avec GPS',
+            ].map((example) => (
+              <button
+                key={example}
+                onClick={() => setQuery(example)}
+                className="px-2.5 py-0.5 rounded-full bg-surface-container-high hover:bg-surface-variant text-[11px] text-on-surface-variant hover:text-on-surface transition-colors border border-outline-variant/20"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+
 
       {/* Quick Filter Chips Section */}
       <section className="space-y-3">

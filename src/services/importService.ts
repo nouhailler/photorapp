@@ -1,6 +1,7 @@
 import ExifReader from 'exifreader';
 import type { Photo, PhotoMetadata, PhotoExif } from '../types/types';
-import { savePhotoBlob, savePhotoMeta } from '../utils/db';
+import { savePhotoBlob, savePhotoMeta, saveThumbnailBlob } from '../utils/db';
+import { generateThumbnailBlob } from './thumbnailService';
 
 export interface ImportProgress {
   current: number;
@@ -259,7 +260,7 @@ export async function processPhotosImport(
         createdAt: new Date().toISOString(),
       };
 
-      // 4. Save to IndexedDB (both blob and metadata)
+      // 4. Save to IndexedDB (master blob, thumbnail, and metadata)
       onProgress?.({
         current: i + 1,
         total,
@@ -267,6 +268,13 @@ export async function processPhotosImport(
         phase: 'saving',
       });
       await savePhotoBlob({ id, blob: file });
+      try {
+        const thumbBlob = await generateThumbnailBlob(file);
+        await saveThumbnailBlob({ id, blob: thumbBlob });
+        photo.hasThumbnail = true;
+      } catch (thumbErr) {
+        console.warn(`[ImportService] Thumbnail generation skipped for ${file.name}:`, thumbErr);
+      }
       await savePhotoMeta(photo);
 
       importedPhotos.push(photo);

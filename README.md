@@ -7,11 +7,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-2.4.0-1E35D0?style=for-the-badge&logo=rocket" alt="Version 2.4.0" />
-  <img src="https://img.shields.io/badge/Date_de_sortie-10_Novembre_2026-10B981?style=for-the-badge" alt="Release Date" />
+  <img src="https://img.shields.io/badge/Version-2.5.0-1E35D0?style=for-the-badge&logo=rocket" alt="Version 2.5.0" />
+  <img src="https://img.shields.io/badge/Date_de_sortie-13_Novembre_2026-10B981?style=for-the-badge" alt="Release Date" />
   <img src="https://img.shields.io/badge/PWA-Installable-38BDF8?style=for-the-badge&logo=pwa" alt="PWA Ready" />
   <img src="https://img.shields.io/badge/Confidentialit%C3%A9-100%25_Local_First-6366F1?style=for-the-badge&logo=shield" alt="Local First" />
-  <img src="https://img.shields.io/badge/IndexedDB-GalleryProDB-F59E0B?style=for-the-badge" alt="IndexedDB" />
+  <img src="https://img.shields.io/badge/IndexedDB-GalleryProDB_v3-F59E0B?style=for-the-badge" alt="IndexedDB" />
 </p>
 
 ---
@@ -26,15 +26,15 @@
 
 | Catégorie | Fonctionnalité | Description | Statut |
 | :--- | :--- | :--- | :--- |
+| **🧠 IA Vision Locale** | **Classification sémantique & Visages** | Reconnaissance locale des scènes (Paysages, Portraits, Plages, Nuit), mots-clés auto et regroupement biométrique opt-in avec effacement irréversible. | ✅ Opérationnel |
+| **🔎 Langage Naturel** | **Recherche conversationnelle** | Requêtes naturelles (« Montagnes en hiver », « Chiens dans un jardin », « Coups de cœur GPS ») interprétées localement. | ✅ Opérationnel |
+| **✨ Souvenirs** | **Rétrospectives authentiques** | Carrousel automatique « Il y a 1 an », « Même période » et « Escapades » basé uniquement sur vos dates et lieux EXIF réels. | ✅ Opérationnel |
+| **⚡ Performances 20k** | **Miniatures WebP & Grille Virtualisée** | Pipeline de miniatures (~20 Ko) dans IndexedDB v3 et fenêtrage virtualisé 60 fps jusqu'à 20 000 photos + suite de benchmark intégrée. | ✅ Opérationnel |
+| **🛡️ Préservation** | **Simulation de Restauration & Centre d'Activité** | Prévisualisation avant restauration ZIP, réparation des miniatures manquantes et suivi/annulation des tâches longues. | ✅ Opérationnel |
 | **🍔 Menu Hamburger** | **Organisation par catégories** | Accès immédiat regroupé : Photothèque, Outils IA, Gestion Données, Système. | ✅ Opérationnel |
 | **📲 PWA & Mobiles** | **Bouton « Installer l'application »** | Installation directe sur l'écran d'accueil (Desktop, Android, iOS Safari) en 1 clic. | ✅ Opérationnel |
-| **⚙️ Système** | **Paramètres Système & Mises à jour** | Date de version, vérification manuelle, mise à jour forcée du cache. | ✅ Opérationnel |
-| **🔄 Auto-Update** | **Mises à jour automatiques en arrière-plan** | Service Worker périodique vérifiant et installant les nouvelles versions sans perturber l'utilisateur. | ✅ Opérationnel |
-| **💡 Onboarding** | **Aide Novice & Infobulles contextuelles** | Badges d'aide `?` interactifs sur tous les champs et écrans pour guider les débutants. | ✅ Opérationnel |
-| **⚖️ Légal** | **Mentions légales & Décharge de responsabilité** | Clause contractuelle claire : l'auteur n'est pas responsable des données fournies par les utilisateurs. | ✅ Opérationnel |
-| **🖼️ Photothèque** | **Galerie & Albums Intelligents** | Organisation chronologique, tri dynamique, albums manuels et règles automatiques. | ✅ Opérationnel |
-| **✨ IA & Qualité** | **Éditeur & Détection de Doublons** | Filtres non destructifs, recadrage libre & ratios, scoring netteté/qualité, détection de similitudes. | ✅ Opérationnel |
-| **💾 Données & Sauvegardes** | **Sauvegarde Intégrale ZIP SHA-256** | Manifeste versionné v2, conservation des fichiers originaux, vérification d'intégrité et restauration. | ✅ Opérationnel |
+| **⚙️ Système** | **Paramètres Système & Mises à jour** | Date de version, vérification manuelle, mise à jour forcée du cache et mises à jour automatiques. | ✅ Opérationnel |
+| **💡 Onboarding** | **Aide Novice & Mentions Légales** | Badges `?` interactifs sur tous les champs et clause de non-responsabilité sur les données locales. | ✅ Opérationnel |
 
 ---
 

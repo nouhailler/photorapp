@@ -6,6 +6,27 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [2.5.0] - 2026-11-13
+
+### 🚀 Phase 3 : Intelligence Photographique, Performances & Fiabilité Produit
+- **🧠 Intelligence Photographique Locale :**
+  - Nouveau moteur de vision par ordinateur `aiVisionService.ts` : classification sémantique (Nature & Paysage, Plage & Mer, Architecture & Ville, Coucher de soleil, Portrait, Nuit) et mots-clés automatiques sans appel serveur.
+  - Recherche en langage naturel `naturalSearchService.ts` (« Montagnes en hiver », « Chiens dans un jardin », « Photos avec GPS ») avec badges d'interprétation sémantique sur `/search`.
+  - Carrousel de Souvenirs Rétrospectifs (`souvenirService.ts` & `SouvenirsCarousel.tsx`) intégré à la Galerie : « Ce jour-là il y a 1 an », « Même saison », « Escapades » et « Coups de cœur oubliés » sans jamais inventer de dates ni de lieux.
+  - Regroupement local de visages (`faceService.ts`) strictement opt-in, renommage manuel et bouton d'effacement biométrique irréversible (`clearAllFaceData`).
+
+- **⚡ Performance & Capacité jusqu'à 20 000 photos :**
+  - Passage d'IndexedDB (`GalleryProDB`) en v3 avec store dédié `thumbnails` et pipeline WebP/JPEG (~20 Ko par miniature).
+  - Virtualisation par fenêtrage de lignes dans `PhotoGrid.tsx` (> 48 photos) assurant un défilement fluide à 60 fps.
+  - Suite de benchmark authentique (`benchmarkService.ts`) intégrée dans `/settings` mesurant chargement, recherche, filtres et mémoire de 1 000 à 20 000 photos.
+
+- **🛡️ Fiabilité, Préservation & Suivi :**
+  - Simulation et prévisualisation de restauration (`simulateRestoreBackup` & `RestoreSimulationModal`) avant toute écriture dans IndexedDB.
+  - Outils de réparation dans `/sharing` et `/settings` : régénération en lot des miniatures manquantes et nettoyage des fichiers orphelins.
+  - Centre d'Activité unifié (`activityService.ts` & `ActivityCenterModal`) accessible depuis la barre supérieure et le menu Hamburger avec annulation des tâches longues.
+
+---
+
 ## [2.4.0] - 2026-11-10
 
 ### 🚀 Nouveautés & Fonctionnalités Majeures

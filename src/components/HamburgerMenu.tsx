@@ -8,6 +8,7 @@ interface HamburgerMenuProps {
   isOpen: boolean;
   onClose: () => void;
   onImportClick?: () => void;
+  onOpenActivityCenter?: () => void;
 }
 
 interface MenuCategory {
@@ -27,6 +28,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   isOpen,
   onClose,
   onImportClick,
+  onOpenActivityCenter,
 }) => {
   const { isHelpModeActive, toggleHelpMode, openLegalModal } = useHelp();
 
@@ -117,7 +119,16 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           label: 'Paramètres Système & Mises à Jour',
           path: '/settings',
           icon: 'system_update',
-          description: 'Versions, vérification manuelle et auto-update',
+          description: 'Versions, benchmark 20k photos et auto-update',
+        },
+        {
+          label: "Centre d'Activité & Tâches",
+          action: () => {
+            onClose();
+            onOpenActivityCenter?.();
+          },
+          icon: 'pending_actions',
+          description: 'Suivi en direct et annulation des opérations longues',
         },
         {
           label: 'Guide & Infobulles pour Novices',

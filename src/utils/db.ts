@@ -1,10 +1,11 @@
 import type { Photo, Album, StorageDiagnostic, PersonGroup } from '../types/types';
 
 const DB_NAME = 'GalleryProDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export const STORES = {
-  PHOTOS: 'photos', // Photo blobs: { id: string, blob: Blob }
+  PHOTOS: 'photos', // Master photo blobs: { id: string, blob: Blob }
+  THUMBNAILS: 'thumbnails', // Lightweight preview thumbnails: { id: string, blob: Blob }
   METADATA: 'metadata', // Photo metadata: Photo
   ALBUMS: 'albums', // Album metadata: Album
   PERSONS: 'persons', // PersonGroup: PersonGroup
@@ -66,9 +67,14 @@ export const openDB = (): Promise<IDBDatabase> => {
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
 
-      // Store for binary blobs
+      // Store for binary master blobs
       if (!db.objectStoreNames.contains(STORES.PHOTOS)) {
         db.createObjectStore(STORES.PHOTOS, { keyPath: 'id' });
+      }
+
+      // Store for lightweight thumbnails
+      if (!db.objectStoreNames.contains(STORES.THUMBNAILS)) {
+        db.createObjectStore(STORES.THUMBNAILS, { keyPath: 'id' });
       }
 
       // Store for photo metadata
@@ -97,7 +103,7 @@ export const openDB = (): Promise<IDBDatabase> => {
 };
 
 /* ============================================================
-   PHOTO BLOBS (BINARY DATA)
+   PHOTO BLOBS (BINARY MASTER DATA)
    ============================================================ */
 
 export const savePhotoBlob = async (photoBlob: PhotoBlob): Promise<void> => {
@@ -136,6 +142,63 @@ export const deletePhotoBlob = async (id: string): Promise<void> => {
 
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
+  });
+};
+
+/* ============================================================
+   THUMBNAILS (OPTIMIZED PREVIEW BLOBS)
+   ============================================================ */
+
+export const saveThumbnailBlob = async (thumbnail: PhotoBlob): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORES.THUMBNAILS, 'readwrite');
+    const store = transaction.objectStore(STORES.THUMBNAILS);
+    const request = store.put(thumbnail);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+};
+
+export const getThumbnailBlob = async (id: string): Promise<Blob | null> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORES.THUMBNAILS, 'readonly');
+    const store = transaction.objectStore(STORES.THUMBNAILS);
+    const request = store.get(id);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const result = request.result as PhotoBlob | undefined;
+      resolve(result ? result.blob : null);
+    };
+  });
+};
+
+export const deleteThumbnailBlob = async (id: string): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORES.THUMBNAILS, 'readwrite');
+    const store = transaction.objectStore(STORES.THUMBNAILS);
+    const request = store.delete(id);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+};
+
+export const getAllThumbnailIds = async (): Promise<string[]> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORES.THUMBNAILS, 'readonly');
+    const store = transaction.objectStore(STORES.THUMBNAILS);
+    const request = store.getAllKeys();
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      resolve((request.result as string[]) || []);
+    };
   });
 };
 
@@ -359,12 +422,17 @@ export const deletePhotoAtomic = async (
     transaction.onabort = () => reject(new Error('Transaction aborted during atomic photo deletion'));
   });
 
-  // Step 2: Delete local binary blob only after metadata transaction committed
+  // Step 2: Delete local binary blob and thumbnail only after metadata transaction committed
   if (isLocal) {
     try {
       await deletePhotoBlob(photoId);
     } catch (e) {
       console.warn(`[GalleryProDB] Non-fatal: blob ${photoId} deletion failed after metadata removed:`, e);
+    }
+    try {
+      await deleteThumbnailBlob(photoId);
+    } catch {
+      // Non-fatal
     }
   }
 };
@@ -392,12 +460,17 @@ export const deletePhotosAtomic = async (
     transaction.onabort = () => reject(new Error('Transaction aborted during atomic bulk photos deletion'));
   });
 
-  // Delete blobs afterwards
+  // Delete blobs and thumbnails afterwards
   for (const localId of localPhotoIds) {
     try {
       await deletePhotoBlob(localId);
     } catch (e) {
       console.warn(`[GalleryProDB] Non-fatal: blob ${localId} cleanup failed:`, e);
+    }
+    try {
+      await deleteThumbnailBlob(localId);
+    } catch {
+      // Non-fatal
     }
   }
 };
@@ -531,15 +604,23 @@ export const diagnoseStorage = async (
   let totalEstimatedBytes = 0;
   let orphanedBlobsCount = 0;
   let missingBlobsCount = 0;
+  let thumbnailsCount = 0;
+  let missingThumbnailsCount = 0;
 
   if (indexedDbSupported) {
     try {
-      const blobIds = await getAllBlobIds();
+      const [blobIds, thumbIds] = await Promise.all([
+        getAllBlobIds(),
+        getAllThumbnailIds(),
+      ]);
       const localPhotos = currentPhotos.filter((p) => p.storage === 'local');
       const localPhotoIds = new Set(localPhotos.map((p) => p.id));
+      const thumbSet = new Set(thumbIds);
 
       orphanedBlobsCount = blobIds.filter((id) => !localPhotoIds.has(id)).length;
       missingBlobsCount = localPhotos.filter((p) => !blobIds.includes(p.id)).length;
+      thumbnailsCount = thumbIds.length;
+      missingThumbnailsCount = localPhotos.filter((p) => !thumbSet.has(p.id)).length;
 
       // Estimate storage through quota API if available
       if (navigator.storage && navigator.storage.estimate) {
@@ -561,6 +642,8 @@ export const diagnoseStorage = async (
     totalSizeEstimatedBytes: totalEstimatedBytes,
     orphanedBlobsCount,
     missingBlobsCount,
+    thumbnailsCount,
+    missingThumbnailsCount,
     indexedDbSupported,
   };
 };
@@ -580,6 +663,25 @@ export const cleanupOrphanedBlobs = async (activePhotoIds: string[]): Promise<nu
     return removed;
   } catch (err) {
     console.error('[GalleryProDB] Error cleaning up orphaned blobs:', err);
+    return 0;
+  }
+};
+
+export const cleanupOrphanedThumbnails = async (activePhotoIds: string[]): Promise<number> => {
+  try {
+    const allThumbIds = await getAllThumbnailIds();
+    const activeSet = new Set(activePhotoIds);
+    let removed = 0;
+
+    for (const thumbId of allThumbIds) {
+      if (!activeSet.has(thumbId)) {
+        await deleteThumbnailBlob(thumbId);
+        removed++;
+      }
+    }
+    return removed;
+  } catch (err) {
+    console.error('[GalleryProDB] Error cleaning up orphaned thumbnails:', err);
     return 0;
   }
 };
