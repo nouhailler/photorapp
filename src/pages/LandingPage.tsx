@@ -3,6 +3,8 @@ import { LandingHeader } from '../components/landing/LandingHeader';
 import { HeroSection } from '../components/landing/HeroSection';
 import { ProblemSection } from '../components/landing/ProblemSection';
 import { FeaturesSection } from '../components/landing/FeaturesSection';
+import { InteractiveDemoSection } from '../components/landing/InteractiveDemoSection';
+import { UserJourneySection } from '../components/landing/UserJourneySection';
 import { IntelligenceSection } from '../components/landing/IntelligenceSection';
 import { BackupSection } from '../components/landing/BackupSection';
 import { PrivacySection } from '../components/landing/PrivacySection';
@@ -73,6 +75,12 @@ const LandingPage: React.FC = () => {
         </div>
         <div className="reveal-section">
           <FeaturesSection />
+        </div>
+        <div className="reveal-section">
+          <InteractiveDemoSection />
+        </div>
+        <div className="reveal-section">
+          <UserJourneySection />
         </div>
         <div className="reveal-section">
           <IntelligenceSection />

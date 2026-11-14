@@ -27,7 +27,7 @@ describe('LandingPage', () => {
       </MemoryRouter>
     );
 
-  it('renders the hero value proposition, primary app CTA (/gallery), and GitHub link without app onboarding popup', () => {
+  it('renders the hero value proposition, real interface caption, primary app CTA (/gallery), and GitHub link without onboarding popup', () => {
     renderLanding();
 
     expect(
@@ -37,8 +37,12 @@ describe('LandingPage', () => {
       })
     ).toBeInTheDocument();
 
+    expect(
+      screen.getByText(/Votre photothèque, organisée et accessible depuis votre navigateur\./i)
+    ).toBeInTheDocument();
+
     const appLinks = screen.getAllByRole('link', {
-      name: /Ouvrir Gallery Pro|Découvrir Gallery Pro|Accéder à Gallery Pro/i,
+      name: /Ouvrir Gallery Pro|Découvrir Gallery Pro|Accéder à Gallery Pro|Ouvrir ma propre photothèque/i,
     });
     expect(appLinks.length).toBeGreaterThanOrEqual(2);
     expect(appLinks.every((el) => el.getAttribute('href') === '/gallery')).toBe(true);
@@ -51,27 +55,69 @@ describe('LandingPage', () => {
     expect(screen.queryByText(/Mentions légales et responsabilité/i)).not.toBeInTheDocument();
   });
 
-  it('runs the real local natural search parser when switching sample queries', () => {
+  it('provides an isolated interactive DemoGallery with filters and keyboard-accessible lightbox', () => {
+    renderLanding();
+
+    // 8 local demonstration thumbnails initially visible
+    const photoButtons = screen.getAllByRole('button', { name: /Agrandir /i });
+    expect(photoButtons).toHaveLength(8);
+
+    // Filter by Littoral (2 photos)
+    fireEvent.click(screen.getByRole('button', { name: 'Littoral' }));
+    const coastalButtons = screen.getAllByRole('button', { name: /Agrandir /i });
+    expect(coastalButtons).toHaveLength(2);
+
+    // Open lightbox on the first coastal photo
+    fireEvent.click(coastalButtons[0]);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText(/Exemple 1 \/ 2/i)).toBeInTheDocument();
+
+    // Navigate to next demo photo
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    expect(screen.getByText(/Exemple 2 \/ 2/i)).toBeInTheDocument();
+
+    // Close with Escape key
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('runs the real local natural search parser on both sample chips and direct input typing', () => {
     renderLanding();
 
     // Default sample: "Montagnes en hiver" -> month 1
     expect(screen.getByText(/^mois 1$/i)).toBeInTheDocument();
 
-    // Switch to GPS query
+    // Switch to GPS query chip
     fireEvent.click(screen.getByRole('button', { name: /« Photos de plage avec GPS »/i }));
     expect(screen.getByText(/true \(Avec GPS\)/i)).toBeInTheDocument();
 
-    // Switch to blurry photos query
-    fireEvent.click(screen.getByRole('button', { name: /« Photos floues »/i }));
-    expect(screen.getByText(/true \(Flou détecté\)/i)).toBeInTheDocument();
+    // Type a custom query directly into the search input
+    const searchInput = screen.getByLabelText(/Saisir une requête de recherche de démonstration/i);
+    fireEvent.change(searchInput, { target: { value: 'Coups de cœur 2024 à Paris' } });
+    expect(screen.getByText(/true \(Favoris\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/année 2024/i)).toBeInTheDocument();
   });
 
-  it('updates before/after preview label when clicking editor preset buttons', () => {
+  it('updates before/after preview label and slider value in DemoPhotoEditor', () => {
     renderLanding();
 
     expect(screen.getByText(/Prévisualisation \(Vivid\)/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Noir & Blanc' }));
-    expect(screen.getByText(/Prévisualisation \(Noir & Blanc\)/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Noir et blanc' }));
+    expect(screen.getByText(/Prévisualisation \(Noir et blanc\)/i)).toBeInTheDocument();
+
+    const rangeSlider = screen.getByRole('slider', { name: /Curseur de comparaison avant\/après/i });
+    fireEvent.change(rangeSlider, { target: { value: '75' } });
+    expect(screen.getByText('75%')).toBeInTheDocument();
+  });
+
+  it('renders the 4-step visual user journey from import to preservation', () => {
+    renderLanding();
+
+    expect(screen.getByRole('heading', { name: /De vos premières photos à une photothèque organisée\./i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Importez vos photographies/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Organisez votre collection/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Retrouvez et améliorez vos photos/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Gardez le contrôle de vos souvenirs/i })).toBeInTheDocument();
   });
 
   it('toggles FAQ accordion items cleanly with aria-expanded', () => {
@@ -100,11 +146,14 @@ describe('LandingPage', () => {
     expect(screen.getByRole('navigation', { name: /Menu mobile/i })).toBeInTheDocument();
   });
 
-  it('displays all four real application screenshots alongside the complementary app_preview.svg diagram', () => {
+  it('displays real application screenshots alongside the complementary app_preview.svg diagram', () => {
     const { container } = renderLanding();
 
     const imgSrcs = Array.from(container.querySelectorAll('img')).map((img) => img.getAttribute('src'));
+    expect(imgSrcs).toContain('/screenshots/gallery-grid.png');
     expect(imgSrcs).toContain('/screenshots/gallery-drawer.png');
+    expect(imgSrcs).toContain('/screenshots/import-modal.png');
+    expect(imgSrcs).toContain('/screenshots/albums-view.png');
     expect(imgSrcs).toContain('/screenshots/photo-editor.png');
     expect(imgSrcs).toContain('/screenshots/ia-analysis-map.png');
     expect(imgSrcs).toContain('/screenshots/sharing-restore-sim.png');

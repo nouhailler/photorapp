@@ -2,15 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 
-const STEPS = [
-  { step: '01', title: 'Ouvrez Gallery Pro', detail: 'Accès direct dans le navigateur, sans inscription préalable.' },
-  { step: '02', title: 'Importez vos photographies', detail: 'Lecture EXIF/GPS, empreinte SHA-256 et miniatures locales.' },
-  { step: '03', title: 'Organisez vos albums', detail: 'Collections manuelles ou règles intelligentes dynamiques.' },
-  { step: '04', title: 'Retrouvez vos souvenirs', detail: 'Recherche multicritère, requêtes naturelles et carrousel annuel.' },
-  { step: '05', title: 'Retouchez vos images', detail: 'Ajustements visuels et recadrage sans toucher à l’original.' },
-  { step: '06', title: 'Sauvegardez votre photothèque', detail: 'Exportez régulièrement votre archive .gpro.zip en lieu sûr.' },
-];
-
 const SUMMARY_ROWS = [
   { need: 'Organiser ses photos', feature: 'Albums manuels et intelligents' },
   { need: 'Retrouver un cliché', feature: 'Recherche avancée et naturelle par règles lexicales' },
@@ -34,7 +25,7 @@ export const InstallAndWorkflowSection: React.FC = () => {
 
   return (
     <div className="bg-[#FAF9F6] divide-y divide-neutral-200/80 border-b border-neutral-200/80">
-      {/* SECTION 6 : PWA — Une application qui vous appartient */}
+      {/* SECTION PWA — Une application qui vous appartient */}
       <section aria-labelledby="pwa-heading" className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-7 space-y-4">
@@ -109,47 +100,8 @@ export const InstallAndWorkflowSection: React.FC = () => {
         </div>
       </section>
 
-      {/* SECTION 7 : Une expérience simple et guidée */}
-      <section aria-labelledby="guided-heading" className="bg-[#F2F1EC] py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
-            <div className="lg:col-span-7 space-y-3">
-              <p className="text-xs font-mono uppercase tracking-[0.16em] text-[#1E35D0] font-semibold">
-                Prise en main guidée
-              </p>
-              <h2
-                id="guided-heading"
-                className="font-serif text-3xl sm:text-4xl font-semibold text-[#18191D] leading-tight [text-wrap:balance]"
-              >
-                Conçue pour les utilisateurs novices comme pour les photographes exigeants.
-              </h2>
-            </div>
-            <p className="lg:col-span-5 text-sm text-neutral-600 leading-relaxed">
-              Dès la première ouverture de l&apos;application, un onboarding en 3 étapes présente le stockage local et
-              les mentions légales, complété par des infobulles contextuelles <code className="font-mono text-xs">?</code>{' '}
-              activables sur chaque champ et curseur.
-            </p>
-          </div>
-
-          <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {STEPS.map((item) => (
-              <li
-                key={item.step}
-                className="bg-white rounded-2xl border border-neutral-200/90 p-5 space-y-2"
-              >
-                <span className="font-mono text-xs font-semibold text-[#1E35D0] tabular-nums">
-                  Étape {item.step}
-                </span>
-                <h3 className="font-landing text-base font-bold text-[#18191D]">{item.title}</h3>
-                <p className="text-sm text-neutral-600 leading-relaxed">{item.detail}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* SECTION 8 : Tableau de synthèse des bénéfices */}
-      <section aria-labelledby="summary-heading" className="py-16 sm:py-20">
+      {/* Tableau de synthèse des bénéfices */}
+      <section aria-labelledby="summary-heading" className="bg-[#FAF9F6] py-16 sm:py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="space-y-2">
             <p className="text-xs font-mono uppercase tracking-[0.16em] text-[#1E35D0] font-semibold">
@@ -166,7 +118,7 @@ export const InstallAndWorkflowSection: React.FC = () => {
           <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-neutral-200 bg-[#F2F1EC]/70 text-xs font-semibold uppercase tracking-wider text-neutral-600">
+                <tr className="border-b border-neutral-200 bg-[#FAF9F6] text-xs font-semibold uppercase tracking-wider text-neutral-600">
                   <th scope="col" className="py-3.5 px-5 sm:px-6">
                     Besoin
                   </th>

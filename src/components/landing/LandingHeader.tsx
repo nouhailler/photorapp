@@ -4,7 +4,8 @@ import { GITHUB_REPO_URL } from './landingMedia';
 
 const NAV_LINKS = [
   { label: 'Fonctionnalités', href: '#fonctionnalites' },
-  { label: 'Intelligence', href: '#intelligence' },
+  { label: 'Démo', href: '#demo' },
+  { label: 'Parcours', href: '#parcours' },
   { label: 'Confidentialité', href: '#confidentialite' },
   { label: 'Sauvegarde', href: '#sauvegarde' },
   { label: 'FAQ', href: '#faq' },
@@ -50,7 +51,7 @@ export const LandingHeader: React.FC = () => {
         {/* Zone 2 : Liens de navigation concis */}
         <nav
           aria-label="Navigation principale"
-          className="hidden lg:flex items-center gap-7 text-sm font-medium text-neutral-600"
+          className="hidden lg:flex items-center gap-4 xl:gap-7 text-[13px] xl:text-sm font-medium text-neutral-600"
         >
           {NAV_LINKS.map((item) => (
             <a
@@ -64,14 +65,15 @@ export const LandingHeader: React.FC = () => {
         </nav>
 
         {/* Zone 3 : Actions desktop + bouton menu mobile */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 xl:gap-3 shrink-0">
           <a
             href={GITHUB_REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-[#18191D] px-3 py-2 rounded-lg hover:bg-neutral-200/50 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E35D0]"
+            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-[#18191D] px-2.5 xl:px-3 py-2 rounded-lg hover:bg-neutral-200/50 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E35D0]"
           >
-            <span>Découvrir sur GitHub</span>
+            <span className="xl:hidden">GitHub</span>
+            <span className="hidden xl:inline">Découvrir sur GitHub</span>
           </a>
 
           <Link
