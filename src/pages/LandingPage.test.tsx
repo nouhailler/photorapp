@@ -99,4 +99,15 @@ describe('LandingPage', () => {
     expect(screen.getByRole('button', { name: /Fermer le menu/i })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('navigation', { name: /Menu mobile/i })).toBeInTheDocument();
   });
+
+  it('displays all four real application screenshots alongside the complementary app_preview.svg diagram', () => {
+    const { container } = renderLanding();
+
+    const imgSrcs = Array.from(container.querySelectorAll('img')).map((img) => img.getAttribute('src'));
+    expect(imgSrcs).toContain('/screenshots/gallery-drawer.png');
+    expect(imgSrcs).toContain('/screenshots/photo-editor.png');
+    expect(imgSrcs).toContain('/screenshots/ia-analysis-map.png');
+    expect(imgSrcs).toContain('/screenshots/sharing-restore-sim.png');
+    expect(imgSrcs).toContain('/app_preview.svg');
+  });
 });

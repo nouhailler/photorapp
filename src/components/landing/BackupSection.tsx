@@ -93,6 +93,21 @@ export const BackupSection: React.FC = () => {
     └── ...`}
               </pre>
             </div>
+
+            <figure className="rounded-2xl overflow-hidden border border-neutral-200 bg-white shadow-sm">
+              <img
+                src="/screenshots/sharing-restore-sim.png"
+                alt="Capture réelle de l'onglet /sharing montrant la modale de prévisualisation avant restauration d'une archive .gpro.zip"
+                width={1366}
+                height={860}
+                loading="lazy"
+                className="w-full h-auto block"
+              />
+              <figcaption className="px-4 py-2.5 bg-[#14161D] text-neutral-300 text-xs">
+                Capture réelle de l&apos;onglet /sharing : prévisualisation et contrôle d&apos;intégrité avant
+                restauration d&apos;une archive .gpro.zip.
+              </figcaption>
+            </figure>
           </div>
         </div>
       </div>

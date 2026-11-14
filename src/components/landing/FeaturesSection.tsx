@@ -80,21 +80,36 @@ export const FeaturesSection: React.FC = () => {
             </ul>
           </div>
 
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 space-y-4">
             <figure className="rounded-2xl overflow-hidden border border-neutral-200 bg-[#0F172A] shadow-lg">
               <img
-                src="/app_preview.svg"
-                alt="Illustration vectorielle de l'architecture d'interface Gallery Pro avec menu latéral, grille chronologique et mode aide"
-                width={1200}
-                height={680}
+                src="/screenshots/gallery-drawer.png"
+                alt="Capture réelle de l'application Gallery Pro sur /gallery montrant la grille chronologique et le menu latéral par catégories ouvert"
+                width={1366}
+                height={860}
                 loading="lazy"
                 className="w-full h-auto block"
               />
               <figcaption className="px-4 py-2.5 bg-neutral-900 text-neutral-300 text-xs flex flex-wrap items-center justify-between gap-2">
-                <span>Illustration vectorielle de l&apos;espace de travail Gallery Pro (ressource du dépôt)</span>
+                <span>Capture réelle de la vue /gallery : grille chronologique chargée et menu latéral ouvert</span>
                 <Link to="/gallery" className="text-[#93C5FD] hover:underline font-medium">
-                  Ouvrir l&apos;application réelle →
+                  Ouvrir /gallery →
                 </Link>
+              </figcaption>
+            </figure>
+
+            <figure className="rounded-xl overflow-hidden border border-neutral-200 bg-[#0F172A] flex flex-col sm:flex-row items-center gap-4 p-3">
+              <img
+                src="/app_preview.svg"
+                alt="Illustration vectorielle complémentaire de l'architecture d'interface Gallery Pro"
+                width={1200}
+                height={680}
+                loading="lazy"
+                className="w-full sm:w-52 h-auto rounded-lg shrink-0 border border-white/10"
+              />
+              <figcaption className="text-xs text-neutral-300 leading-relaxed pr-2">
+                <strong className="text-white block mb-0.5">En complément : schéma vectoriel (/app_preview.svg)</strong>
+                Vue synthétique de l&apos;architecture générale de l&apos;espace de travail issue du dépôt.
               </figcaption>
             </figure>
           </div>
@@ -370,6 +385,21 @@ export const FeaturesSection: React.FC = () => {
                 />
               </label>
             </div>
+
+            <figure className="rounded-2xl overflow-hidden border border-neutral-200 bg-black shadow-sm">
+              <img
+                src="/screenshots/photo-editor.png"
+                alt="Capture réelle de l'éditeur photo Gallery Pro sur un cliché de lac alpin avec réglages non destructifs actifs"
+                width={1366}
+                height={860}
+                loading="lazy"
+                className="w-full h-auto block"
+              />
+              <figcaption className="px-4 py-2.5 bg-neutral-900 text-neutral-300 text-xs">
+                Capture réelle de l&apos;éditeur intégré : ajustements non destructifs en direct (Hautes lumières, Ombres,
+                Vignettage) et bouton « Comparer ».
+              </figcaption>
+            </figure>
           </div>
 
           {/* F. Retouche + G. Géolocalisation */}

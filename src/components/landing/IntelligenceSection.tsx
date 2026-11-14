@@ -80,6 +80,23 @@ export const IntelligenceSection: React.FC = () => {
           ))}
         </div>
 
+        <figure className="rounded-2xl overflow-hidden border border-neutral-200 bg-white shadow-sm">
+          <img
+            src="/screenshots/ia-analysis-map.png"
+            alt="Capture réelle de l'onglet /ia affichant le compteur d'analyse locale, les groupes de doublons, les catégories sémantiques et la carte Leaflet GPS"
+            width={1366}
+            height={1180}
+            loading="lazy"
+            className="w-full h-auto block"
+          />
+          <figcaption className="px-5 py-3 bg-[#14161D] text-neutral-300 text-xs flex flex-wrap items-center justify-between gap-2">
+            <span>
+              Capture réelle de l&apos;onglet /ia : bilan d&apos;analyse locale, détection de doublons SHA-256/dHash et
+              carte Leaflet OpenStreetMap des clichés géolocalisés.
+            </span>
+          </figcaption>
+        </figure>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-xl border border-neutral-200 px-6 py-4 text-sm">
           <p className="text-neutral-700">
             Consultez les résultats calculés par le moteur dans le module <strong>Intelligence &amp; Qualité</strong>.
