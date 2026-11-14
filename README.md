@@ -70,22 +70,24 @@ La plupart des photothèques modernes imposent un compromis difficile : soit de 
 
 ## Présentation visuelle
 
-![Aperçu graphique de l'interface Gallery Pro](public/app_preview.svg)
+![Aperçu de la galerie Gallery Pro](public/screenshots/gallery-grid.png)
 
-> *Illustration vectorielle de l'interface Gallery Pro (`public/app_preview.svg`). Le logo officiel du projet est disponible dans `public/logo.svg`, accompagné des icônes PWA `public/icon.svg`, `public/icons.svg` et `public/favicon.svg`.*
+> *Capture réelle de l'interface Gallery Pro (`/gallery`) complétée par le schéma vectoriel `public/app_preview.svg` et les ressources graphiques `public/logo.svg`, `public/icon.svg`, `public/icons.svg` et `public/favicon.svg`.*
 
-### Parcours visuels de l'application (emplacements prévus pour captures réelles)
+### Parcours visuels et captures réelles intégrées
 
-Le dépôt contient actuellement des visuels vectoriels (`public/logo.svg`, `public/app_preview.svg`) ainsi que des maquettes de conception initiales dans `stitch_photorapp/`. Pour documenter l'interface exécutée en production, les captures suivantes sont prévues dans l'arborescence éditoriale :
+Le dépôt inclut désormais les captures d'écran réelles de l'application dans `public/screenshots/`, exploitées sur la vitrine produit (`/`) et documentées ci-dessous :
 
-| Écran | Route | Rôle dans le parcours utilisateur | Statut visuel actuel |
+| Écran | Route | Rôle dans le parcours utilisateur | Capture disponible |
 | :--- | :--- | :--- | :--- |
-| **Galerie principale** | `/` | Mur chronologique, carrousel Souvenirs, sélection par lot | À capturer depuis l'app en exécution |
-| **Albums et sélections** | `/albums` | Albums manuels, albums intelligents, couverture et partage local | À capturer depuis l'app en exécution |
-| **Recherche avancée** | `/search` | Barre sémantique, badges d'interprétation, filtres date/lieu/appareil | À capturer depuis l'app en exécution |
-| **Éditeur non destructif** | Modale depuis `/` | Curseurs lumière/couleur, filtres, comparaison avant/après, recadrage | À capturer depuis l'app en exécution |
-| **Module Intelligence & Qualité** | `/ia` | Analyse locale des pixels, doublons SHA-256/dHash, carte GPS, personnes | À capturer depuis l'app en exécution |
-| **Sauvegardes & Paramètres** | `/sharing`, `/settings` | Import, export `.gpro.zip`, diagnostic IndexedDB, benchmark, mises à jour | À capturer depuis l'app en exécution |
+| **Vitrine produit publique** | `/` | Présentation éditoriale, démonstrations interactives isolées et parcours en 4 étapes | Page d'accueil publique |
+| **Galerie principale** | `/gallery` (et `/app`) | Mur chronologique, barre de recherche rapide, menu latéral et sélection par lot | `public/screenshots/gallery-grid.png`, `public/screenshots/gallery-drawer.png` |
+| **Importation locale** | Modale depuis `/gallery` | Ingestion par lots avec extraction EXIF, SHA-256 et miniatures WebP | `public/screenshots/import-modal.png` |
+| **Albums et sélections** | `/albums` | Albums manuels, albums intelligents dynamiques et couverture personnalisable | `public/screenshots/albums-view.png` |
+| **Recherche avancée** | `/search` | Barre sémantique, badges d'interprétation, filtres date/lieu/appareil | Accessible via le menu et `/search` |
+| **Éditeur non destructif** | Modale depuis `/gallery` | Curseurs lumière/couleur, filtres, comparaison avant/après, recadrage | `public/screenshots/photo-editor.png` |
+| **Module Intelligence & Qualité** | `/ia` | Analyse locale des pixels, doublons SHA-256/dHash, carte GPS, personnes | `public/screenshots/ia-analysis-map.png` |
+| **Sauvegardes & Paramètres** | `/sharing`, `/settings` | Import, export `.gpro.zip`, simulation de restauration, diagnostic IndexedDB, benchmark | `public/screenshots/sharing-restore-sim.png` |
 
 ---
 
@@ -93,7 +95,7 @@ Le dépôt contient actuellement des visuels vectoriels (`public/logo.svg`, `pub
 
 ### A. Photothèque personnelle
 
-- **Galerie chronologique** (`/`) : regroupement automatique des clichés par date de prise de vue avec en-têtes temporels et indicateurs de favoris ou d'alerte de flou.
+- **Galerie chronologique** (`/gallery` et alias `/app`) : regroupement automatique des clichés par date de prise de vue avec en-têtes temporels et indicateurs de favoris ou d'alerte de flou. La racine `/` présente la landing page produit publique sans écriture dans IndexedDB.
 - **Importation par lot** (`src/services/importService.ts`) : prise en charge des formats image navigateur (`JPEG`, `PNG`, `WebP`, `GIF`, `AVIF`, `HEIC`/`HEIF`, `TIFF`, `BMP` selon décodage du navigateur), calcul d'empreinte **SHA-256** pour ignorer les doublons exacts, lecture des dimensions et extraction EXIF via `exifreader`.
 - **Gestion des métadonnées** : stockage de l'appareil photo, de la résolution en mégapixels, de la date de prise de vue, des coordonnées GPS, de la vitesse d'obturation, de l'ouverture, de l'ISO et de la focale.
 - **Consultation et diaporama** (`DetailView.tsx`, `SlideshowModal.tsx`) : vue plein écran avec fiche EXIF détaillée, mise en favori, partage natif (`navigator.share` si disponible) ou téléchargement, et diaporama temporisé (`2s`, `3.5s`, `5s`, lecture aléatoire, raccourcis clavier).
@@ -237,9 +239,9 @@ L'architecture vise à garder l'interface réactive à mesure que le catalogue g
    Le hachage SHA-256, l'extraction EXIF, la génération de miniatures, le scoring de netteté/exposition, les empreintes `dHash`, l'analyse heuristique de scènes, le moteur de recherche et la création d'archives `.gpro.zip` s'exécutent dans votre navigateur.
 3. **Accès réseau effectivement présents dans le code**
    Pour éviter toute ambiguïté, voici les requêtes réseau externes susceptibles d'être émises par l'application :
-   - **Polices et icônes** (`index.html`) : chargement de *Inter* et *Material Symbols Outlined* depuis `fonts.googleapis.com`.
+   - **Polices et icônes** (`index.html`) : chargement des polices *Fraunces*, *Inter*, *JetBrains Mono*, *Plus Jakarta Sans* et *Material Symbols Outlined* depuis `fonts.googleapis.com` (avec repli système hors ligne).
    - **Fonds de carte géographiques** (`MapComponent.tsx`) : chargement des tuiles OpenStreetMap depuis `tile.openstreetmap.org` lors de l'affichage de la carte.
-   - **Clichés de démonstration initiaux** (`mockData.ts` & `Albums.tsx`) : au tout premier démarrage à vide, 3 photos d'exemple et une couverture de secours pointent vers des URLs distantes (`lh3.googleusercontent.com` / `images.unsplash.com`). Dès que vous importez vos propres photos (`storage: 'local'`), elles sont lues depuis IndexedDB.
+   - **Clichés de démonstration** : sur la vitrine `/`, la mini-galerie interactive embarque 8 images locales dans le bundle sans accès réseau ni écriture IndexedDB ; dans l'application (`/gallery`), au premier démarrage à vide, 3 photos d'exemple et une couverture de secours pointent vers des URLs distantes (`mockData.ts` & `Albums.tsx`) jusqu'à votre premier import local.
    - **Catalogue optionnel OpenRouter** (`openrouter.ts` sur `/ia`) : appel à `https://openrouter.ai/api/v1/models` uniquement si vous ouvrez la configuration et cliquez sur charger la liste des modèles gratuits.
    - **Vérification de mise à jour** (`updateService.ts`) : requête `HEAD /?t=...` vers le domaine d'hébergement de l'application pour comparer l'en-tête `ETag`.
 4. **Fonctionnement hors ligne et limite navigateur**
@@ -301,8 +303,8 @@ npm run preview
 
 ### Première utilisation (pas à pas)
 
-1. **Ouvrir l'application** : lancez `npm run dev` puis ouvrez `http://localhost:3000` dans votre navigateur.
-2. **Valider l'accueil et les mentions légales** : parcourez l'onboarding en 3 étapes et cochez la confirmation de responsabilité locale.
+1. **Découvrir la vitrine et accéder à l'application** : lancez `npm run dev`, consultez la page d'accueil et ses démonstrations interactives sur `http://localhost:3000/`, puis cliquez sur **Ouvrir Gallery Pro** (`/gallery`).
+2. **Valider l'accueil et les mentions légales** : à l'entrée dans `/gallery`, parcourez l'onboarding en 3 étapes et cochez la confirmation de responsabilité locale.
 3. **Importer des photographies** : cliquez sur le bouton d'importation dans la barre supérieure (ou allez dans `/sharing`) et sélectionnez un lot d'images. L'extraction EXIF, le hash SHA-256 et la génération des miniatures démarrent immédiatement.
 4. **Créer un album** : ouvrez **Albums** (`/albums`), créez un album manuel ou définissez un **Album Intelligent** (par exemple : *Favoris avec GPS*).
 5. **Explorer la recherche et l'analyse** : lancez l'analyse locale depuis `/ia` pour enrichir les tags et la détection de netteté, puis testez une requête sur `/search`.
@@ -320,13 +322,13 @@ npm run preview
 - **Persistance & Fichiers** : IndexedDB natif (`GalleryProDB` v3), `jszip` `3.10.2`, `exifreader` `4.54.0`
 - **Cartographie** : `leaflet` `1.9.4`, `react-leaflet` `5.0.0`
 - **Icônes & UI** : `lucide-react` `1.17.0`, Google Material Symbols Outlined
-- **Tests & Qualité** : Vitest `4.1.8`, Testing Library React `16.3.2`, jsdom `29.1.1`, ESLint `10.3.0`
+- **Tests & Qualité** : Vitest `4.1.8`, Testing Library React `16.3.2`, jsdom `29.1.1`, Playwright `1.65.1`, ESLint `10.3.0`
 
 ### Schéma d'architecture générale
 
 ```mermaid
 flowchart LR
-  UI["Interface React 19\n(Pages, PhotoGrid virtualisée, Modales)"] --> CTX["Contextes & Hooks\n(PhotoContext, HelpContext, usePhotoUrl, usePWAInstall)"]
+  UI["Interface React 19\n(Landing /, Pages App, PhotoGrid virtualisée)"] --> CTX["Contextes & Hooks\n(PhotoContext, HelpContext, usePhotoUrl, usePWAInstall)"]
   CTX --> SRV["Services Métier\n(import, export, thumbnail, aiVision,\nquality, duplicate, search, souvenir, face,\nbenchmark, activity, update)"]
   SRV --> IDB["IndexedDB GalleryProDB v3\nphotos | thumbnails | metadata |\nalbums | persons | settings"]
   CTX -. "Cache ObjectURLs &\nmiroir léger" .-> MEM["RAM Navigateur &\nlocalStorage"]
@@ -341,24 +343,30 @@ Arborescence principale réellement présente dans le dépôt :
 
 ```text
 photorapp/
-├── index.html                  # Point d'entrée HTML, métadonnées SEO et polices Google
+├── index.html                  # Point d'entrée HTML, SEO/OG/Schema.org et polices Google
 ├── metadata.json               # Nom et description de l'application
 ├── netlify.toml                # Configuration de build et redirection SPA (/* -> /index.html)
 ├── package.json                # Dépendances et scripts (dev, build, lint, preview, test)
 ├── vite.config.ts              # Configuration Vite (port 3000), PWA et Vitest
-├── public/                     # Assets statiques : logo.svg, app_preview.svg, icon.svg, icons.svg, favicon.svg
+├── public/                     # Assets statiques : logo.svg, app_preview.svg, icônes PWA,
+│   └── screenshots/            # 7 captures réelles de l'application (.png)
 ├── stitch_photorapp/           # Maquettes visuelles historiques (Stitch)
 └── src/
-    ├── App.tsx                 # Définition des 7 routes principales
+    ├── App.tsx                 # Définition des routes (landing /, app /gallery, /app, /albums, /ia, /search, /sharing, /settings)
     ├── main.tsx                # Montage React
-    ├── assets/data/mockData.ts # Jeu de 3 photos et 2 albums d'exemple initiaux
-    ├── components/             # Composants UI : PhotoGrid, Editor, DetailView, SlideshowModal,
-    │                           # MapComponent, HamburgerMenu, OnboardingModal, HelpTooltip,
-    │                           # PWAInstallButton, ActivityCenterModal, RestoreSimulationModal, etc.
+    ├── assets/
+    │   ├── data/mockData.ts    # Jeu de 3 photos et 2 albums d'exemple initiaux
+    │   └── images/             # 8 photographies locales embarquées pour la vitrine et la démo
+    ├── components/
+    │   ├── landing/            # 17 modules de la landing page (Hero, InteractiveDemoSection,
+    │   │                       # DemoGallery, DemoSearch, DemoPhotoEditor, UserJourneySection, etc.)
+    │   └── ...                 # Composants applicatifs : PhotoGrid, Editor, DetailView, SlideshowModal,
+    │                           # MapComponent, HamburgerMenu, OnboardingModal, HelpTooltip, etc.
     ├── context/                # PhotoContext, HelpContext et hooks associés (usePhotos, useHelp)
     ├── hooks/                  # usePhotoUrl (résolution blob/miniature), usePWAInstall
-    ├── pages/                  # Gallery, Albums, AlbumDetail, Search, IntelligenceIA, Sharing, SystemSettings
-    ├── services/               # 14 services métier (+ tests unitaires associés)
+    ├── pages/                  # LandingPage (+ LandingPage.test.tsx), Gallery, Albums, AlbumDetail,
+    │                           # Search, IntelligenceIA, Sharing, SystemSettings
+    ├── services/               # Services métier (+ suites de tests unitaires associées)
     ├── types/types.ts          # Interfaces TypeScript (Photo, Album, PhotoAnalysis, PersonGroup...)
     └── utils/                  # db.ts (IndexedDB v3, migration, diagnostic), openrouter.ts
 ```
@@ -367,7 +375,7 @@ photorapp/
 
 ## Compatibilité et limites
 
-- **Navigateurs compatibles** : navigateurs web modernes supportant IndexedDB, Web Crypto (`crypto.subtle` pour SHA-256), Canvas 2D et ES Modules (Chromium/Chrome/Edge, Firefox, Safari modernes). *Aucune matrice de tests automatisés multi-navigateurs ou E2E Playwright/Cypress n'est actuellement présente dans le dépôt ; seuls les tests Vitest sous `jsdom` sont exécutés.*
+- **Navigateurs compatibles** : navigateurs web modernes supportant IndexedDB, Web Crypto (`crypto.subtle` pour SHA-256), Canvas 2D et ES Modules (Chromium/Chrome/Edge, Firefox, Safari modernes). *Les tests automatisés du dépôt reposent sur Vitest (`jsdom`), complétés par une vérification manuelle headless Playwright sous Chromium (`375px` à `1920px`) pour la landing page ; aucune matrice CI multi-navigateurs sur de très gros volumes IndexedDB n'est encore industrialisée.*
 - **Compatibilité mobile** : interface responsive avec barre de navigation inférieure sur mobile (`< 768px`), menu Hamburger latéral et installation PWA (invite native sur Android/Chrome, guide manuel sur iOS Safari).
 - **Dépendance à IndexedDB et quotas** : la capacité réelle de stockage dépend de l'espace disque disponible et du quota accordé par le navigateur au domaine. Sur iOS/Safari, certaines règles d'éviction de stockage peuvent s'appliquer si le site reste inutilisé longtemps sans installation sur l'écran d'accueil.
 - **Absence de WebGPU / WebGL pour l'IA** : aucune dépendance à WebGPU ; tous les calculs d'image s'exécutent via Canvas 2D sur CPU.

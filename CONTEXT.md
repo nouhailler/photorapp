@@ -36,9 +36,9 @@ Documentation technique de référence pour les développeurs, contributeurs et 
 
 - Aucune photo personnelle ni métadonnée privée ne quitte le navigateur lors des fonctions standards.
 - Exceptions réseau documentées dans le code :
-  - `index.html` charge les feuilles de style Google Fonts (`Inter` et `Material Symbols Outlined`).
+  - `index.html` charge les feuilles de style Google Fonts (`Fraunces`, `Inter`, `JetBrains Mono`, `Plus Jakarta Sans` et `Material Symbols Outlined`).
   - `src/components/MapComponent.tsx` interroge les tuiles `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`.
-  - `src/assets/data/mockData.ts` (3 photos initiales) et `src/pages/Albums.tsx` (image de repli) référencent des URLs distantes `lh3.googleusercontent.com` / `images.unsplash.com` tant que des clichés locaux ne les remplacent pas.
+  - `src/assets/data/mockData.ts` (3 photos initiales) et `src/pages/Albums.tsx` (image de repli) référencent des URLs distantes `lh3.googleusercontent.com` / `images.unsplash.com` tant que des clichés locaux ne les remplacent pas (la vitrine `/` utilise quant à elle uniquement 8 images locales dans `src/assets/images/` et les captures statiques `public/screenshots/`).
   - `src/utils/openrouter.ts` expose `fetchFreeModels()` appelant `https://openrouter.ai/api/v1/models` sur action explicite dans `/ia` (aucune image n'y est transmise).
   - `src/services/updateService.ts` effectue une requête `HEAD /?t=...` pour vérifier l'en-tête `ETag` en ligne.
 
@@ -49,17 +49,28 @@ Documentation technique de référence pour les développeurs, contributeurs et 
 ### Architecture React et routage (`src/App.tsx`)
 
 L'application est encapsulée dans l'ordre suivant :
-`PhotoProvider` → `HelpProvider` → `BrowserRouter` → `Layout` → `Routes`.
+`PhotoProvider` → `HelpProvider` → `BrowserRouter` → `Routes` (avec `/` hors `<Layout>`, et toutes les vues applicatives encapsulées dans `<Layout>`).
 
-| Route | Composant page (`src/pages/`) | Responsabilité |
-| :--- | :--- | :--- |
-| `/` | `Gallery.tsx` | Mur chronologique, carrousel `SouvenirsCarousel`, sélection multiple, accès `DetailView` / `Editor` / `SlideshowModal` |
-| `/albums` | `Albums.tsx` | Gestion des albums manuels et des albums intelligents (`SmartAlbumCriteria`) |
-| `/albums/:id` | `AlbumDetail.tsx` | Contenu d'un album (statique ou évalué dynamiquement), changement de couverture, retrait de photos |
-| `/ia` | `IntelligenceIA.tsx` | Lancement de l'analyse locale, revue flou/exposition, doublons exacts & `dHash`, carte GPS (`MapComponent` en lazy loading), regroupement personnes opt-in, config OpenRouter optionnelle |
-| `/search` | `Search.tsx` | Recherche multicritère combinée et interprétation de requêtes naturelles |
-| `/sharing` | `Sharing.tsx` | Importation par lot, export JSON/ZIP, sauvegarde intégrale `.gpro.zip`, simulation et restauration, diagnostic et réparation du stockage |
-| `/settings` | `SystemSettings.tsx` | Version & mises à jour PWA/SW, mode novice, installation PWA, benchmark `1k`–`20k`, maintenance miniatures/orphelins |
+| Route | Composant page (`src/pages/`) | Enveloppe `<Layout>` | Responsabilité |
+| :--- | :--- | :--- | :--- |
+| `/` | `LandingPage.tsx` | Non (vitrine publique) | Présentation produit, captures réelles, démonstrations interactives isolées (`#demo`), parcours en 4 étapes (`#parcours`) sans `OnboardingModal` ni écriture IndexedDB |
+| `/gallery`, `/app` | `Gallery.tsx` | Oui | Mur chronologique, carrousel `SouvenirsCarousel`, sélection multiple, accès `DetailView` / `Editor` / `SlideshowModal` |
+| `/albums` | `Albums.tsx` | Oui | Gestion des albums manuels et des albums intelligents (`SmartAlbumCriteria`) |
+| `/albums/:id` | `AlbumDetail.tsx` | Oui | Contenu d'un album (statique ou évalué dynamiquement), changement de couverture, retrait de photos |
+| `/ia` | `IntelligenceIA.tsx` | Oui | Lancement de l'analyse locale, revue flou/exposition, doublons exacts & `dHash`, carte GPS (`MapComponent` en lazy loading), regroupement personnes opt-in, config OpenRouter optionnelle |
+| `/search` | `Search.tsx` | Oui | Recherche multicritère combinée et interprétation de requêtes naturelles |
+| `/sharing` | `Sharing.tsx` | Oui | Importation par lot, export JSON/ZIP, sauvegarde intégrale `.gpro.zip`, simulation et restauration, diagnostic et réparation du stockage |
+| `/settings` | `SystemSettings.tsx` | Oui | Version & mises à jour PWA/SW, mode novice, installation PWA, benchmark `1k`–`20k`, maintenance miniatures/orphelins |
+| `*` | `Navigate` → `/` | — | Redirection propre des routes inconnues vers la page d'accueil |
+
+### Composants dédiés à la vitrine publique (`src/components/landing/`)
+
+- **`LandingHeader.tsx`, `HeroSection.tsx`, `ProblemSection.tsx`, `FeaturesSection.tsx`, `IntelligenceSection.tsx`, `BackupSection.tsx`, `PrivacySection.tsx`, `InstallAndWorkflowSection.tsx`, `FaqSection.tsx`, `FinalCTASection.tsx`, `LandingFooter.tsx` :** Sections éditoriales présentant l'architecture Local-First, les captures réelles (`public/screenshots/*.png`) et les liens directs vers `/gallery` et le dépôt GitHub.
+- **`InteractiveDemoSection.tsx` (`DemoGallery.tsx`, `DemoSearch.tsx`, `DemoPhotoEditor.tsx`) :** Suite de 3 démonstrations interactives strictement isolées du store `photos` de `GalleryProDB` :
+  - `DemoGallery` exploite 8 visuels statiques locaux (`src/assets/images/` via `landingMedia.ts`) avec filtre par catégorie et visionneuse clavier (`Échap`, flèches).
+  - `DemoSearch` exécute en lecture seule le parseur réel `parseNaturalLanguageQuery()` sur saisie libre ou préréglages sans scanner les données utilisateur.
+  - `DemoPhotoEditor` propose un comparateur Avant/Après (glisser tactile/souris + `<input type="range">`) par filtres CSS en précisant la différence avec l'export Canvas (`exportService.ts`).
+- **`UserJourneySection.tsx` :** Parcours visuel en 4 étapes (*Importer*, *Organiser*, *Retrouver et retoucher*, *Préserver*) appuyé sur des captures réelles de l'application.
 
 ### Contextes, Hooks et Modules transverses
 
@@ -340,10 +351,11 @@ Le tableau suivant distingue strictement les techniques réellement implémenté
   - `npm run lint` : exécute `eslint .`.
   - `npm run build` : vérifie TypeScript (`tsc -b`) et produit `dist/` (`vite build`).
 
-### Couverture existante (12 fichiers de test)
+### Couverture existante (13 fichiers de test, 64 tests Vitest)
 
 | Catégorie | Fichiers présents | Scénarios couverts |
 | :--- | :--- | :--- |
+| **Landing Page & Démonstrations** | `src/pages/LandingPage.test.tsx` | Hero avec capture réelle et CTAs `/gallery` sans modale légale, `DemoGallery` (filtres + lightbox clavier), `DemoSearch` (saisie libre + `parseNaturalLanguageQuery`), `DemoPhotoEditor`, `UserJourneySection`, FAQ et menu mobile |
 | **Persistance & Contexte** | `src/utils/db.test.ts`, `src/context/PhotoContext.test.tsx` | Ouverture/mocks IndexedDB, migration idempotente `LocalStorage → IndexedDB`, suppression atomique et synchronisation des couvertures d'albums |
 | **Sauvegarde & Export** | `src/services/exportService.test.ts` | Génération de sauvegarde `.gpro.zip` avec manifeste v2, simulation de restauration, détection de corruption SHA-256 |
 | **Recherche & Albums intelligents** | `src/services/searchEngine.test.ts`, `src/services/naturalSearchService.test.ts`, `src/services/smartAlbumService.test.ts` | Filtrage multicritère, parsing FR/EN (saisons, années, concepts), validation et évaluation des `SmartAlbumCriteria` |
@@ -352,8 +364,8 @@ Le tableau suivant distingue strictement les techniques réellement implémenté
 
 ### Limites des tests et couverture souhaitable
 
-- **Absence de tests E2E navigateur :** Aucun test Playwright/Cypress sur de vrais blobs IndexedDB, PWA/Service Worker ou rendu Canvas réel (`jsdom` mocke Canvas et IndexedDB).
-- **Modules sans suite dédiée :** `importService.ts`, `thumbnailService.ts`, `qualityService.ts`, `faceService.ts`, `activityService.ts`, `updateService.ts`, `openrouter.ts`, `MapComponent.tsx`, `Layout.tsx`, `HamburgerMenu.tsx` et les pages (`Gallery`, `Albums`, `Sharing`, `Search`, `IntelligenceIA`, `SystemSettings`).
+- **Vérification navigateur :** `playwright` (`1.65.1`) est présent en `devDependencies` et a servi à valider la landing page `/` sous Chromium headless (`375px` à `1920px`), mais aucune suite E2E permanente Playwright/Cypress sur de vrais blobs IndexedDB, PWA/Service Worker ou rendu Canvas réel n'est configurée dans `package.json` (`jsdom` reste utilisé pour les tests unitaires/composants).
+- **Modules sans suite dédiée :** `importService.ts`, `thumbnailService.ts`, `qualityService.ts`, `faceService.ts`, `activityService.ts`, `updateService.ts`, `openrouter.ts`, `MapComponent.tsx`, `Layout.tsx`, `HamburgerMenu.tsx` et les pages applicatives (`Gallery`, `Albums`, `Sharing`, `Search`, `IntelligenceIA`, `SystemSettings`).
 
 ---
 
