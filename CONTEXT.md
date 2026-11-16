@@ -347,14 +347,22 @@ Le tableau suivant distingue strictement les techniques réellement implémenté
 
 ### Frameworks et commandes
 
-- **Runner & DOM virtuel :** `vitest` (`4.1.8`) avec environnement `jsdom` (`29.1.1`), configuration dans `vite.config.ts` et setup dans `src/vitest-setup.ts`.
+- **Gestionnaire de paquets & lockfile :** `bun` (`bun.lock`, Node `22` via `.node-version`).
+- **Runner unitaire & DOM virtuel :** `vitest` (`4.1.8`) avec environnement `jsdom` (`29.1.1`), configuration dans `vite.config.ts` (excluant `tests/e2e/**`) et setup dans `src/vitest-setup.ts`.
+- **Tests End-to-End navigateur :** `@playwright/test` (`1.65.1`) avec `playwright.config.ts` (Chromium headless, serveur Vite automatique sur port `3000`, `trace: 'on-first-retry'`, captures sur échec dans `test-results/` et rapport HTML dans `playwright-report/`).
 - **Utilitaires de test :** `@testing-library/react` (`16.3.2`), `@testing-library/jest-dom` (`6.9.1`).
 - **Commandes vérifiées (`package.json`) :**
-  - `npm run test -- --run` : exécute l'ensemble des suites Vitest.
-  - `npm run lint` : exécute `eslint .`.
-  - `npm run build` : vérifie TypeScript (`tsc -b`) et produit `dist/` (`vite build`).
+  - `bun run lint` : exécute `eslint .`.
+  - `bun run test:unit` (ou `npm run test -- --run`) : exécute les 14 suites Vitest (72 tests).
+  - `bun run build` : vérifie TypeScript (`tsc -b`) et produit `dist/` (`vite build`).
+  - `bunx playwright install --with-deps chromium` : installe le binaire Chromium compatible.
+  - `bun run test:e2e` (`:ui`, `:headed`) : exécute les 11 tests Playwright E2E dans `tests/e2e/`.
+  - `bun run test:all` : exécute séquentiellement `eslint . && vitest run && tsc -b && vite build && playwright test`.
+- **Intégration continue (`.github/workflows/ci.yml`) :** Déclenchée sur `push` (`main`), `pull_request` (`main`) et `workflow_dispatch`. Exécute sur `ubuntu-latest` (Node `22` + Bun + cache `~/.bun/install/cache`, sans aucun secret) : `bun install --frozen-lockfile`, `bun run lint`, `bun run test:unit`, `bun run build`, `bunx playwright install --with-deps chromium`, `bun run test:e2e` et l'envoi des artefacts `playwright-report/` et `test-results/` (`if: always()`).
 
-### Couverture existante (14 fichiers de test, 72 tests Vitest)
+### Couverture existante
+
+#### A. Vitest (14 fichiers de test, 72 tests)
 
 | Catégorie | Fichiers présents | Scénarios couverts |
 | :--- | :--- | :--- |
@@ -365,10 +373,18 @@ Le tableau suivant distingue strictement les techniques réellement implémenté
 | **Intelligence, Souvenirs, Doublons & Charge** | `src/services/aiVisionService.test.ts`, `src/services/souvenirService.test.ts`, `src/services/duplicateService.test.ts`, `src/services/benchmarkService.test.ts` | Enrichissement de tags et Canvas mocké, souvenirs par dates/lieux réels, distance `dHash` / doublons SHA-256, exécution du benchmark |
 | **Composants UI** | `src/components/Editor.test.tsx`, `src/components/SlideshowModal.test.tsx` | Contrôles de l'éditeur non destructif et navigation du diaporama |
 
+#### B. Playwright E2E (3 fichiers de test, 11 tests sous Chromium)
+
+| Fichier (`tests/e2e/`) | Scénarios vérifiés en navigateur réel |
+| :--- | :--- |
+| `landing-i18n.spec.ts` | Chargement FR (`/`), EN (`/en`), sélecteur `FR / EN`, persistance `localStorage` (`gallery_pro_lang`) au rechargement, transmission vers `/gallery`, zéro erreur console 1P / `pageerror` |
+| `demos.spec.ts` | `DemoGallery` (filtres + navigation clavier `Enter`/`ArrowRight`/`ArrowLeft`/`Escape`), `DemoSearch` (préréglages, saisie libre, requête sans correspondance `floues`, effacement), `DemoPhotoEditor` (`clipPath`, curseur `%`, préréglages CSS `filter`) |
+| `gallery-and-responsive.spec.ts` | Parcours complet d'entrée `/gallery` (onboarding 3 étapes + case légale + persistance après rechargement), tiroir mobile `375px` sans chevauchement, vérification anti-débordement horizontal sur `375px`, `768px` et `1366px` (`/`, `/en`, `/gallery`) |
+
 ### Limites des tests et couverture souhaitable
 
-- **Vérification navigateur :** `playwright` (`1.65.1`) est présent en `devDependencies` et a servi à valider la landing page `/` sous Chromium headless (`375px` à `1920px`), mais aucune suite E2E permanente Playwright/Cypress sur de vrais blobs IndexedDB, PWA/Service Worker ou rendu Canvas réel n'est configurée dans `package.json` (`jsdom` reste utilisé pour les tests unitaires/composants).
-- **Modules sans suite dédiée :** `importService.ts`, `thumbnailService.ts`, `qualityService.ts`, `faceService.ts`, `activityService.ts`, `updateService.ts`, `openrouter.ts`, `MapComponent.tsx`, `Layout.tsx`, `HamburgerMenu.tsx` et les pages applicatives (`Gallery`, `Albums`, `Sharing`, `Search`, `IntelligenceIA`, `SystemSettings`).
+- **Périmètre E2E restant à étendre :** Les tests E2E actuels ciblent Chromium et ne couvrent pas encore Firefox/WebKit, l'import binaire de fichiers EXIF réels, la restauration `.gpro.zip` de bout en bout en navigateur ni les tests de charge à 20 000 blobs IndexedDB.
+- **Modules sans suite unitaire dédiée :** `importService.ts`, `thumbnailService.ts`, `qualityService.ts`, `faceService.ts`, `activityService.ts`, `updateService.ts`, `openrouter.ts`, `MapComponent.tsx`, `Layout.tsx`, `HamburgerMenu.tsx` et les écrans internes complets (`Albums`, `Sharing`, `Search`, `IntelligenceIA`, `SystemSettings`).
 
 ---
 

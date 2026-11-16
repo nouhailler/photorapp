@@ -273,8 +273,8 @@ L'architecture vise à garder l'interface réactive à mesure que le catalogue g
 
 ### Prérequis
 
-- **Node.js** (version LTS recommandée, compatible Vite 8 et TypeScript ~6.0)
-- **npm** (inclus avec Node.js)
+- **Node.js `22`** (voir `.node-version`, compatible Vite 8 et TypeScript ~6.0)
+- **Bun** (gestionnaire de paquets principal du dépôt, lockfile `bun.lock`) — les alias `npm run ...` restent utilisables si les dépendances sont déjà installées
 
 ### Commandes disponibles (`package.json`)
 
@@ -283,24 +283,41 @@ L'architecture vise à garder l'interface réactive à mesure que le catalogue g
 git clone https://github.com/nouhailler/photorapp.git
 cd photorapp
 
-# 2. Installer les dépendances
-npm install
+# 2. Installer les dépendances exactement depuis bun.lock
+bun install --frozen-lockfile
 
 # 3. Lancer le serveur de développement (port 3000)
-npm run dev
+bun run dev
 
 # 4. Vérifier la qualité du code (ESLint)
-npm run lint
+bun run lint
 
-# 5. Exécuter les tests unitaires et d'intégration (Vitest)
-npm run test -- --run
+# 5. Exécuter les tests unitaires et composants (Vitest — 14 fichiers, 72 tests)
+bun run test:unit
 
 # 6. Compiler le bundle de production (TypeScript + Vite)
-npm run build
+bun run build
 
 # 7. Prévisualiser le build de production localement
-npm run preview
+bun run preview
+
+# 8. Installer le navigateur Chromium pour Playwright (une fois par machine)
+bunx playwright install --with-deps chromium
+
+# 9. Exécuter les tests End-to-End navigateur (Playwright — 11 tests)
+bun run test:e2e
+
+# Variantes Playwright : mode interactif / fenêtre visible
+bun run test:e2e:ui
+bun run test:e2e:headed
+
+# 10. Enchaîner toute la chaîne qualité locale (lint + Vitest + build + Playwright)
+bun run test:all
 ```
+
+> **Rapports Playwright et CI GitHub Actions :**
+> - Après chaque exécution Playwright, un rapport HTML est généré dans `playwright-report/index.html` et les captures/traces d'échec sont enregistrées dans `test-results/`.
+> - Le workflow **GitHub Actions** (`.github/workflows/ci.yml`) exécute automatiquement `bun install --frozen-lockfile`, `bun run lint`, `bun run test:unit`, `bun run build`, l'installation de Chromium et `bun run test:e2e` sur chaque `push` ou `pull_request` vers `main` (ainsi qu'en déclenchement manuel `workflow_dispatch`), sans aucun secret requis. Les rapports `playwright-report/` et `test-results/` sont publiés en artefacts de job (`if: always()`).
 
 ### Première utilisation (pas à pas)
 
@@ -355,28 +372,32 @@ Arborescence principale réellement présente dans le dépôt :
 
 ```text
 photorapp/
+├── .github/workflows/ci.yml    # Pipeline CI GitHub Actions (lint, Vitest, build, Playwright)
 ├── index.html                  # Point d'entrée HTML, SEO/OG/Schema.org et polices Google
 ├── metadata.json               # Nom et description de l'application
-├── .node-version               # Version Node.js (22) pour builds CI (Cloudflare/Vite 8)
+├── .node-version               # Version Node.js (22) pour builds CI (GitHub Actions / Cloudflare)
+├── bun.lock                    # Lockfile reproductible Bun
 ├── wrangler.jsonc              # Configuration Cloudflare Workers Static Assets (SPA)
 ├── netlify.toml                # Configuration de build et redirection SPA (/* -> /index.html)
-├── package.json                # Dépendances et scripts (dev, build, lint, preview, test, cf:*)
+├── package.json                # Dépendances et scripts (dev, build, lint, preview, test:*, cf:*)
+├── playwright.config.ts        # Configuration Playwright E2E (Chromium, rapports HTML, traces)
 ├── vite.config.ts              # Configuration Vite (port 3000), PWA et Vitest
 ├── public/                     # Assets statiques : _headers (Cloudflare), logo.svg, app_preview.svg, icônes PWA,
 │   └── screenshots/            # 7 captures réelles de l'application (.png)
 ├── stitch_photorapp/           # Maquettes visuelles historiques (Stitch)
+├── tests/e2e/                  # Suite Playwright End-to-End (11 tests : i18n, démos, /gallery, responsive)
 └── src/
-    ├── App.tsx                 # Définition des routes (landing /, app /gallery, /app, /albums, /ia, /search, /sharing, /settings)
+    ├── App.tsx                 # Définition des routes (landing /, /en, app /gallery, /app, /albums, /ia, /search, /sharing, /settings)
     ├── main.tsx                # Montage React
     ├── assets/
     │   ├── data/mockData.ts    # Jeu de 3 photos et 2 albums d'exemple initiaux
     │   └── images/             # 8 photographies locales embarquées pour la vitrine et la démo
     ├── components/
-    │   ├── landing/            # 17 modules de la landing page (Hero, InteractiveDemoSection,
+    │   ├── landing/            # 18 modules de la landing page (Hero, InteractiveDemoSection,
     │   │                       # DemoGallery, DemoSearch, DemoPhotoEditor, UserJourneySection, etc.)
     │   └── ...                 # Composants applicatifs : PhotoGrid, Editor, DetailView, SlideshowModal,
     │                           # MapComponent, HamburgerMenu, OnboardingModal, HelpTooltip, etc.
-    ├── context/                # PhotoContext, HelpContext et hooks associés (usePhotos, useHelp)
+    ├── context/                # PhotoContext, LanguageContext, HelpContext et hooks associés
     ├── hooks/                  # usePhotoUrl (résolution blob/miniature), usePWAInstall
     ├── pages/                  # LandingPage (+ LandingPage.test.tsx), Gallery, Albums, AlbumDetail,
     │                           # Search, IntelligenceIA, Sharing, SystemSettings
@@ -389,7 +410,7 @@ photorapp/
 
 ## Compatibilité et limites
 
-- **Navigateurs compatibles** : navigateurs web modernes supportant IndexedDB, Web Crypto (`crypto.subtle` pour SHA-256), Canvas 2D et ES Modules (Chromium/Chrome/Edge, Firefox, Safari modernes). *Les tests automatisés du dépôt reposent sur Vitest (`jsdom`), complétés par une vérification manuelle headless Playwright sous Chromium (`375px` à `1920px`) pour la landing page ; aucune matrice CI multi-navigateurs sur de très gros volumes IndexedDB n'est encore industrialisée.*
+- **Navigateurs compatibles** : navigateurs web modernes supportant IndexedDB, Web Crypto (`crypto.subtle` pour SHA-256), Canvas 2D et ES Modules (Chromium/Chrome/Edge, Firefox, Safari modernes). *Les tests automatisés du dépôt combinent Vitest (`jsdom`, 72 tests) et une suite Playwright E2E sous Chromium réel (`tests/e2e/`, 11 tests couvrant `375px`, `768px` et `1366px`) ; aucune matrice CI multi-navigateurs (Firefox/WebKit) ni test E2E de charge sur 20 000 blobs IndexedDB n'est encore industrialisé.*
 - **Compatibilité mobile** : interface responsive avec barre de navigation inférieure sur mobile (`< 768px`), menu Hamburger latéral et installation PWA (invite native sur Android/Chrome, guide manuel sur iOS Safari).
 - **Dépendance à IndexedDB et quotas** : la capacité réelle de stockage dépend de l'espace disque disponible et du quota accordé par le navigateur au domaine. Sur iOS/Safari, certaines règles d'éviction de stockage peuvent s'appliquer si le site reste inutilisé longtemps sans installation sur l'écran d'accueil.
 - **Absence de WebGPU / WebGL pour l'IA** : aucune dépendance à WebGPU ; tous les calculs d'image s'exécutent via Canvas 2D sur CPU.

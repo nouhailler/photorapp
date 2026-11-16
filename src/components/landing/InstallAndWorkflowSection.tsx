@@ -138,7 +138,7 @@ export const InstallAndWorkflowSection: React.FC = () => {
               ) : (
                 <Link
                   to="/settings"
-                  className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-[#18191D] bg-[#F2F1EC] hover:bg-neutral-200/80 rounded-xl transition-colors whitespace-nowrap shrink-0 min-h-[44px]"
+                  className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-3 text-sm font-semibold text-[#18191D] bg-[#F2F1EC] hover:bg-neutral-200/80 rounded-xl transition-colors max-w-full sm:whitespace-nowrap min-h-[44px]"
                 >
                   <span>{t.settingsCta}</span>
                   <span className="material-symbols-outlined text-[18px]" aria-hidden="true">

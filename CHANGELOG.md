@@ -11,6 +11,11 @@ Le format suit les conventions de [Keep a Changelog](https://keepachangelog.com/
 ## [Unreleased] - 2026-11-16
 
 ### Added
+- **Suite End-to-End Playwright & intégration continue GitHub Actions (`.github/workflows/ci.yml`, `playwright.config.ts`, `tests/e2e/`) :**
+  - Ajout de `@playwright/test` (`1.65.1`) aligné sur `playwright`, configuration `playwright.config.ts` (Chromium headless, serveur Vite dev/preview automatique sur port `3000`, `trace: 'on-first-retry'`, captures sur échec, rapport HTML dans `playwright-report/`).
+  - Ajout de 11 tests E2E répartis dans `tests/e2e/landing-i18n.spec.ts`, `tests/e2e/demos.spec.ts` et `tests/e2e/gallery-and-responsive.spec.ts` (plus `tests/e2e/helpers.ts`) couvrant : vitrine `/` FR et `/en` EN, persistance `gallery_pro_lang`, passage vers `/gallery` (onboarding 3 étapes + validation légale), démonstrations `DemoGallery`, `DemoSearch` et `DemoPhotoEditor`, menu mobile `375px`, responsive `375px`/`768px`/`1366px` et détection d'erreurs `pageerror` / console applicative.
+  - Ajout des scripts `test:unit`, `test:e2e`, `test:e2e:ui`, `test:e2e:headed` et `test:all` dans `package.json`, exclusion de `tests/e2e/**` dans `vite.config.ts`, support TypeScript/ESLint/Git ignore pour les répertoires Playwright.
+  - Création du workflow `.github/workflows/ci.yml` (`push` et `pull_request` sur `main`, `workflow_dispatch`) exécutant sous Node `22` + Bun (`bun install --frozen-lockfile`, sans secret) : lint, Vitest, build, installation Chromium (`bunx playwright install --with-deps chromium`), Playwright E2E et publication des artefacts (`playwright-report/`, `test-results/`).
 - **Préparation au déploiement Cloudflare (`wrangler.jsonc`, `public/_headers`, `.node-version`, `package.json`) :** Ajout de la configuration Cloudflare Workers Static Assets (`not_found_handling: "single-page-application"`), des en-têtes `_headers` (sécurité + cache `must-revalidate` pour `index.html`/`sw.js`/`manifest.webmanifest` et `immutable` pour `/assets/*`), de l'épinglage Node `22` (`.node-version` + `engines.node`) et des scripts `cf:deploy`, `cf:preview`, `cf:pages`.
 - **Internationalisation complète FR/EN de l'application (`src/context/LanguageContext.tsx`, `languageContextDef.ts`, `useLanguage.ts`):**
   - Contexte linguistique global partagé entre la vitrine publique (`/`, `/en`) et l'ensemble de l'application (`/gallery`, `/app`, `/albums`, `/albums/:id`, `/ia`, `/search`, `/sharing`, `/settings`), persisté via `localStorage` (`gallery_pro_lang`, `'fr'` par défaut).
@@ -28,7 +33,10 @@ Le format suit les conventions de [Keep a Changelog](https://keepachangelog.com/
 
 ### Changed
 - **Séparation des routes vitrine et application (`src/App.tsx`, `HamburgerMenu.tsx`) :** La vitrine publique occupe `/` (FR) et `/en` (EN) hors `<Layout>`, tandis que l'espace galerie complet devient accessible sur `/gallery` (avec alias `/app`), tout en préservant l'ensemble des routes internes (`/albums`, `/albums/:id`, `/ia`, `/search`, `/sharing`, `/settings`) et des données `GalleryProDB v3`.
-- **Mise à jour documentaire (`README.md`, `CONTEXT.md`, `CHANGELOG.md`) :** Synchronisation de l'architecture bilingue FR/EN, des routes, des captures, de la liste des polices chargées et de la couverture de tests.
+- **Mise à jour documentaire (`README.md`, `CONTEXT.md`, `CHANGELOG.md`) :** Synchronisation de l'architecture bilingue FR/EN, des routes, des captures, de la liste des polices chargées, de la couverture Vitest + Playwright et de la CI GitHub Actions.
+
+### Fixed
+- **Débordement horizontal mobile (`375px`) avant chargement des polices (`src/index.css`, `src/components/landing/InstallAndWorkflowSection.tsx`) :** Confinement de `.material-symbols-outlined` et `.material-symbols-fill` dans une boîte `1em × 1em` (`overflow: hidden`) pour empêcher l'expansion des noms de ligature avant chargement de la police d'icônes, et autorisation du retour à la ligne sur le bouton CTA long de la carte PWA sur petit écran.
 
 ---
 
