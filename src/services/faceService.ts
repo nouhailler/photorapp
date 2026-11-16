@@ -1,5 +1,6 @@
 import type { Photo, PersonGroup } from '../types/types';
 import { getAllPersons, savePerson, deletePerson, openDB, STORES } from '../utils/db';
+import type { AppLang } from '../context/languageContextDef';
 
 const STORAGE_KEYS = {
   FACES_ENABLED: 'gallery_pro_faces_enabled',
@@ -38,11 +39,16 @@ export async function getSavedPersonGroups(): Promise<PersonGroup[]> {
 /**
  * Creates or updates a person group with user-defined name.
  */
-export async function updatePersonGroupName(personId: string, newName: string): Promise<void> {
+export async function updatePersonGroupName(
+  personId: string,
+  newName: string,
+  lang: AppLang = 'fr'
+): Promise<void> {
   const all = await getAllPersons();
   const target = all.find((p) => p.id === personId);
   if (target) {
-    const updated: PersonGroup = { ...target, name: newName.trim() || 'Personne sans nom' };
+    const fallback = lang === 'en' ? 'Unnamed person' : 'Personne sans nom';
+    const updated: PersonGroup = { ...target, name: newName.trim() || fallback };
     await savePerson(updated);
   }
 }
@@ -58,7 +64,10 @@ export async function removePersonGroup(personId: string): Promise<void> {
  * Groups photos marked as portraits or with detected faces into anonymous cluster groups.
  * If existing named groups exist, preserves their names and associations.
  */
-export async function clusterPhotosIntoPersonGroups(photos: Photo[]): Promise<PersonGroup[]> {
+export async function clusterPhotosIntoPersonGroups(
+  photos: Photo[],
+  lang: AppLang = 'fr'
+): Promise<PersonGroup[]> {
   const existingGroups = await getAllPersons();
   const existingByPhotoId = new Map<string, PersonGroup>();
 
@@ -101,7 +110,7 @@ export async function clusterPhotosIntoPersonGroups(photos: Photo[]): Promise<Pe
     const groupId = `person-group-${Date.now()}-${i}`;
     const newGroup: PersonGroup = {
       id: groupId,
-      name: `Personne ${groupCounter++}`,
+      name: `${lang === 'en' ? 'Person' : 'Personne'} ${groupCounter++}`,
       coverPhotoId: chunk[0].id,
       photoIds: chunk.map((p) => p.id),
       createdAt: new Date().toISOString(),

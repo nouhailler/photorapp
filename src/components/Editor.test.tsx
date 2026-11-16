@@ -3,6 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import Editor from './Editor';
 import { usePhotos } from '../context/usePhotos';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
+import { LanguageProvider } from '../context/LanguageContext';
+import { APP_LANG_STORAGE_KEY } from '../context/languageContextDef';
 import type { Photo } from '../types/types';
 
 // Mock the hooks
@@ -109,5 +111,25 @@ describe('Editor Component', () => {
       mockPhoto.id,
       expect.objectContaining({ rotation: 90 })
     );
+  });
+
+  it('renders full English controls when LanguageProvider is set to English', () => {
+    window.localStorage.setItem(APP_LANG_STORAGE_KEY, 'en');
+    render(
+      <LanguageProvider>
+        <Editor photo={mockPhoto} onClose={mockOnClose} />
+      </LanguageProvider>
+    );
+
+    expect(screen.getByText('Save')).toBeInTheDocument();
+    expect(screen.getByText('Compare')).toBeInTheDocument();
+    expect(screen.getByText('Adjustments')).toBeInTheDocument();
+    expect(screen.getByText('Filters')).toBeInTheDocument();
+    expect(screen.getByText('Crop')).toBeInTheDocument();
+    expect(screen.getByText(/Auto-Adjust/i)).toBeInTheDocument();
+    expect(screen.getByText(/Rotate \(\+90°\)/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Brightness/i)).toBeInTheDocument();
+
+    window.localStorage.clear();
   });
 });

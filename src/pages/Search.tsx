@@ -6,10 +6,29 @@ import Editor from '../components/Editor';
 import { extractAvailableFilters, smartSearchPhotos } from '../services/searchEngine';
 import type { SearchFilters } from '../services/searchEngine';
 import { HelpTooltip } from '../components/HelpTooltip';
+import { useLanguage } from '../context/useLanguage';
 import type { Photo } from '../types/types';
+
+const INFERRED_CATEGORY_EN: Record<string, string> = {
+  montagne: 'mountain',
+  plage: 'beach',
+  coucher: 'sunset',
+  chien: 'dog',
+  chat: 'cat',
+  portrait: 'portrait',
+  architecture: 'architecture',
+  nuit: 'night',
+  nature: 'nature',
+  forêt: 'forest',
+  ville: 'city',
+  mer: 'sea',
+  fleur: 'flower',
+  voyage: 'travel',
+};
 
 const Search: React.FC = () => {
   const { photos, albums, toggleFavorite } = usePhotos();
+  const { lang, isEn } = useLanguage();
 
   const [query, setQuery] = useState('');
   const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
@@ -30,8 +49,8 @@ const Search: React.FC = () => {
 
   // Extract real dynamic filters from actual library
   const availableFilters = useMemo(() => {
-    return extractAvailableFilters(photos, albums);
-  }, [photos, albums]);
+    return extractAvailableFilters(photos, albums, lang);
+  }, [photos, albums, lang]);
 
   // Combined search filters
   const filters: SearchFilters = useMemo(() => {
@@ -108,14 +127,22 @@ const Search: React.FC = () => {
       {/* Header */}
       <section className="pt-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-headline-lg font-bold text-on-surface">Recherche Avancée & Filtres</h2>
+          <h2 className="text-headline-lg font-bold text-on-surface">
+            {isEn ? 'Advanced Search & Filters' : 'Recherche Avancée & Filtres'}
+          </h2>
           <HelpTooltip
-            title="Recherche & Filtres"
-            text="Filtrez instantanément vos clichés par mot-clé, tags, statut favori, coordonnées GPS, mois et qualité d'image sans appel réseau."
+            title={isEn ? 'Search & Filters' : 'Recherche & Filtres'}
+            text={
+              isEn
+                ? 'Instantly filter your shots by keyword, tags, favorite status, GPS coordinates, month, and image quality with zero network calls.'
+                : "Filtrez instantanément vos clichés par mot-clé, tags, statut favori, coordonnées GPS, mois et qualité d'image sans appel réseau."
+            }
           />
         </div>
         <p className="text-body-sm text-on-surface-variant mt-1">
-          Explorez votre photothèque locale avec des filtres combinables précis et instantanés.
+          {isEn
+            ? 'Explore your local photo library with instant, combinable precision filters.'
+            : 'Explorez votre photothèque locale avec des filtres combinables précis et instantanés.'}
         </p>
       </section>
 
@@ -127,15 +154,23 @@ const Search: React.FC = () => {
           </div>
           <input
             className="bg-transparent border-none focus:ring-0 w-full py-2.5 font-body-md text-on-surface placeholder:text-on-surface-variant/60 outline-none"
-            placeholder="Rechercher par mot-clé, tag, lieu, appareil, métadonnée..."
+            placeholder={
+              isEn
+                ? 'Search by keyword, tag, location, camera, metadata...'
+                : 'Rechercher par mot-clé, tag, lieu, appareil, métadonnée...'
+            }
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
           <HelpTooltip
             className="mr-2"
-            title="Mots-clés acceptés"
-            text="Recherchez un titre, un nom d'appareil (ex: Sony, iPhone), un nom de ville ou un tag associé."
+            title={isEn ? 'Accepted keywords' : 'Mots-clés acceptés'}
+            text={
+              isEn
+                ? 'Search a photo title, camera name (e.g. Sony, iPhone), city name, or assigned tag.'
+                : "Recherchez un titre, un nom d'appareil (ex: Sony, iPhone), un nom de ville ou un tag associé."
+            }
           />
           {query && (
             <button
@@ -152,11 +187,15 @@ const Search: React.FC = () => {
           <div className="flex items-center gap-2 pt-2.5 px-2 flex-wrap text-label-xs animate-in fade-in">
             <span className="text-primary font-bold flex items-center gap-1">
               <span className="material-symbols-outlined text-[15px]">psychology</span>
-              Analyse du langage naturel :
+              {isEn ? 'Natural language analysis:' : 'Analyse du langage naturel :'}
             </span>
             {searchOutcome.inferredCategory && (
               <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container font-semibold">
-                Scène : {searchOutcome.inferredCategory}
+                {isEn ? 'Scene:' : 'Scène :'}{' '}
+                {isEn
+                  ? INFERRED_CATEGORY_EN[searchOutcome.inferredCategory.toLowerCase()] ||
+                    searchOutcome.inferredCategory
+                  : searchOutcome.inferredCategory}
               </span>
             )}
             {searchOutcome.semanticTags.map((tag) => (
@@ -170,14 +209,25 @@ const Search: React.FC = () => {
         {/* Query Suggestions for novices */}
         {!query && (
           <div className="flex items-center gap-1.5 pt-2 px-1 flex-wrap">
-            <span className="text-[11px] text-on-surface-variant/80 font-medium">Exemples :</span>
-            {[
-              'Montagnes en hiver',
-              'Chiens dans un jardin',
-              'Coucher de soleil',
-              'Portraits récents',
-              'Photos avec GPS',
-            ].map((example) => (
+            <span className="text-[11px] text-on-surface-variant/80 font-medium">
+              {isEn ? 'Examples:' : 'Exemples :'}
+            </span>
+            {(isEn
+              ? [
+                  'Mountains in winter',
+                  'Dogs in a garden',
+                  'Sunset',
+                  'Recent portraits',
+                  'Photos with GPS',
+                ]
+              : [
+                  'Montagnes en hiver',
+                  'Chiens dans un jardin',
+                  'Coucher de soleil',
+                  'Portraits récents',
+                  'Photos avec GPS',
+                ]
+            ).map((example) => (
               <button
                 key={example}
                 onClick={() => setQuery(example)}
@@ -196,7 +246,7 @@ const Search: React.FC = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
             <span className="text-label-sm font-bold text-on-surface-variant uppercase tracking-wider">
-              Filtres instantanés
+              {isEn ? 'Instant filters' : 'Filtres instantanés'}
             </span>
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
@@ -205,7 +255,11 @@ const Search: React.FC = () => {
               <span className="material-symbols-outlined text-[16px]">
                 {showAdvancedFilters ? 'expand_less' : 'tune'}
               </span>
-              <span>{showAdvancedFilters ? 'Masquer filtres avancés' : 'Plus de filtres'}</span>
+              <span>
+                {showAdvancedFilters
+                  ? isEn ? 'Hide advanced filters' : 'Masquer filtres avancés'
+                  : isEn ? 'More filters' : 'Plus de filtres'}
+              </span>
             </button>
           </div>
           {hasActiveFilters && (
@@ -213,7 +267,7 @@ const Search: React.FC = () => {
               onClick={handleResetFilters}
               className="text-label-xs font-bold text-primary hover:underline"
             >
-              Tout réinitialiser
+              {isEn ? 'Reset all' : 'Tout réinitialiser'}
             </button>
           )}
         </div>
@@ -230,7 +284,7 @@ const Search: React.FC = () => {
             }`}
           >
             <span className="material-symbols-outlined text-[16px] material-symbols-fill">star</span>
-            <span>Favoris</span>
+            <span>{isEn ? 'Favorites' : 'Favoris'}</span>
           </button>
 
           {/* GPS Filter Cycle */}
@@ -250,9 +304,9 @@ const Search: React.FC = () => {
               {gpsFilter === 'withoutGps' ? 'location_off' : 'location_on'}
             </span>
             <span>
-              {gpsFilter === 'all' && 'GPS (Tous)'}
-              {gpsFilter === 'withGps' && 'Avec GPS'}
-              {gpsFilter === 'withoutGps' && 'Sans GPS'}
+              {gpsFilter === 'all' && (isEn ? 'GPS (All)' : 'GPS (Tous)')}
+              {gpsFilter === 'withGps' && (isEn ? 'With GPS' : 'Avec GPS')}
+              {gpsFilter === 'withoutGps' && (isEn ? 'Without GPS' : 'Sans GPS')}
             </span>
           </button>
 
@@ -266,7 +320,7 @@ const Search: React.FC = () => {
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">blur_on</span>
-            <span>Photos floues</span>
+            <span>{isEn ? 'Blurry photos' : 'Photos floues'}</span>
           </button>
 
           {/* Real Years */}
@@ -291,7 +345,9 @@ const Search: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {/* Month selector */}
               <div>
-                <label className="block text-label-xs font-bold text-on-surface mb-1">Mois</label>
+                <label className="block text-label-xs font-bold text-on-surface mb-1">
+                  {isEn ? 'Month' : 'Mois'}
+                </label>
                 <select
                   value={selectedMonth || ''}
                   onChange={(e) =>
@@ -299,7 +355,7 @@ const Search: React.FC = () => {
                   }
                   className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
                 >
-                  <option value="">Tous les mois</option>
+                  <option value="">{isEn ? 'All months' : 'Tous les mois'}</option>
                   {availableFilters.months.map((m) => (
                     <option key={m.number} value={m.number}>
                       {m.label}
@@ -316,7 +372,7 @@ const Search: React.FC = () => {
                   onChange={(e) => setSelectedAlbumId(e.target.value || undefined)}
                   className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
                 >
-                  <option value="">Tous les albums</option>
+                  <option value="">{isEn ? 'All albums' : 'Tous les albums'}</option>
                   {availableFilters.albums.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.title}
@@ -327,13 +383,15 @@ const Search: React.FC = () => {
 
               {/* Camera / Device selector */}
               <div>
-                <label className="block text-label-xs font-bold text-on-surface mb-1">Appareil</label>
+                <label className="block text-label-xs font-bold text-on-surface mb-1">
+                  {isEn ? 'Camera' : 'Appareil'}
+                </label>
                 <select
                   value={selectedDevice || ''}
                   onChange={(e) => setSelectedDevice(e.target.value || undefined)}
                   className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
                 >
-                  <option value="">Tous les appareils</option>
+                  <option value="">{isEn ? 'All cameras' : 'Tous les appareils'}</option>
                   {availableFilters.devices.map((d) => (
                     <option key={d} value={d}>
                       {d}
@@ -346,7 +404,7 @@ const Search: React.FC = () => {
             {/* Custom Date Range */}
             <div>
               <label className="block text-label-xs font-bold text-on-surface mb-1">
-                Période personnalisée (début / fin)
+                {isEn ? 'Custom date range (start / end)' : 'Période personnalisée (début / fin)'}
               </label>
               <div className="grid grid-cols-2 gap-3 max-w-md">
                 <input
@@ -371,7 +429,7 @@ const Search: React.FC = () => {
           <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 text-label-xs">
             <span className="text-on-surface-variant font-semibold flex items-center gap-1 shrink-0">
               <span className="material-symbols-outlined text-[14px]">pin_drop</span>
-              Lieux :
+              {isEn ? 'Locations:' : 'Lieux :'}
             </span>
             {availableFilters.locations.map((loc) => (
               <button
@@ -418,11 +476,15 @@ const Search: React.FC = () => {
         <div className="flex justify-between items-center">
           <h3 className="text-headline-md font-bold text-on-surface">
             {hasActiveFilters
-              ? `${searchResults.length} résultat(s) trouvé(s)`
-              : `Toutes les photos (${searchResults.length})`}
+              ? isEn
+                ? `${searchResults.length} result(s) found`
+                : `${searchResults.length} résultat(s) trouvé(s)`
+              : isEn
+                ? `All photos (${searchResults.length})`
+                : `Toutes les photos (${searchResults.length})`}
           </h3>
           <span className="text-label-sm text-on-surface-variant">
-            {photos.length} photos au total
+            {isEn ? `${photos.length} total photos` : `${photos.length} photos au total`}
           </span>
         </div>
 
@@ -433,15 +495,19 @@ const Search: React.FC = () => {
             <div className="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center text-on-surface-variant mb-3">
               <span className="material-symbols-outlined text-4xl">search_off</span>
             </div>
-            <h4 className="text-headline-sm font-bold text-on-surface">Aucune photo ne correspond</h4>
+            <h4 className="text-headline-sm font-bold text-on-surface">
+              {isEn ? 'No matching photos' : 'Aucune photo ne correspond'}
+            </h4>
             <p className="text-body-sm text-on-surface-variant max-w-sm mt-1">
-              Essayez de modifier vos termes de recherche ou de réinitialiser certains filtres.
+              {isEn
+                ? 'Try modifying your search terms or clearing some active filters.'
+                : 'Essayez de modifier vos termes de recherche ou de réinitialiser certains filtres.'}
             </p>
             <button
               onClick={handleResetFilters}
               className="mt-4 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
             >
-              Réinitialiser les filtres
+              {isEn ? 'Reset filters' : 'Réinitialiser les filtres'}
             </button>
           </div>
         )}

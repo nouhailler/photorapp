@@ -1,5 +1,6 @@
 import type { Photo, Album } from '../types/types';
 import { parseNaturalLanguageQuery } from './naturalSearchService';
+import type { AppLang } from '../context/languageContextDef';
 
 export interface SearchFilters {
   query?: string;
@@ -28,15 +29,24 @@ export interface AvailableFilters {
   albums: { id: string; title: string }[];
 }
 
-const MONTH_NAMES = [
+const MONTH_NAMES_FR = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+];
+
+const MONTH_NAMES_EN = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
 /**
  * Extracts all unique available filter values dynamically from the current photo library.
  */
-export function extractAvailableFilters(photos: Photo[], albums: Album[]): AvailableFilters {
+export function extractAvailableFilters(
+  photos: Photo[],
+  albums: Album[],
+  lang: AppLang = 'fr'
+): AvailableFilters {
   const yearsSet = new Set<number>();
   const locationsSet = new Set<string>();
   const devicesSet = new Set<string>();
@@ -59,10 +69,11 @@ export function extractAvailableFilters(photos: Photo[], albums: Album[]): Avail
   }
 
   const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+  const monthNames = lang === 'en' ? MONTH_NAMES_EN : MONTH_NAMES_FR;
 
   return {
     years: sortedYears,
-    months: MONTH_NAMES.map((name, idx) => ({ number: idx + 1, label: name })),
+    months: monthNames.map((name, idx) => ({ number: idx + 1, label: name })),
     locations: Array.from(locationsSet).sort(),
     devices: Array.from(devicesSet).sort(),
     tags: Array.from(tagsSet).sort(),

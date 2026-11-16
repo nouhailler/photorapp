@@ -80,7 +80,7 @@ Le dépôt inclut désormais les captures d'écran réelles de l'application dan
 
 | Écran | Route | Rôle dans le parcours utilisateur | Capture disponible |
 | :--- | :--- | :--- | :--- |
-| **Vitrine produit publique** | `/` | Présentation éditoriale, démonstrations interactives isolées et parcours en 4 étapes | Page d'accueil publique |
+| **Vitrine produit publique (FR / EN)** | `/`, `/en` | Présentation éditoriale bilingue, démonstrations interactives isolées et parcours en 4 étapes | Page d'accueil publique |
 | **Galerie principale** | `/gallery` (et `/app`) | Mur chronologique, barre de recherche rapide, menu latéral et sélection par lot | `public/screenshots/gallery-grid.png`, `public/screenshots/gallery-drawer.png` |
 | **Importation locale** | Modale depuis `/gallery` | Ingestion par lots avec extraction EXIF, SHA-256 et miniatures WebP | `public/screenshots/import-modal.png` |
 | **Albums et sélections** | `/albums` | Albums manuels, albums intelligents dynamiques et couverture personnalisable | `public/screenshots/albums-view.png` |
@@ -221,6 +221,7 @@ L'architecture vise à garder l'interface réactive à mesure que le catalogue g
 ### K. PWA et expérience utilisateur
 
 - **PWA installable** (`vite-plugin-pwa`, `usePWAInstall`, `PWAInstallButton`) : détection de l'événement `beforeinstallprompt` sur navigateurs Chromium (desktop/Android) et guide visuel dédié pour l'ajout à l'écran d'accueil sur **iOS Safari**.
+- **Interface bilingue Français / Anglais (`LanguageContext`)** : sélecteur `FR / EN` dans la barre supérieure, le menu latéral, les paramètres système (`/settings`) et sur la vitrine (`/` ↔ `/en`), avec persistance via `localStorage` (`gallery_pro_lang`) et conservation automatique de l'anglais lors de l'entrée depuis `/en`.
 - **Menu Hamburger catégorisé** (`HamburgerMenu.tsx`) : regroupe l'accès par 4 familles (*Photothèque & Souvenirs*, *Outils Intelligents & Qualité*, *Gestion des Données*, *Système & Préférences*).
 - **Onboarding et mentions légales** (`OnboardingModal.tsx`) : présentation initiale et acceptation explicite d'une clause de non-responsabilité rappelant que l'utilisateur conserve la responsabilité exclusive de ses fichiers et sauvegardes.
 - **Mode accompagnement novice** (`HelpContext.tsx`, `HelpTooltip.tsx`) : bulles d'aide `?` contextuelles sur l'ensemble des formulaires et curseurs, activables ou désactivables à tout moment.
@@ -310,6 +311,17 @@ npm run preview
 5. **Explorer la recherche et l'analyse** : lancez l'analyse locale depuis `/ia` pour enrichir les tags et la détection de netteté, puis testez une requête sur `/search`.
 6. **Effectuer une première sauvegarde** : rendez-vous dans **Sauvegardes & Données** (`/sharing`) pour générer votre première archive `.gpro.zip` et la stocker en lieu sûr.
 
+### Déploiement sur Cloudflare (Workers Static Assets ou Cloudflare Pages)
+
+Le dépôt inclut une configuration prête pour Cloudflare (`wrangler.jsonc`, `public/_headers`, `.node-version`) compatible avec le routage SPA (`/`, `/en`, `/gallery`, `/albums`, `/ia`, `/search`, `/sharing`, `/settings`) et le cache PWA/Service Worker (`sw.js` et `index.html` en `must-revalidate`, `/assets/*` en `immutable`) :
+
+- **Option 1 — Cloudflare Workers Static Assets (recommandée par Cloudflare) :**
+  - **Via CLI :** `npx wrangler login` puis `npm run cf:deploy` (exécute `npm run build` puis `npx wrangler deploy` en lisant `wrangler.jsonc`).
+  - **Via tableau de bord Cloudflare (Git) :** connectez le dépôt GitHub, commande de build `npm run build`, commande de déploiement `npx wrangler deploy`.
+- **Option 2 — Cloudflare Pages :**
+  - **Via tableau de bord Cloudflare Pages :** commande de build `npm run build`, répertoire de sortie `dist` (Node `22` sélectionné via `.node-version` ; fallback SPA automatique en l'absence de `404.html`).
+  - **Via CLI :** `npm run cf:pages` (`npm run build && npx wrangler pages deploy dist --project-name=photorapp`).
+
 ---
 
 ## Architecture technique
@@ -345,10 +357,12 @@ Arborescence principale réellement présente dans le dépôt :
 photorapp/
 ├── index.html                  # Point d'entrée HTML, SEO/OG/Schema.org et polices Google
 ├── metadata.json               # Nom et description de l'application
+├── .node-version               # Version Node.js (22) pour builds CI (Cloudflare/Vite 8)
+├── wrangler.jsonc              # Configuration Cloudflare Workers Static Assets (SPA)
 ├── netlify.toml                # Configuration de build et redirection SPA (/* -> /index.html)
-├── package.json                # Dépendances et scripts (dev, build, lint, preview, test)
+├── package.json                # Dépendances et scripts (dev, build, lint, preview, test, cf:*)
 ├── vite.config.ts              # Configuration Vite (port 3000), PWA et Vitest
-├── public/                     # Assets statiques : logo.svg, app_preview.svg, icônes PWA,
+├── public/                     # Assets statiques : _headers (Cloudflare), logo.svg, app_preview.svg, icônes PWA,
 │   └── screenshots/            # 7 captures réelles de l'application (.png)
 ├── stitch_photorapp/           # Maquettes visuelles historiques (Stitch)
 └── src/

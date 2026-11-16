@@ -1,6 +1,7 @@
 import { createContext } from 'react';
 import type { Photo, Album, PhotoAdjustments, SmartAlbumCriteria } from '../types/types';
 import type { MigrationReport } from '../utils/db';
+import type { AppLang } from './languageContextDef';
 
 export interface PhotoContextType {
   photos: Photo[];
@@ -21,7 +22,7 @@ export interface PhotoContextType {
   setAlbumCover: (albumId: string, photoId: string) => void;
   getPhotoUrl: (photo: Photo, isThumbnail?: boolean) => Promise<string>;
   analyzePhoto: (photoId: string) => Promise<void>;
-  analyzeAllPhotos: (onProgress?: (current: number, total: number) => void) => Promise<void>;
+  analyzeAllPhotos: (onProgress?: (current: number, total: number) => void, lang?: AppLang) => Promise<void>;
 }
 
 export const PhotoContext = createContext<PhotoContextType | undefined>(undefined);

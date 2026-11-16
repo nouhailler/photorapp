@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import { LanguageProvider } from './context/LanguageContext';
 import { PhotoProvider } from './context/PhotoContext';
 import { HelpProvider } from './context/HelpContext';
 import LandingPage from './pages/LandingPage';
@@ -14,11 +15,13 @@ import SystemSettings from './pages/SystemSettings';
 
 const App: React.FC = () => {
   return (
-    <PhotoProvider>
-      <HelpProvider>
-        <Router>
+    <LanguageProvider>
+      <PhotoProvider>
+        <HelpProvider>
+          <Router>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<LandingPage initialLang="fr" />} />
+            <Route path="/en" element={<LandingPage initialLang="en" />} />
             <Route
               path="/gallery"
               element={
@@ -88,6 +91,7 @@ const App: React.FC = () => {
         </Router>
       </HelpProvider>
     </PhotoProvider>
+    </LanguageProvider>
   );
 };
 

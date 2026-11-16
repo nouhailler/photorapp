@@ -4,6 +4,7 @@ import { usePhotos } from '../context/usePhotos';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { getSmartAlbumPhotos, isCriteriaValid } from '../services/smartAlbumService';
 import { HelpTooltip } from '../components/HelpTooltip';
+import { useLanguage } from '../context/useLanguage';
 import type { Album, Photo, SmartAlbumCriteria } from '../types/types';
 
 interface AlbumCardProps {
@@ -16,6 +17,7 @@ interface AlbumCardProps {
 
 const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhoto, photoCount, onDelete, onRename }) => {
   const navigate = useNavigate();
+  const { isEn } = useLanguage();
   const url = usePhotoUrl(
     coverPhoto ||
       ({
@@ -43,7 +45,9 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhoto, photoCount, on
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-on-surface-variant p-4 text-center">
               <span className="material-symbols-outlined text-4xl mb-1 opacity-40">photo_library</span>
-              <span className="text-[11px] font-semibold opacity-60">Album vide</span>
+              <span className="text-[11px] font-semibold opacity-60">
+                {isEn ? 'Empty album' : 'Album vide'}
+              </span>
             </div>
           )}
 
@@ -56,7 +60,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhoto, photoCount, on
                 e.stopPropagation();
                 onRename(album);
               }}
-              title="Renommer l'album"
+              title={isEn ? 'Rename album' : "Renommer l'album"}
               className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center hover:bg-primary/80 transition-colors"
             >
               <span className="material-symbols-outlined text-[16px]">edit</span>
@@ -66,13 +70,15 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhoto, photoCount, on
                 e.stopPropagation();
                 if (
                   window.confirm(
-                    `Supprimer l'album "${album.title}" ? (Les photos seront conservées dans la bibliothèque)`
+                    isEn
+                      ? `Delete album "${album.title}"? (Photos will remain in your library)`
+                      : `Supprimer l'album "${album.title}" ? (Les photos seront conservées dans la bibliothèque)`
                   )
                 ) {
                   onDelete(album.id);
                 }
               }}
-              title="Supprimer l'album"
+              title={isEn ? 'Delete album' : "Supprimer l'album"}
               className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md text-white flex items-center justify-center hover:bg-error/80 transition-colors"
             >
               <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -85,7 +91,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhoto, photoCount, on
                 auto_awesome
               </span>
               <span className="text-[10px] font-bold text-on-tertiary-container uppercase tracking-wider">
-                Intelligent
+                {isEn ? 'Smart' : 'Intelligent'}
               </span>
             </div>
           )}
@@ -97,10 +103,12 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhoto, photoCount, on
           {album.title}
         </h3>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-label-sm font-semibold text-primary">{photoCount} photos</span>
+          <span className="text-label-sm font-semibold text-primary">
+            {photoCount} {isEn ? (photoCount === 1 ? 'photo' : 'photos') : 'photos'}
+          </span>
           <span className="w-1 h-1 rounded-full bg-outline-variant" />
           <span className="text-label-sm text-on-surface-variant">
-            {album.isSmart ? 'Filtre automatique' : 'Manuel'}
+            {album.isSmart ? (isEn ? 'Auto filter' : 'Filtre automatique') : (isEn ? 'Manual' : 'Manuel')}
           </span>
         </div>
       </div>
@@ -110,6 +118,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, coverPhoto, photoCount, on
 
 const Albums: React.FC = () => {
   const { albums, photos, createAlbum, updateAlbum, deleteAlbum } = usePhotos();
+  const { isEn } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'title' | 'count' | 'recent'>('recent');
 
@@ -254,14 +263,22 @@ const Albums: React.FC = () => {
       <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-headline-lg font-bold text-on-surface">Collections & Albums</h2>
+            <h2 className="text-headline-lg font-bold text-on-surface">
+              {isEn ? 'Collections & Albums' : 'Collections & Albums'}
+            </h2>
             <HelpTooltip
               title="Collections & Albums"
-              text="Organisez vos clichés dans des albums manuels ou intelligents. Les albums intelligents se mettent à jour automatiquement sans dupliquer vos fichiers."
+              text={
+                isEn
+                  ? 'Organize your shots into manual or smart albums. Smart albums update automatically without duplicating your files.'
+                  : 'Organisez vos clichés dans des albums manuels ou intelligents. Les albums intelligents se mettent à jour automatiquement sans dupliquer vos fichiers.'
+              }
             />
           </div>
           <p className="text-body-sm text-on-surface-variant">
-            {albums.length} albums organisés · Classement intelligent et manuel
+            {isEn
+              ? `${albums.length} organized albums · Smart and manual organization`
+              : `${albums.length} albums organisés · Classement intelligent et manuel`}
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -270,11 +287,15 @@ const Albums: React.FC = () => {
             className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-2xl font-bold text-label-md shadow-md active:scale-95 transition-transform"
           >
             <span className="material-symbols-outlined text-[20px]">add</span>
-            <span>Nouvel album</span>
+            <span>{isEn ? 'New album' : 'Nouvel album'}</span>
           </button>
           <HelpTooltip
-            title="Créer un album"
-            text="Créez un album standard pour y ajouter des photos manuellement, ou un album intelligent filtré par année, lieu, favoris, etc."
+            title={isEn ? 'Create an album' : 'Créer un album'}
+            text={
+              isEn
+                ? 'Create a standard album to add photos manually, or a smart album filtered by year, location, favorites, etc.'
+                : 'Créez un album standard pour y ajouter des photos manuellement, ou un album intelligent filtré par année, lieu, favoris, etc.'
+            }
           />
         </div>
       </section>
@@ -289,24 +310,30 @@ const Albums: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher un album..."
+            placeholder={isEn ? 'Search albums...' : 'Rechercher un album...'}
             className="w-full h-10 pl-10 pr-4 bg-surface-container-low border border-outline-variant/30 rounded-xl text-body-sm focus:border-primary outline-none"
           />
         </div>
 
         <div className="flex items-center gap-2 self-end sm:self-auto text-label-sm font-medium text-on-surface-variant">
           <div className="flex items-center gap-1">
-            <span>Trier par :</span>
-            <HelpTooltip text="Triez vos albums par date de création, nombre de photos ou ordre alphabétique." />
+            <span>{isEn ? 'Sort by:' : 'Trier par :'}</span>
+            <HelpTooltip
+              text={
+                isEn
+                  ? 'Sort your albums by creation date, photo count, or alphabetical order.'
+                  : 'Triez vos albums par date de création, nombre de photos ou ordre alphabétique.'
+              }
+            />
           </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'title' | 'count' | 'recent')}
             className="h-10 px-3 bg-surface-container-low border border-outline-variant/30 rounded-xl text-on-surface outline-none cursor-pointer"
           >
-            <option value="recent">Plus récents</option>
-            <option value="count">Nombre de photos</option>
-            <option value="title">Nom alphabétique</option>
+            <option value="recent">{isEn ? 'Most recent' : 'Plus récents'}</option>
+            <option value="count">{isEn ? 'Photo count' : 'Nombre de photos'}</option>
+            <option value="title">{isEn ? 'Alphabetical' : 'Nom alphabétique'}</option>
           </select>
         </div>
       </div>
@@ -322,9 +349,11 @@ const Albums: React.FC = () => {
             <span className="material-symbols-outlined text-primary text-[32px]">create_new_folder</span>
           </div>
           <span className="text-label-md font-bold text-on-surface group-hover:text-primary">
-            Créer un album
+            {isEn ? 'Create an album' : 'Créer un album'}
           </span>
-          <span className="text-[11px] text-on-surface-variant mt-1">Classique ou Intelligent</span>
+          <span className="text-[11px] text-on-surface-variant mt-1">
+            {isEn ? 'Classic or Smart' : 'Classique ou Intelligent'}
+          </span>
         </button>
 
         {filteredAlbums.map((album) => {
@@ -345,9 +374,13 @@ const Albums: React.FC = () => {
 
       {/* Smart Spaces Section computed from real user data */}
       <section className="pt-8 border-t border-outline-variant/20">
-        <h3 className="text-headline-md font-bold text-on-surface mb-2">Espaces Intelligents Instantanés</h3>
+        <h3 className="text-headline-md font-bold text-on-surface mb-2">
+          {isEn ? 'Instant Smart Spaces' : 'Espaces Intelligents Instantanés'}
+        </h3>
         <p className="text-body-sm text-on-surface-variant mb-6">
-          Suggestions créées dynamiquement à partir de vos photos réelles sans duplication de fichiers.
+          {isEn
+            ? 'Suggestions generated dynamically from your real photos with zero file duplication.'
+            : 'Suggestions créées dynamiquement à partir de vos photos réelles sans duplication de fichiers.'}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -358,22 +391,28 @@ const Albums: React.FC = () => {
                 <span className="material-symbols-outlined text-[28px] material-symbols-fill">star</span>
               </div>
               <div>
-                <h4 className="text-headline-sm font-bold text-on-surface">Vos Favoris</h4>
-                <p className="text-label-sm text-on-surface-variant">{favoritePhotosCount} photos étoilées</p>
+                <h4 className="text-headline-sm font-bold text-on-surface">
+                  {isEn ? 'Your Favorites' : 'Vos Favoris'}
+                </h4>
+                <p className="text-label-sm text-on-surface-variant">
+                  {isEn ? `${favoritePhotosCount} starred photos` : `${favoritePhotosCount} photos étoilées`}
+                </p>
               </div>
             </div>
             <button
               onClick={() => {
                 createAlbum(
-                  'Mes Favoris',
-                  'Album intelligent regroupant toutes vos photos favorites',
+                  isEn ? 'My Favorites' : 'Mes Favoris',
+                  isEn
+                    ? 'Smart album gathering all your favorite photos'
+                    : 'Album intelligent regroupant toutes vos photos favorites',
                   true,
                   { isFavorite: true }
                 );
               }}
               className="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-sm font-bold active:scale-95"
             >
-              Créer l'album
+              {isEn ? 'Create album' : "Créer l'album"}
             </button>
           </div>
 
@@ -384,21 +423,28 @@ const Albums: React.FC = () => {
                 <span className="material-symbols-outlined text-[28px]">explore</span>
               </div>
               <div>
-                <h4 className="text-headline-sm font-bold text-on-surface">Photos Géolocalisées</h4>
+                <h4 className="text-headline-sm font-bold text-on-surface">
+                  {isEn ? 'Geotagged Photos' : 'Photos Géolocalisées'}
+                </h4>
                 <p className="text-label-sm text-on-surface-variant">
-                  {gpsPhotosCount} photos avec coordonnées GPS
+                  {isEn
+                    ? `${gpsPhotosCount} photos with GPS coordinates`
+                    : `${gpsPhotosCount} photos avec coordonnées GPS`}
                 </p>
               </div>
             </div>
             <button
               onClick={() => {
-                createAlbum('Carnet de voyage', 'Photos disposant de coordonnées GPS', true, {
-                  hasGps: true,
-                });
+                createAlbum(
+                  isEn ? 'Travel Journal' : 'Carnet de voyage',
+                  isEn ? 'Photos containing GPS coordinates' : 'Photos disposant de coordonnées GPS',
+                  true,
+                  { hasGps: true }
+                );
               }}
               className="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-sm font-bold active:scale-95"
             >
-              Créer l'album
+              {isEn ? 'Create album' : "Créer l'album"}
             </button>
           </div>
         </div>
@@ -410,7 +456,9 @@ const Albums: React.FC = () => {
           <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-md w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-headline-sm font-bold text-on-surface">
-                {editingAlbum ? 'Renommer l\'album' : 'Nouvel album'}
+                {editingAlbum
+                  ? isEn ? 'Rename album' : "Renommer l'album"
+                  : isEn ? 'New album' : 'Nouvel album'}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -423,14 +471,14 @@ const Albums: React.FC = () => {
             <form onSubmit={handleSaveModal} className="space-y-4">
               <div>
                 <label className="block text-label-sm font-semibold text-on-surface mb-1.5">
-                  Titre de l'album *
+                  {isEn ? 'Album title *' : "Titre de l'album *"}
                 </label>
                 <input
                   type="text"
                   required
                   value={albumTitle}
                   onChange={(e) => setAlbumTitle(e.target.value)}
-                  placeholder="Ex : Vacances en Bretagne 2024"
+                  placeholder={isEn ? 'e.g. Brittany Trip 2024' : 'Ex : Vacances en Bretagne 2024'}
                   className="w-full h-11 px-4 bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-sm focus:border-primary outline-none"
                   autoFocus
                 />
@@ -438,13 +486,13 @@ const Albums: React.FC = () => {
 
               <div>
                 <label className="block text-label-sm font-semibold text-on-surface mb-1.5">
-                  Description (facultative)
+                  {isEn ? 'Description (optional)' : 'Description (facultative)'}
                 </label>
                 <input
                   type="text"
                   value={albumDesc}
                   onChange={(e) => setAlbumDesc(e.target.value)}
-                  placeholder="Ex : Souvenirs de famille et paysages"
+                  placeholder={isEn ? 'e.g. Family memories and landscapes' : 'Ex : Souvenirs de famille et paysages'}
                   className="w-full h-11 px-4 bg-surface-container-low border border-outline-variant/40 rounded-xl text-body-sm focus:border-primary outline-none"
                 />
               </div>
@@ -459,9 +507,13 @@ const Albums: React.FC = () => {
                       className="w-5 h-5 accent-primary rounded cursor-pointer"
                     />
                     <div>
-                      <span className="text-label-md font-bold text-on-surface">Album Intelligent</span>
+                      <span className="text-label-md font-bold text-on-surface">
+                        {isEn ? 'Smart Album' : 'Album Intelligent'}
+                      </span>
                       <p className="text-[11px] text-on-surface-variant">
-                        Mise à jour automatique sans dupliquer les fichiers
+                        {isEn
+                          ? 'Updates automatically without duplicating files'
+                          : 'Mise à jour automatique sans dupliquer les fichiers'}
                       </p>
                     </div>
                   </label>
@@ -469,7 +521,7 @@ const Albums: React.FC = () => {
                   {isSmartAlbum && (
                     <div className="space-y-3 pt-2 border-t border-outline-variant/20">
                       <label className="block text-label-xs font-semibold text-on-surface-variant">
-                        Critère d'appartenance automatique :
+                        {isEn ? 'Automatic membership rule:' : "Critère d'appartenance automatique :"}
                       </label>
                       <select
                         value={smartType}
@@ -488,14 +540,14 @@ const Albums: React.FC = () => {
                         }
                         className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
                       >
-                        <option value="favorites">Photos favorites uniquement</option>
-                        <option value="gps">Photos géolocalisées (coordonnées GPS)</option>
-                        <option value="year">Photos d'une année précise</option>
-                        <option value="month">Photos d'un mois précis (1 à 12)</option>
-                        <option value="tag">Photos associées à un mot-clé (tag)</option>
-                        <option value="location">Photos d'un lieu / ville</option>
-                        <option value="blurry">Photos floues (à trier / nettoyer)</option>
-                        <option value="dateRange">Période personnalisée (début - fin)</option>
+                        <option value="favorites">{isEn ? 'Favorite photos only' : 'Photos favorites uniquement'}</option>
+                        <option value="gps">{isEn ? 'Geotagged photos (GPS coordinates)' : 'Photos géolocalisées (coordonnées GPS)'}</option>
+                        <option value="year">{isEn ? 'Photos from a specific year' : "Photos d'une année précise"}</option>
+                        <option value="month">{isEn ? 'Photos from a specific month (1–12)' : "Photos d'un mois précis (1 à 12)"}</option>
+                        <option value="tag">{isEn ? 'Photos matching a keyword (tag)' : 'Photos associées à un mot-clé (tag)'}</option>
+                        <option value="location">{isEn ? 'Photos from a place / city' : "Photos d'un lieu / ville"}</option>
+                        <option value="blurry">{isEn ? 'Blurry photos (to review / clean up)' : 'Photos floues (à trier / nettoyer)'}</option>
+                        <option value="dateRange">{isEn ? 'Custom date range (start - end)' : 'Période personnalisée (début - fin)'}</option>
                       </select>
 
                       {smartType === 'year' && (
@@ -506,7 +558,7 @@ const Albums: React.FC = () => {
                           max={2100}
                           onChange={(e) => setSmartYear(parseInt(e.target.value, 10) || new Date().getFullYear())}
                           className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
-                          placeholder="Ex : 2024"
+                          placeholder={isEn ? 'e.g. 2024' : 'Ex : 2024'}
                         />
                       )}
 
@@ -516,10 +568,10 @@ const Albums: React.FC = () => {
                           onChange={(e) => setSmartMonth(parseInt(e.target.value, 10))}
                           className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
                         >
-                          {[
-                            'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-                            'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
-                          ].map((monthName, idx) => (
+                          {(isEn
+                            ? ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+                            : ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+                          ).map((monthName, idx) => (
                             <option key={idx + 1} value={idx + 1}>
                               {monthName} ({idx + 1})
                             </option>
@@ -533,7 +585,7 @@ const Albums: React.FC = () => {
                           value={smartTag}
                           onChange={(e) => setSmartTag(e.target.value)}
                           className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
-                          placeholder="Ex : Voyage, Famille, Portrait..."
+                          placeholder={isEn ? 'e.g. Travel, Family, Portrait...' : 'Ex : Voyage, Famille, Portrait...'}
                         />
                       )}
 
@@ -543,7 +595,7 @@ const Albums: React.FC = () => {
                           value={smartLocation}
                           onChange={(e) => setSmartLocation(e.target.value)}
                           className="w-full h-10 px-3 bg-surface border border-outline-variant/40 rounded-xl text-label-sm"
-                          placeholder="Ex : Paris, Bretagne, Tokyo..."
+                          placeholder={isEn ? 'e.g. Paris, Brittany, Tokyo...' : 'Ex : Paris, Bretagne, Tokyo...'}
                         />
                       )}
 
@@ -574,14 +626,16 @@ const Albums: React.FC = () => {
                   onClick={() => setIsModalOpen(false)}
                   className="px-5 py-2.5 rounded-xl border border-outline-variant/40 text-on-surface font-semibold text-label-md hover:bg-surface-variant/30"
                 >
-                  Annuler
+                  {isEn ? 'Cancel' : 'Annuler'}
                 </button>
                 <button
                   type="submit"
                   disabled={!isFormValid}
                   className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-label-md active:scale-95 disabled:opacity-50"
                 >
-                  {editingAlbum ? 'Mettre à jour' : 'Créer l\'album'}
+                  {editingAlbum
+                    ? isEn ? 'Update' : 'Mettre à jour'
+                    : isEn ? 'Create album' : "Créer l'album"}
                 </button>
               </div>
             </form>

@@ -16,9 +16,11 @@ import { regenerateAllMissingThumbnails } from '../services/thumbnailService';
 import { diagnoseStorage, cleanupOrphanedBlobs } from '../utils/db';
 import type { StorageDiagnostic } from '../types/types';
 import { HelpTooltip } from '../components/HelpTooltip';
+import { useLanguage } from '../context/useLanguage';
 
 const Sharing: React.FC = () => {
   const { photos, albums, addPhotos } = usePhotos();
+  const { lang, isEn } = useLanguage();
 
   // Import Ref & State
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,9 +84,14 @@ const Sharing: React.FC = () => {
     setImportResult(null);
 
     try {
-      const result = await processPhotosImport(files, photos, (prog) => {
-        setImportProgress(prog);
-      });
+      const result = await processPhotosImport(
+        files,
+        photos,
+        (prog) => {
+          setImportProgress(prog);
+        },
+        { skipDuplicates: true, lang }
+      );
 
       if (result.importedPhotos.length > 0) {
         await addPhotos(result.importedPhotos.map((p) => ({ photo: p })));
@@ -104,13 +111,18 @@ const Sharing: React.FC = () => {
     if (photos.length === 0) return;
     setIsExporting(true);
     setExportProgressPct(5);
-    setExportStatusText('Préparation de la sauvegarde...');
+    setExportStatusText(isEn ? 'Preparing backup...' : 'Préparation de la sauvegarde...');
 
     try {
-      const res = await createFullLibraryBackup(photos, albums, (pct, status) => {
-        setExportProgressPct(pct);
-        setExportStatusText(status);
-      });
+      const res = await createFullLibraryBackup(
+        photos,
+        albums,
+        (pct, status) => {
+          setExportProgressPct(pct);
+          setExportStatusText(status);
+        },
+        lang
+      );
       setBackupReport(res);
     } catch (err) {
       console.error('Backup error:', err);
@@ -127,15 +139,21 @@ const Sharing: React.FC = () => {
 
     setIsExporting(true);
     setExportProgressPct(20);
-    setExportStatusText("Analyse et simulation de l'archive de sauvegarde...");
+    setExportStatusText(
+      isEn ? 'Analyzing and simulating backup archive...' : "Analyse et simulation de l'archive de sauvegarde..."
+    );
 
     try {
-      const sim = await simulateRestoreBackup(file);
+      const sim = await simulateRestoreBackup(file, lang);
       setRestoreSimulation(sim);
       setRestorePendingFile(file);
     } catch (err) {
       console.error('Simulation restore error:', err);
-      alert(`Erreur de lecture de l'archive : ${err instanceof Error ? err.message : 'Fichier non valide'}`);
+      alert(
+        isEn
+          ? `Failed to read archive: ${err instanceof Error ? err.message : 'Invalid file'}`
+          : `Erreur de lecture de l'archive : ${err instanceof Error ? err.message : 'Fichier non valide'}`
+      );
     } finally {
       setIsExporting(false);
       setExportStatusText('');
@@ -149,20 +167,28 @@ const Sharing: React.FC = () => {
 
     setIsExporting(true);
     setExportProgressPct(10);
-    setExportStatusText('Restauration sécurisée en cours...');
+    setExportStatusText(isEn ? 'Secure restore in progress...' : 'Restauration sécurisée en cours...');
 
     try {
-      const res = await restoreFullLibraryBackup(restorePendingFile, (pct, status) => {
-        setExportProgressPct(pct);
-        setExportStatusText(status);
-      });
+      const res = await restoreFullLibraryBackup(
+        restorePendingFile,
+        (pct, status) => {
+          setExportProgressPct(pct);
+          setExportStatusText(status);
+        },
+        lang
+      );
       setRestoreReport(res);
       setRestoreSimulation(null);
       setRestorePendingFile(null);
       loadDiagnostic();
     } catch (err) {
       console.error('Restore error:', err);
-      alert(`Erreur lors de la restauration : ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+      alert(
+        isEn
+          ? `Restore failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+          : `Erreur lors de la restauration : ${err instanceof Error ? err.message : 'Erreur inconnue'}`
+      );
     } finally {
       setIsExporting(false);
       setExportStatusText('');
@@ -174,7 +200,11 @@ const Sharing: React.FC = () => {
     setIsRegeneratingThumbs(true);
     try {
       const res = await regenerateAllMissingThumbnails(photos);
-      setCleanupMessage(`${res.generated} miniature(s) générée(s) avec succès.`);
+      setCleanupMessage(
+        isEn
+          ? `${res.generated} thumbnail(s) generated successfully.`
+          : `${res.generated} miniature(s) générée(s) avec succès.`
+      );
       setTimeout(() => setCleanupMessage(''), 3000);
       loadDiagnostic();
     } catch (err) {
@@ -190,12 +220,17 @@ const Sharing: React.FC = () => {
     if (photos.length === 0) return;
     setIsExporting(true);
     setExportProgressPct(10);
-    setExportStatusText('Compression de toutes les photos...');
+    setExportStatusText(isEn ? 'Compressing all photos...' : 'Compression de toutes les photos...');
     try {
-      const res = await exportPhotosToZip(photos, 'photorapp_toutes_photos.zip', (pct, name) => {
-        setExportProgressPct(pct);
-        setExportStatusText(`Ajout : ${name}`);
-      });
+      const res = await exportPhotosToZip(
+        photos,
+        'gallery_pro_all_photos.zip',
+        (pct, name) => {
+          setExportProgressPct(pct);
+          setExportStatusText(isEn ? `Adding: ${name}` : `Ajout : ${name}`);
+        },
+        lang
+      );
       setZipExportReport(res);
     } catch (e) {
       console.error('Zip export error:', e);
@@ -214,7 +249,11 @@ const Sharing: React.FC = () => {
   const handleCleanupOrphans = async () => {
     const activeIds = photos.map((p) => p.id);
     const removed = await cleanupOrphanedBlobs(activeIds);
-    setCleanupMessage(`${removed} fichier(s) orphelin(s) supprimé(s) avec succès.`);
+    setCleanupMessage(
+      isEn
+        ? `${removed} orphaned file(s) removed successfully.`
+        : `${removed} fichier(s) orphelin(s) supprimé(s) avec succès.`
+    );
     setTimeout(() => setCleanupMessage(''), 3000);
     loadDiagnostic();
   };
@@ -241,11 +280,21 @@ const Sharing: React.FC = () => {
       {/* Header */}
       <section className="pt-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-headline-lg font-bold text-on-surface">Sauvegarde & Exportation</h2>
-          <HelpTooltip text="Gallery Pro fonctionne 100% en local dans votre navigateur. Utilisez cette page pour exporter des sauvegardes sécurisées sur votre disque dur ou restaurer vos albums." />
+          <h2 className="text-headline-lg font-bold text-on-surface">
+            {isEn ? 'Backup & Export' : 'Sauvegarde & Exportation'}
+          </h2>
+          <HelpTooltip
+            text={
+              isEn
+                ? 'Gallery Pro runs 100% locally in your browser. Use this page to export verified backups to your drive or restore your albums.'
+                : 'Gallery Pro fonctionne 100% en local dans votre navigateur. Utilisez cette page pour exporter des sauvegardes sécurisées sur votre disque dur ou restaurer vos albums.'
+            }
+          />
         </div>
         <p className="text-body-sm text-on-surface-variant mt-1">
-          Centre de gestion des transferts, sauvegardes intégrales et santé de votre stockage local.
+          {isEn
+            ? 'Transfer management hub, full library backups, and local storage health diagnostics.'
+            : 'Centre de gestion des transferts, sauvegardes intégrales et santé de votre stockage local.'}
         </p>
       </section>
 
@@ -269,9 +318,15 @@ const Sharing: React.FC = () => {
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <h3 className="text-label-md font-bold text-primary uppercase tracking-wider">
-            Importer des photos
+            {isEn ? 'Import photos' : 'Importer des photos'}
           </h3>
-          <HelpTooltip text="Sélectionnez des fichiers photo depuis votre ordinateur ou smartphone. Vos photos restent sur votre appareil et ne sont jamais transmises à des tiers." />
+          <HelpTooltip
+            text={
+              isEn
+                ? 'Select photo files from your computer or phone. Your photos remain on your device and are never uploaded to third parties.'
+                : 'Sélectionnez des fichiers photo depuis votre ordinateur ou smartphone. Vos photos restent sur votre appareil et ne sont jamais transmises à des tiers.'
+            }
+          />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
@@ -282,9 +337,13 @@ const Sharing: React.FC = () => {
               <span className="material-symbols-outlined text-3xl">upload_file</span>
             </div>
             <div>
-              <p className="text-headline-sm font-bold text-on-surface">Importer depuis cet appareil</p>
+              <p className="text-headline-sm font-bold text-on-surface">
+                {isEn ? 'Import from this device' : 'Importer depuis cet appareil'}
+              </p>
               <p className="text-label-xs text-on-surface-variant mt-0.5">
-                Sélectionnez des photos (JPEG, PNG, WEBP, AVIF, HEIC). Extraction automatique des EXIF et GPS.
+                {isEn
+                  ? 'Select photos (JPEG, PNG, WEBP, AVIF, HEIC). Automatic EXIF & GPS extraction.'
+                  : 'Sélectionnez des photos (JPEG, PNG, WEBP, AVIF, HEIC). Extraction automatique des EXIF et GPS.'}
               </p>
             </div>
           </button>
@@ -297,9 +356,13 @@ const Sharing: React.FC = () => {
               <span className="material-symbols-outlined text-3xl">settings_backup_restore</span>
             </div>
             <div>
-              <p className="text-headline-sm font-bold text-on-surface">Restaurer une sauvegarde (.zip)</p>
+              <p className="text-headline-sm font-bold text-on-surface">
+                {isEn ? 'Restore a backup (.zip)' : 'Restaurer une sauvegarde (.zip)'}
+              </p>
               <p className="text-label-xs text-on-surface-variant mt-0.5">
-                Réinjectez une archive complète exportée depuis Gallery Pro avec vérification d'intégrité.
+                {isEn
+                  ? 'Re-import a full archive exported from Gallery Pro with integrity verification.'
+                  : "Réinjectez une archive complète exportée depuis Gallery Pro avec vérification d'intégrité."}
               </p>
             </div>
           </button>
@@ -310,9 +373,15 @@ const Sharing: React.FC = () => {
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <h3 className="text-label-md font-bold text-primary uppercase tracking-wider">
-            Sauvegarde & Archives
+            {isEn ? 'Backup & Archives' : 'Sauvegarde & Archives'}
           </h3>
-          <HelpTooltip text="Sauvegardez l'ensemble de votre bibliothèque dans un fichier zip sécurisé avec un manifeste certifié SHA-256." />
+          <HelpTooltip
+            text={
+              isEn
+                ? 'Back up your entire library into a verified zip archive with a SHA-256 certified manifest.'
+                : "Sauvegardez l'ensemble de votre bibliothèque dans un fichier zip sécurisé avec un manifeste certifié SHA-256."
+            }
+          />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Backup Full Library */}
@@ -324,13 +393,18 @@ const Sharing: React.FC = () => {
               <span className="material-symbols-outlined text-[26px]">archive</span>
             </div>
             <div>
-              <h4 className="text-label-lg font-bold text-on-surface">Sauvegarde intégrale (.zip)</h4>
+              <h4 className="text-label-lg font-bold text-on-surface">
+                {isEn ? 'Full library backup (.zip)' : 'Sauvegarde intégrale (.zip)'}
+              </h4>
               <p className="text-[11px] text-on-surface-variant mt-1">
-                Génère une archive avec manifeste versionné v2, empreintes SHA-256 et métadonnées.
+                {isEn
+                  ? 'Generates an archive with versioned v2 manifest, SHA-256 checksums, and metadata.'
+                  : 'Génère une archive avec manifeste versionné v2, empreintes SHA-256 et métadonnées.'}
               </p>
             </div>
             <span className="text-label-xs font-bold text-primary inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-              Télécharger l'archive <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+              {isEn ? 'Download archive' : "Télécharger l'archive"}{' '}
+              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
             </span>
           </div>
 
@@ -343,13 +417,18 @@ const Sharing: React.FC = () => {
               <span className="material-symbols-outlined text-[26px]">folder_zip</span>
             </div>
             <div>
-              <h4 className="text-label-lg font-bold text-on-surface">Exporter les photos en ZIP</h4>
+              <h4 className="text-label-lg font-bold text-on-surface">
+                {isEn ? 'Export photos as ZIP' : 'Exporter les photos en ZIP'}
+              </h4>
               <p className="text-[11px] text-on-surface-variant mt-1">
-                Archive simple comprenant vos photos avec leurs réglages et recadrages appliqués.
+                {isEn
+                  ? 'Simple archive containing your photos with non-destructive edits and crops baked in.'
+                  : 'Archive simple comprenant vos photos avec leurs réglages et recadrages appliqués.'}
               </p>
             </div>
             <span className="text-label-xs font-bold text-primary inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-              Exporter {photos.length} photos <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+              {isEn ? `Export ${photos.length} photos` : `Exporter ${photos.length} photos`}{' '}
+              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
             </span>
           </div>
 
@@ -362,13 +441,18 @@ const Sharing: React.FC = () => {
               <span className="material-symbols-outlined text-[26px]">data_object</span>
             </div>
             <div>
-              <h4 className="text-label-lg font-bold text-on-surface">Catalogue JSON</h4>
+              <h4 className="text-label-lg font-bold text-on-surface">
+                {isEn ? 'JSON Catalog' : 'Catalogue JSON'}
+              </h4>
               <p className="text-[11px] text-on-surface-variant mt-1">
-                Fichier de métadonnées structurées (albums, tags, EXIF, dates) au format standard JSON.
+                {isEn
+                  ? 'Structured metadata file (albums, tags, EXIF, dates) in standard JSON format.'
+                  : 'Fichier de métadonnées structurées (albums, tags, EXIF, dates) au format standard JSON.'}
               </p>
             </div>
             <span className="text-label-xs font-bold text-primary inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-              Télécharger JSON <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+              {isEn ? 'Download JSON' : 'Télécharger JSON'}{' '}
+              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
             </span>
           </div>
         </div>
@@ -378,7 +462,7 @@ const Sharing: React.FC = () => {
       <section className="space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-label-md font-bold text-primary uppercase tracking-wider">
-            Diagnostic du Stockage Local (IndexedDB)
+            {isEn ? 'Local Storage Diagnostics (IndexedDB)' : 'Diagnostic du Stockage Local (IndexedDB)'}
           </h3>
           <button
             onClick={loadDiagnostic}
@@ -386,7 +470,7 @@ const Sharing: React.FC = () => {
             className="text-label-xs font-bold text-primary hover:underline flex items-center gap-1"
           >
             <span className="material-symbols-outlined text-[16px]">refresh</span>
-            <span>Actualiser</span>
+            <span>{isEn ? 'Refresh' : 'Actualiser'}</span>
           </button>
         </div>
 
@@ -401,21 +485,29 @@ const Sharing: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
               <div className="p-3 bg-surface rounded-xl border border-outline-variant/20">
                 <span className="block text-headline-sm font-bold text-primary">{diagnostic.totalPhotos}</span>
-                <span className="text-[11px] text-on-surface-variant">Photos au catalogue</span>
+                <span className="text-[11px] text-on-surface-variant">
+                  {isEn ? 'Photos in catalog' : 'Photos au catalogue'}
+                </span>
               </div>
               <div className="p-3 bg-surface rounded-xl border border-outline-variant/20">
                 <span className="block text-headline-sm font-bold text-on-surface">{diagnostic.localPhotosCount}</span>
-                <span className="text-[11px] text-on-surface-variant">Fichiers stockés localement</span>
+                <span className="text-[11px] text-on-surface-variant">
+                  {isEn ? 'Files stored locally' : 'Fichiers stockés localement'}
+                </span>
               </div>
               <div className="p-3 bg-surface rounded-xl border border-outline-variant/20">
                 <span className="block text-headline-sm font-bold text-on-surface">{diagnostic.thumbnailsCount ?? 0}</span>
-                <span className="text-[11px] text-on-surface-variant">Miniatures optimisées</span>
+                <span className="text-[11px] text-on-surface-variant">
+                  {isEn ? 'Optimized thumbnails' : 'Miniatures optimisées'}
+                </span>
               </div>
               <div className="p-3 bg-surface rounded-xl border border-outline-variant/20">
                 <span className="block text-headline-sm font-bold text-on-surface">
-                  {(diagnostic.totalSizeEstimatedBytes / (1024 * 1024)).toFixed(1)} Mo
+                  {(diagnostic.totalSizeEstimatedBytes / (1024 * 1024)).toFixed(1)} {isEn ? 'MB' : 'Mo'}
                 </span>
-                <span className="text-[11px] text-on-surface-variant">Stockage navigateur estimé</span>
+                <span className="text-[11px] text-on-surface-variant">
+                  {isEn ? 'Estimated browser storage' : 'Stockage navigateur estimé'}
+                </span>
               </div>
             </div>
 
@@ -425,7 +517,9 @@ const Sharing: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary text-[20px]">photo_size_select_actual</span>
                   <span className="text-primary font-semibold">
-                    {diagnostic.missingThumbnailsCount} photo(s) sans miniature optimisée (rendu plus lent).
+                    {isEn
+                      ? `${diagnostic.missingThumbnailsCount} photo(s) missing optimized thumbnails (slower rendering).`
+                      : `${diagnostic.missingThumbnailsCount} photo(s) sans miniature optimisée (rendu plus lent).`}
                   </span>
                 </div>
                 <button
@@ -436,10 +530,10 @@ const Sharing: React.FC = () => {
                   {isRegeneratingThumbs ? (
                     <>
                       <span className="material-symbols-outlined animate-spin text-[14px]">sync</span>
-                      <span>Génération...</span>
+                      <span>{isEn ? 'Generating...' : 'Génération...'}</span>
                     </>
                   ) : (
-                    <span>Générer</span>
+                    <span>{isEn ? 'Generate' : 'Générer'}</span>
                   )}
                 </button>
               </div>
@@ -448,13 +542,15 @@ const Sharing: React.FC = () => {
             {diagnostic.orphanedBlobsCount > 0 && (
               <div className="flex items-center justify-between p-3 bg-amber-500/10 rounded-xl text-label-sm border border-amber-500/20">
                 <span className="text-amber-600 font-semibold">
-                  {diagnostic.orphanedBlobsCount} fichier(s) orphelin(s) non référencé(s) détecté(s).
+                  {isEn
+                    ? `${diagnostic.orphanedBlobsCount} unreferenced orphaned file(s) detected.`
+                    : `${diagnostic.orphanedBlobsCount} fichier(s) orphelin(s) non référencé(s) détecté(s).`}
                 </span>
                 <button
                   onClick={handleCleanupOrphans}
                   className="px-3 py-1 bg-amber-500 text-white rounded-lg text-label-xs font-bold active:scale-95"
                 >
-                  Nettoyer
+                  {isEn ? 'Clean up' : 'Nettoyer'}
                 </button>
               </div>
             )}
@@ -468,15 +564,17 @@ const Sharing: React.FC = () => {
           <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-primary">
               <span className="material-symbols-outlined text-3xl">verified</span>
-              <h3 className="text-headline-sm font-bold text-on-surface">Sauvegarde terminée</h3>
+              <h3 className="text-headline-sm font-bold text-on-surface">
+                {isEn ? 'Backup Complete' : 'Sauvegarde terminée'}
+              </h3>
             </div>
             <div className="space-y-2 text-body-sm text-on-surface-variant">
-              <p>Total photos : <strong className="text-on-surface">{backupReport.totalPhotos}</strong></p>
-              <p>Originaux locaux sauvegardés : <strong className="text-primary">{backupReport.localSaved}</strong></p>
-              <p>Fichiers distants référencés : <strong className="text-on-surface">{backupReport.remoteReferences}</strong></p>
+              <p>{isEn ? 'Total photos:' : 'Total photos :'} <strong className="text-on-surface">{backupReport.totalPhotos}</strong></p>
+              <p>{isEn ? 'Local originals backed up:' : 'Originaux locaux sauvegardés :'} <strong className="text-primary">{backupReport.localSaved}</strong></p>
+              <p>{isEn ? 'Remote references:' : 'Fichiers distants référencés :'} <strong className="text-on-surface">{backupReport.remoteReferences}</strong></p>
               {backupReport.missingLocal > 0 && (
                 <p className="text-amber-600 font-semibold">
-                  Fichiers locaux manquants : {backupReport.missingLocal}
+                  {isEn ? 'Missing local files:' : 'Fichiers locaux manquants :'} {backupReport.missingLocal}
                 </p>
               )}
             </div>
@@ -485,7 +583,7 @@ const Sharing: React.FC = () => {
                 onClick={() => setBackupReport(null)}
                 className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
               >
-                Fermer
+                {isEn ? 'Close' : 'Fermer'}
               </button>
             </div>
           </div>
@@ -498,22 +596,28 @@ const Sharing: React.FC = () => {
           <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-primary">
               <span className="material-symbols-outlined text-3xl">task_alt</span>
-              <h3 className="text-headline-sm font-bold text-on-surface">Restauration terminée</h3>
+              <h3 className="text-headline-sm font-bold text-on-surface">
+                {isEn ? 'Restore Complete' : 'Restauration terminée'}
+              </h3>
             </div>
             <div className="space-y-2 text-body-sm text-on-surface-variant">
-              <p>Photos restaurées : <strong className="text-primary">{restoreReport.restoredPhotos}</strong></p>
-              <p>Albums restaurés : <strong className="text-on-surface">{restoreReport.restoredAlbums}</strong></p>
+              <p>{isEn ? 'Restored photos:' : 'Photos restaurées :'} <strong className="text-primary">{restoreReport.restoredPhotos}</strong></p>
+              <p>{isEn ? 'Restored albums:' : 'Albums restaurés :'} <strong className="text-on-surface">{restoreReport.restoredAlbums}</strong></p>
               {restoreReport.skippedPhotos > 0 && (
-                <p>Photos ignorées : {restoreReport.skippedPhotos}</p>
+                <p>{isEn ? 'Skipped photos:' : 'Photos ignorées :'} {restoreReport.skippedPhotos}</p>
               )}
               {restoreReport.integrityErrors.length > 0 && (
                 <p className="text-error font-semibold">
-                  {restoreReport.integrityErrors.length} anomalie(s) d'intégrité détectée(s)
+                  {isEn
+                    ? `${restoreReport.integrityErrors.length} integrity anomaly(s) detected`
+                    : `${restoreReport.integrityErrors.length} anomalie(s) d'intégrité détectée(s)`}
                 </p>
               )}
               {restoreReport.missingBlobs.length > 0 && (
                 <p className="text-amber-600 font-semibold">
-                  {restoreReport.missingBlobs.length} fichier(s) photo manquant(s)
+                  {isEn
+                    ? `${restoreReport.missingBlobs.length} missing photo file(s)`
+                    : `${restoreReport.missingBlobs.length} fichier(s) photo manquant(s)`}
                 </p>
               )}
             </div>
@@ -522,13 +626,13 @@ const Sharing: React.FC = () => {
                 onClick={() => setRestoreReport(null)}
                 className="px-5 py-2.5 rounded-xl border border-outline-variant/40 text-on-surface font-semibold text-label-md"
               >
-                Fermer
+                {isEn ? 'Close' : 'Fermer'}
               </button>
               <button
                 onClick={() => window.location.reload()}
                 className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
               >
-                Actualiser la galerie
+                {isEn ? 'Refresh gallery' : 'Actualiser la galerie'}
               </button>
             </div>
           </div>
@@ -541,13 +645,20 @@ const Sharing: React.FC = () => {
           <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-primary">
               <span className="material-symbols-outlined text-3xl">folder_zip</span>
-              <h3 className="text-headline-sm font-bold text-on-surface">Exportation ZIP</h3>
+              <h3 className="text-headline-sm font-bold text-on-surface">
+                {isEn ? 'ZIP Export' : 'Exportation ZIP'}
+              </h3>
             </div>
             <div className="space-y-2 text-body-sm text-on-surface-variant">
-              <p>Photos exportées : <strong className="text-primary">{zipExportReport.exported} / {zipExportReport.total}</strong></p>
+              <p>
+                {isEn ? 'Exported photos:' : 'Photos exportées :'}{' '}
+                <strong className="text-primary">{zipExportReport.exported} / {zipExportReport.total}</strong>
+              </p>
               {zipExportReport.failed.length > 0 && (
                 <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 text-label-xs text-amber-700 space-y-1 max-h-32 overflow-y-auto">
-                  <p className="font-bold">{zipExportReport.failed.length} avertissement(s) :</p>
+                  <p className="font-bold">
+                    {isEn ? `${zipExportReport.failed.length} warning(s):` : `${zipExportReport.failed.length} avertissement(s) :`}
+                  </p>
                   {zipExportReport.failed.map((f, i) => (
                     <p key={i}>• {f.name} : {f.reason}</p>
                   ))}
@@ -559,7 +670,7 @@ const Sharing: React.FC = () => {
                 onClick={() => setZipExportReport(null)}
                 className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
               >
-                Fermer
+                {isEn ? 'Close' : 'Fermer'}
               </button>
             </div>
           </div>

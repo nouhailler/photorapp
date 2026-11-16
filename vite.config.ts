@@ -8,12 +8,13 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     allowedHosts: true,
+    hmr: false,
   },
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icon.svg', 'icons.svg', 'app_preview.svg'],
+      includeAssets: ['favicon.svg', 'icon.svg', 'icons.svg', 'app_preview.svg', 'logo.svg'],
       manifest: {
         name: 'Gallery Pro',
         short_name: 'GalleryPro',

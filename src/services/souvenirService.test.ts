@@ -67,4 +67,23 @@ describe('souvenirService', () => {
     expect(favSouvenir).toBeDefined();
     expect(favSouvenir?.photos).toHaveLength(3);
   });
+
+  it('generates English souvenir titles and subtitles when lang="en"', () => {
+    const refDate = new Date(2026, 10, 13);
+    const photos: Photo[] = [
+      makePhoto('e1', '2025-11-13', { isFavorite: true }),
+      makePhoto('e2', '2024-07-01', { metadata: { device: 'iPhone', resolution: '4K', date: '2024-07-01', location: 'Zermatt' } }),
+      makePhoto('e3', '2024-07-02', { metadata: { device: 'iPhone', resolution: '4K', date: '2024-07-02', location: 'Zermatt' } }),
+      makePhoto('e4', '2024-07-03', { metadata: { device: 'iPhone', resolution: '4K', date: '2024-07-03', location: 'Zermatt' } }),
+      makePhoto('e5', '2024-07-04', { metadata: { device: 'iPhone', resolution: '4K', date: '2024-07-04', location: 'Zermatt' } }),
+      makePhoto('e6', '2023-01-10', { isFavorite: true }),
+      makePhoto('e7', '2023-02-10', { isFavorite: true }),
+      makePhoto('e8', '2023-03-10', { isFavorite: true }),
+    ];
+
+    const souvenirs = generateSouvenirs(photos, refDate, 'en');
+    expect(souvenirs.find((s) => s.type === 'on_this_day')?.title).toBe('On this day, 1 year ago');
+    expect(souvenirs.find((s) => s.type === 'trip')?.title).toBe('Trip to Zermatt');
+    expect(souvenirs.find((s) => s.type === 'forgotten_favorites')?.title).toBe('All-time favorites');
+  });
 });

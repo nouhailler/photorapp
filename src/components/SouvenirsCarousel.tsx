@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import type { Photo, PhotoSouvenir } from '../types/types';
 import { generateSouvenirs } from '../services/souvenirService';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
+import { useLanguage } from '../context/useLanguage';
 
 interface SouvenirsCarouselProps {
   photos: Photo[];
@@ -53,7 +54,8 @@ const SouvenirCard: React.FC<{
 };
 
 export const SouvenirsCarousel: React.FC<SouvenirsCarouselProps> = ({ photos, onSelectSouvenir }) => {
-  const souvenirs = useMemo(() => generateSouvenirs(photos), [photos]);
+  const { lang, isEn } = useLanguage();
+  const souvenirs = useMemo(() => generateSouvenirs(photos, undefined, lang), [photos, lang]);
 
   if (souvenirs.length === 0) return null;
 
@@ -62,10 +64,12 @@ export const SouvenirsCarousel: React.FC<SouvenirsCarouselProps> = ({ photos, on
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-primary text-[24px]">history_edu</span>
-          <h3 className="text-headline-sm font-bold text-on-surface">Vos Souvenirs</h3>
+          <h3 className="text-headline-sm font-bold text-on-surface">
+            {isEn ? 'Your Memories' : 'Vos Souvenirs'}
+          </h3>
         </div>
         <span className="text-label-xs font-semibold text-on-surface-variant">
-          Calculés localement selon vos dates réelles
+          {isEn ? 'Calculated locally from your real photo dates' : 'Calculés localement selon vos dates réelles'}
         </span>
       </div>
 

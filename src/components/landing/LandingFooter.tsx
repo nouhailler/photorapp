@@ -2,8 +2,37 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { APP_VERSION, APP_RELEASE_DATE } from '../../services/updateService';
 import { GITHUB_REPO_URL } from './landingMedia';
+import { useLandingLang } from './LandingLangContext';
+
+const COPY = {
+  fr: {
+    tagline: `Photothèque personnelle Local-First stockée localement via IndexedDB. Version ${APP_VERSION} (${APP_RELEASE_DATE}).`,
+    navAria: 'Liens de pied de page',
+    appLink: 'Application Gallery Pro',
+    settingsLink: 'Paramètres système',
+    githubLink: 'Dépôt GitHub',
+    contextLink: 'Architecture technique (CONTEXT.md)',
+    changelogLink: 'Changelog',
+    altLangLabel: 'English version (/en)',
+    altLangTo: '/en',
+  },
+  en: {
+    tagline: `Local-First personal photo library stored locally in IndexedDB. Version ${APP_VERSION} (${APP_RELEASE_DATE}).`,
+    navAria: 'Footer links',
+    appLink: 'Gallery Pro App',
+    settingsLink: 'System Settings',
+    githubLink: 'GitHub Repository',
+    contextLink: 'Technical Architecture (CONTEXT.md)',
+    changelogLink: 'Changelog',
+    altLangLabel: 'Version française (/)',
+    altLangTo: '/',
+  },
+} as const;
 
 export const LandingFooter: React.FC = () => {
+  const { lang } = useLandingLang();
+  const t = COPY[lang];
+
   return (
     <footer className="bg-[#101218] text-neutral-300 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
@@ -12,20 +41,18 @@ export const LandingFooter: React.FC = () => {
             <img src="/icon.svg" alt="" width={24} height={24} className="w-6 h-6 rounded-md" />
             <span className="font-landing font-bold text-base">Gallery Pro — Your Visual Legacy</span>
           </div>
-          <p className="text-xs text-neutral-400 leading-relaxed">
-            Photothèque personnelle Local-First stockée localement via IndexedDB. Version {APP_VERSION} ({APP_RELEASE_DATE}).
-          </p>
+          <p className="text-xs text-neutral-400 leading-relaxed">{t.tagline}</p>
         </div>
 
-        <nav
-          aria-label="Liens de pied de page"
-          className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm"
-        >
+        <nav aria-label={t.navAria} className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm">
           <Link to="/gallery" className="text-neutral-200 hover:text-white hover:underline">
-            Application Gallery Pro
+            {t.appLink}
           </Link>
           <Link to="/settings" className="text-neutral-300 hover:text-white hover:underline">
-            Paramètres système
+            {t.settingsLink}
+          </Link>
+          <Link to={t.altLangTo} className="text-neutral-300 hover:text-white hover:underline">
+            {t.altLangLabel}
           </Link>
           <a
             href={GITHUB_REPO_URL}
@@ -33,7 +60,7 @@ export const LandingFooter: React.FC = () => {
             rel="noopener noreferrer"
             className="text-neutral-300 hover:text-white hover:underline"
           >
-            Dépôt GitHub
+            {t.githubLink}
           </a>
           <a
             href={`${GITHUB_REPO_URL}/blob/main/CONTEXT.md`}
@@ -41,7 +68,7 @@ export const LandingFooter: React.FC = () => {
             rel="noopener noreferrer"
             className="text-neutral-300 hover:text-white hover:underline"
           >
-            Architecture technique (CONTEXT.md)
+            {t.contextLink}
           </a>
           <a
             href={`${GITHUB_REPO_URL}/blob/main/CHANGELOG.md`}
@@ -49,7 +76,7 @@ export const LandingFooter: React.FC = () => {
             rel="noopener noreferrer"
             className="text-neutral-300 hover:text-white hover:underline"
           >
-            Changelog
+            {t.changelogLink}
           </a>
         </nav>
       </div>

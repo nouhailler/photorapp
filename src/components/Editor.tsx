@@ -4,6 +4,7 @@ import type { Photo, PhotoAdjustments } from '../types/types';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { exportSinglePhoto } from '../services/exportService';
 import { HelpTooltip } from './HelpTooltip';
+import { useLanguage } from '../context/useLanguage';
 
 interface EditorProps {
   photo: Photo;
@@ -19,6 +20,7 @@ interface CropMargins {
 
 const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
   const { updateAdjustments, resetAdjustments } = usePhotos();
+  const { isEn } = useLanguage();
   const url = usePhotoUrl(photo);
 
   const initialAdjustments: PhotoAdjustments = photo.adjustments || {
@@ -60,12 +62,12 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
 
   const filters = [
     { name: 'Original', value: '' },
-    { name: 'N&B', value: 'grayscale(100%)' },
-    { name: 'Sépia', value: 'sepia(80%) contrast(110%)' },
+    { name: isEn ? 'B&W' : 'N&B', value: 'grayscale(100%)' },
+    { name: isEn ? 'Sepia' : 'Sépia', value: 'sepia(80%) contrast(110%)' },
     { name: 'HDR', value: 'contrast(125%) saturate(150%)' },
-    { name: 'Froid', value: 'brightness(110%) hue-rotate(15deg)' },
-    { name: 'Chaud', value: 'brightness(90%) hue-rotate(-20deg)' },
-    { name: 'Dramatique', value: 'contrast(140%) brightness(90%) saturate(120%)' },
+    { name: isEn ? 'Cool' : 'Froid', value: 'brightness(110%) hue-rotate(15deg)' },
+    { name: isEn ? 'Warm' : 'Chaud', value: 'brightness(90%) hue-rotate(-20deg)' },
+    { name: isEn ? 'Dramatic' : 'Dramatique', value: 'contrast(140%) brightness(90%) saturate(120%)' },
   ];
 
   const handleSliderChange = (key: keyof PhotoAdjustments, value: number) => {
@@ -211,7 +213,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
         <button
           onClick={onClose}
           className="p-2 text-white/80 hover:text-white rounded-full hover:bg-white/10 active:scale-95 transition-all"
-          aria-label="Fermer"
+          aria-label={isEn ? 'Close' : 'Fermer'}
         >
           <span className="material-symbols-outlined">close</span>
         </button>
@@ -225,19 +227,25 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
               onTouchStart={() => setIsComparing(true)}
               onTouchEnd={() => setIsComparing(false)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white text-label-sm font-semibold active:scale-95 select-none"
-              title="Maintenez pour voir l'original"
+              title={isEn ? 'Hold to view original' : "Maintenez pour voir l'original"}
             >
               <span className="material-symbols-outlined text-[16px]">compare</span>
-              <span>{isComparing ? 'Original' : 'Comparer'}</span>
+              <span>{isComparing ? 'Original' : (isEn ? 'Compare' : 'Comparer')}</span>
             </button>
-            <HelpTooltip text="Maintenez ce bouton enfoncé pour afficher la photo brute originale sans aucun filtre ni retouche." />
+            <HelpTooltip
+              text={
+                isEn
+                  ? 'Press and hold this button to view the untouched original photo without any filters or adjustments.'
+                  : 'Maintenez ce bouton enfoncé pour afficher la photo brute originale sans aucun filtre ni retouche.'
+              }
+            />
           </div>
 
           {/* Reset Button */}
           <button
             onClick={handleReset}
             className="p-2 text-white/80 hover:text-white rounded-full hover:bg-white/10 active:scale-95 transition-all"
-            title="Réinitialiser tous les réglages"
+            title={isEn ? 'Reset all adjustments' : 'Réinitialiser tous les réglages'}
           >
             <span className="material-symbols-outlined text-[20px]">restart_alt</span>
           </button>
@@ -246,10 +254,10 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
           <button
             onClick={handleExportEdited}
             className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/20 text-white text-label-sm font-semibold hover:bg-white/30 active:scale-95"
-            title="Exporter une copie avec les modifications"
+            title={isEn ? 'Export a copy with edits' : 'Exporter une copie avec les modifications'}
           >
             <span className="material-symbols-outlined text-[16px]">download</span>
-            <span className="hidden sm:inline">Exporter</span>
+            <span className="hidden sm:inline">{isEn ? 'Export' : 'Exporter'}</span>
           </button>
 
           {/* Save */}
@@ -257,7 +265,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
             onClick={handleSave}
             className="bg-primary text-on-primary px-5 py-1.5 rounded-full text-label-md font-bold shadow-md hover:brightness-110 active:scale-95 transition-all"
           >
-            Enregistrer
+            {isEn ? 'Save' : 'Enregistrer'}
           </button>
         </div>
       </header>
@@ -287,7 +295,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
 
         {isComparing && (
           <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md text-white text-label-sm font-bold border border-white/20">
-            Original (non modifié)
+            {isEn ? 'Original (unmodified)' : 'Original (non modifié)'}
           </div>
         )}
       </main>
@@ -301,7 +309,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
           }`}
         >
           <span className="material-symbols-outlined text-[18px]">tune</span>
-          Ajustements
+          {isEn ? 'Adjustments' : 'Ajustements'}
         </button>
         <button
           onClick={() => setActiveTab('filters')}
@@ -310,7 +318,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
           }`}
         >
           <span className="material-symbols-outlined text-[18px]">palette</span>
-          Filtres
+          {isEn ? 'Filters' : 'Filtres'}
         </button>
         <button
           onClick={() => setActiveTab('crop')}
@@ -319,7 +327,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
           }`}
         >
           <span className="material-symbols-outlined text-[18px]">crop</span>
-          Recadrage
+          {isEn ? 'Crop' : 'Recadrage'}
         </button>
       </div>
 
@@ -331,12 +339,20 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
             <button
               onClick={handleAutoAdjust}
               className="flex flex-col items-center gap-1 group active:scale-95 transition-transform"
-              title="Optimisation automatique des couleurs et de la lumière"
+              title={isEn ? 'Automatic color and light optimization' : 'Optimisation automatique des couleurs et de la lumière'}
             >
               <span className="material-symbols-outlined text-primary material-symbols-fill">auto_fix_high</span>
-              <span className="text-[10px] font-bold text-on-surface">Auto-Ajustement</span>
+              <span className="text-[10px] font-bold text-on-surface">
+                {isEn ? 'Auto-Adjust' : 'Auto-Ajustement'}
+              </span>
             </button>
-            <HelpTooltip text="Applique un équilibrage automatique doux du contraste, de l'exposition et de la saturation pour embellir instantanément la photo." />
+            <HelpTooltip
+              text={
+                isEn
+                  ? 'Applies a gentle automatic balance of contrast, exposure, and saturation to enhance the photo immediately.'
+                  : "Applique un équilibrage automatique doux du contraste, de l'exposition et de la saturation pour embellir instantanément la photo."
+              }
+            />
           </div>
           <div className="flex items-center gap-1.5">
             <button
@@ -344,9 +360,17 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
               className="flex flex-col items-center gap-1 group active:scale-95 transition-transform"
             >
               <span className="material-symbols-outlined text-primary">rotate_right</span>
-              <span className="text-[10px] font-bold text-on-surface">Pivoter (+90°)</span>
+              <span className="text-[10px] font-bold text-on-surface">
+                {isEn ? 'Rotate (+90°)' : 'Pivoter (+90°)'}
+              </span>
             </button>
-            <HelpTooltip text="Fait tourner la photo d'un quart de tour dans le sens horaire." />
+            <HelpTooltip
+              text={
+                isEn
+                  ? 'Rotates the photo by a quarter turn clockwise.'
+                  : 'Fait tourner la photo d\'un quart de tour dans le sens horaire.'
+              }
+            />
           </div>
         </div>
 
@@ -354,15 +378,15 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
         {activeTab === 'adjust' && (
           <div className="p-6 space-y-5 max-w-md mx-auto w-full">
             {[
-              { label: 'Luminosité', key: 'brightness', icon: 'brightness_6', min: -100, max: 100, desc: "Ajuste la clarté générale de l'image." },
-              { label: 'Contraste', key: 'contrast', icon: 'contrast', min: -100, max: 100, desc: 'Renforce ou adoucit la différence entre zones claires et sombres.' },
-              { label: 'Saturation', key: 'saturation', icon: 'palette', min: -100, max: 100, desc: "Rend les couleurs plus vives ou plus sobres (jusqu'au noir et blanc)." },
-              { label: 'Exposition', key: 'exposure', icon: 'wb_sunny', min: -100, max: 100, desc: 'Simule un apport lumineux plus ou moins intense du capteur.' },
-              { label: 'Température', key: 'temperature', icon: 'thermostat', min: -100, max: 100, desc: 'Réchauffe (tons ambrés) ou refroidit (tons bleutés) la tonalité.' },
-              { label: 'Teinte', key: 'tint', icon: 'color_lens', min: -100, max: 100, desc: 'Bascule la balance des teintes entre nuances vertes et magenta.' },
-              { label: 'Hautes Lumières', key: 'highlights', icon: 'light_mode', min: -100, max: 100, desc: 'Recouvre des détails dans le ciel ou les zones très claires.' },
-              { label: 'Ombres', key: 'shadows', icon: 'dark_mode', min: -100, max: 100, desc: 'Éclaircit les sous-bois ou zones ombragées pour révéler les détails.' },
-              { label: 'Vignettage', key: 'vignette', icon: 'vignette', min: 0, max: 100, desc: 'Crée un halo sombre subtil sur le pourtour pour concentrer l’œil.' },
+              { label: isEn ? 'Brightness' : 'Luminosité', key: 'brightness', icon: 'brightness_6', min: -100, max: 100, desc: isEn ? 'Adjusts the overall lightness of the image.' : "Ajuste la clarté générale de l'image." },
+              { label: isEn ? 'Contrast' : 'Contraste', key: 'contrast', icon: 'contrast', min: -100, max: 100, desc: isEn ? 'Strengthens or softens the difference between light and dark areas.' : 'Renforce ou adoucit la différence entre zones claires et sombres.' },
+              { label: 'Saturation', key: 'saturation', icon: 'palette', min: -100, max: 100, desc: isEn ? 'Makes colors more vivid or muted (all the way to black & white).' : "Rend les couleurs plus vives ou plus sobres (jusqu'au noir et blanc)." },
+              { label: isEn ? 'Exposure' : 'Exposition', key: 'exposure', icon: 'wb_sunny', min: -100, max: 100, desc: isEn ? 'Simulates higher or lower light intake from the sensor.' : 'Simule un apport lumineux plus ou moins intense du capteur.' },
+              { label: isEn ? 'Temperature' : 'Température', key: 'temperature', icon: 'thermostat', min: -100, max: 100, desc: isEn ? 'Warms (amber tones) or cools (blue tones) the color balance.' : 'Réchauffe (tons ambrés) ou refroidit (tons bleutés) la tonalité.' },
+              { label: isEn ? 'Tint' : 'Teinte', key: 'tint', icon: 'color_lens', min: -100, max: 100, desc: isEn ? 'Shifts the color tint between green and magenta tones.' : 'Bascule la balance des teintes entre nuances vertes et magenta.' },
+              { label: isEn ? 'Highlights' : 'Hautes Lumières', key: 'highlights', icon: 'light_mode', min: -100, max: 100, desc: isEn ? 'Recovers details in skies or bright areas.' : 'Recouvre des détails dans le ciel ou les zones très claires.' },
+              { label: isEn ? 'Shadows' : 'Ombres', key: 'shadows', icon: 'dark_mode', min: -100, max: 100, desc: isEn ? 'Brightens shaded areas to reveal hidden details.' : 'Éclaircit les sous-bois ou zones ombragées pour révéler les détails.' },
+              { label: isEn ? 'Vignette' : 'Vignettage', key: 'vignette', icon: 'vignette', min: 0, max: 100, desc: isEn ? 'Adds a subtle dark halo around the edges to draw focus to the center.' : 'Crée un halo sombre subtil sur le pourtour pour concentrer l’œil.' },
             ].map((item) => (
               <div key={item.key} className="space-y-1.5">
                 <div className="flex justify-between items-center text-on-surface">
@@ -431,7 +455,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
           <div className="p-6 space-y-6 max-w-md mx-auto w-full">
             <div>
               <p className="text-label-sm font-semibold text-on-surface-variant text-center mb-3">
-                Format et proportions d'affichage :
+                {isEn ? 'Aspect ratio and display proportions:' : "Format et proportions d'affichage :"}
               </p>
               <div className="grid grid-cols-4 gap-3">
                 {(['original', '1:1', '4:3', '16:9'] as const).map((ratio) => (
@@ -453,20 +477,22 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
             {/* Custom Crop Margins */}
             <div className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/20 space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-label-sm font-bold text-on-surface">Rognage personnalisé (% de marge)</span>
+                <span className="text-label-sm font-bold text-on-surface">
+                  {isEn ? 'Custom crop (margin %)' : 'Rognage personnalisé (% de marge)'}
+                </span>
                 <button
                   onClick={handleResetCrop}
                   className="text-primary text-[11px] font-bold hover:underline"
                 >
-                  Réinitialiser le recadrage
+                  {isEn ? 'Reset crop' : 'Réinitialiser le recadrage'}
                 </button>
               </div>
 
               {[
-                { label: 'Haut', side: 'top' as const },
-                { label: 'Bas', side: 'bottom' as const },
-                { label: 'Gauche', side: 'left' as const },
-                { label: 'Droite', side: 'right' as const },
+                { label: isEn ? 'Top' : 'Haut', side: 'top' as const },
+                { label: isEn ? 'Bottom' : 'Bas', side: 'bottom' as const },
+                { label: isEn ? 'Left' : 'Gauche', side: 'left' as const },
+                { label: isEn ? 'Right' : 'Droite', side: 'right' as const },
               ].map(({ label, side }) => (
                 <div key={side} className="space-y-1">
                   <div className="flex justify-between text-[12px] font-semibold text-on-surface-variant">
@@ -477,7 +503,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
                     type="range"
                     min="0"
                     max="45"
-                    aria-label={`Rognage ${label}`}
+                    aria-label={isEn ? `Crop ${label}` : `Rognage ${label}`}
                     value={cropMargins[side]}
                     onChange={(e) => handleCropMarginChange(side, parseInt(e.target.value, 10))}
                     className="w-full h-1.5 bg-outline-variant rounded-lg appearance-none cursor-pointer accent-primary"

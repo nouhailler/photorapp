@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { Photo } from '../types/types';
+import { useLanguage } from '../context/useLanguage';
 
 // Fix Leaflet default icon paths in bundlers without using 'any'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -24,6 +25,7 @@ interface MapComponentProps {
 
 const MapComponent: React.FC<MapComponentProps> = ({ photos = [], markers = [], onPhotoClick }) => {
   const [tileError, setTileError] = useState(false);
+  const { isEn } = useLanguage();
 
   // Filter only photos with real, valid GPS coordinates
   const geotaggedPhotos = photos.filter(
@@ -52,9 +54,13 @@ const MapComponent: React.FC<MapComponentProps> = ({ photos = [], markers = [], 
         <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant mb-3">
           <span className="material-symbols-outlined text-3xl">location_off</span>
         </div>
-        <h3 className="text-headline-sm font-bold text-on-surface">Aucune coordonnée GPS</h3>
+        <h3 className="text-headline-sm font-bold text-on-surface">
+          {isEn ? 'No GPS coordinates' : 'Aucune coordonnée GPS'}
+        </h3>
         <p className="text-body-sm text-on-surface-variant max-w-sm mt-1">
-          Les photos importées avec des métadonnées EXIF de géolocalisation apparaîtront automatiquement sur cette carte.
+          {isEn
+            ? 'Imported photos containing EXIF geolocation metadata will automatically appear on this map.'
+            : 'Les photos importées avec des métadonnées EXIF de géolocalisation apparaîtront automatiquement sur cette carte.'}
         </p>
       </div>
     );
@@ -70,7 +76,11 @@ const MapComponent: React.FC<MapComponentProps> = ({ photos = [], markers = [], 
       {tileError && (
         <div className="absolute top-3 left-3 right-3 z-[1000] bg-amber-500/90 text-white text-label-sm font-medium px-4 py-2 rounded-xl backdrop-blur-md shadow-md flex items-center gap-2">
           <span className="material-symbols-outlined text-[18px]">wifi_off</span>
-          <span>Mode hors ligne : les tuiles cartographiques détaillées ne peuvent pas être chargées.</span>
+          <span>
+            {isEn
+              ? 'Offline mode: detailed map tiles could not be loaded.'
+              : 'Mode hors ligne : les tuiles cartographiques détaillées ne peuvent pas être chargées.'}
+          </span>
         </div>
       )}
 
@@ -109,7 +119,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ photos = [], markers = [], 
                     onClick={() => onPhotoClick(photo)}
                     className="w-full mt-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                   >
-                    Voir la photo
+                    {isEn ? 'View photo' : 'Voir la photo'}
                   </button>
                 )}
               </div>

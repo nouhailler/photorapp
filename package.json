@@ -3,12 +3,18 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3000 --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "cf:deploy": "npm run build && npx wrangler deploy",
+    "cf:preview": "npm run build && npx wrangler dev",
+    "cf:pages": "npm run build && npx wrangler pages deploy dist --project-name=photorapp"
   },
   "dependencies": {
     "@types/jszip": "^3.4.0",

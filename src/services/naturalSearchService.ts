@@ -22,38 +22,54 @@ const SEASON_MONTHS: Record<string, number[]> = {
 };
 
 const SCENE_SYNONYMS: Record<string, string[]> = {
-  montagne: ['montagne', 'sommet', 'neige', 'alpes', 'nature'],
-  plage: ['plage', 'mer', 'océan', 'sable', 'côte', 'eau'],
-  mer: ['mer', 'océan', 'plage', 'eau', 'côte'],
-  foret: ['forêt', 'bois', 'arbres', 'nature', 'verdure'],
-  forêt: ['forêt', 'bois', 'arbres', 'nature', 'verdure'],
-  ville: ['ville', 'urbain', 'architecture', 'bâtiment', 'rue'],
-  batiment: ['bâtiment', 'architecture', 'immeuble', 'monument', 'ville'],
-  bâtiment: ['bâtiment', 'architecture', 'immeuble', 'monument', 'ville'],
-  coucher: ['coucher de soleil', 'crépuscule', 'doré'],
-  nuit: ['nuit', 'nocturne', 'sombre'],
-  portrait: ['portrait', 'personne', 'visage', 'gens'],
-  chien: ['chien', 'animal', 'faune'],
-  chat: ['chat', 'animal', 'faune'],
-  animal: ['animal', 'faune', 'sauvage'],
-  voiture: ['voiture', 'véhicule', 'auto'],
-  fleur: ['fleur', 'nature', 'jardin', 'plante'],
-  jardin: ['jardin', 'parc', 'nature', 'verdure', 'fleur'],
+  montagne: ['montagne', 'sommet', 'neige', 'alpes', 'nature', 'mountain', 'snow', 'peak'],
+  mountain: ['mountain', 'montagne', 'peak', 'snow', 'neige', 'alps', 'nature'],
+  plage: ['plage', 'mer', 'océan', 'sable', 'côte', 'eau', 'beach', 'sea', 'ocean'],
+  beach: ['beach', 'plage', 'sea', 'mer', 'ocean', 'océan', 'sand', 'coast', 'water'],
+  mer: ['mer', 'océan', 'plage', 'eau', 'côte', 'sea', 'ocean', 'beach'],
+  sea: ['sea', 'ocean', 'beach', 'plage', 'mer', 'water', 'coast'],
+  ocean: ['ocean', 'océan', 'sea', 'beach', 'plage', 'mer', 'water'],
+  foret: ['forêt', 'bois', 'arbres', 'nature', 'verdure', 'forest', 'woods', 'trees'],
+  forêt: ['forêt', 'bois', 'arbres', 'nature', 'verdure', 'forest', 'woods', 'trees'],
+  forest: ['forest', 'forêt', 'woods', 'trees', 'nature', 'greenery'],
+  ville: ['ville', 'urbain', 'architecture', 'bâtiment', 'rue', 'city', 'urban', 'building'],
+  city: ['city', 'ville', 'urban', 'urbain', 'architecture', 'street', 'building'],
+  batiment: ['bâtiment', 'architecture', 'immeuble', 'monument', 'ville', 'building'],
+  bâtiment: ['bâtiment', 'architecture', 'immeuble', 'monument', 'ville', 'building'],
+  building: ['building', 'bâtiment', 'architecture', 'monument', 'city', 'ville'],
+  coucher: ['coucher de soleil', 'crépuscule', 'doré', 'sunset', 'dusk', 'golden'],
+  sunset: ['sunset', 'coucher de soleil', 'dusk', 'crépuscule', 'golden', 'doré'],
+  nuit: ['nuit', 'nocturne', 'sombre', 'night', 'dark'],
+  night: ['night', 'nuit', 'nocturne', 'dark', 'sombre'],
+  portrait: ['portrait', 'personne', 'visage', 'gens', 'person', 'face', 'people'],
+  people: ['portrait', 'personne', 'visage', 'people', 'person'],
+  chien: ['chien', 'animal', 'faune', 'dog'],
+  dog: ['dog', 'chien', 'animal', 'pet', 'wildlife'],
+  chat: ['chat', 'animal', 'faune', 'cat'],
+  cat: ['cat', 'chat', 'animal', 'pet'],
+  animal: ['animal', 'faune', 'sauvage', 'wildlife'],
+  voiture: ['voiture', 'véhicule', 'auto', 'car', 'vehicle'],
+  car: ['car', 'voiture', 'vehicle', 'auto'],
+  fleur: ['fleur', 'nature', 'jardin', 'plante', 'flower', 'garden'],
+  flower: ['flower', 'fleur', 'nature', 'garden', 'jardin', 'plant'],
+  jardin: ['jardin', 'parc', 'nature', 'verdure', 'fleur', 'garden', 'park'],
+  garden: ['garden', 'jardin', 'park', 'parc', 'nature', 'flower', 'fleur'],
 };
 
 /**
  * Parses natural language input queries in French & English into structured search filters.
- * Enables queries like "Photos de montagnes en hiver", "Chiens dans un jardin", "Bâtiments anciens", "Voitures rouges".
+ * Enables queries like "Photos de montagnes en hiver", "Mountains in winter", "Beach photos with GPS".
  */
 export function parseNaturalLanguageQuery(inputQuery: string): ParsedNaturalQuery {
   const cleanInput = inputQuery.trim().toLowerCase();
   const filters: SearchFilters = {};
   const semanticTags: string[] = [];
 
-  // Remove common French stop words
+  // Remove common French and English stop words
   const stopWords = new Set([
     'photos', 'photo', 'de', 'des', 'du', 'la', 'le', 'les', 'en', 'dans', 'un', 'une', 'sur', 'avec', 'par',
-    'prises', 'prise', 'mes', 'au', 'aux', 'qui', 'sont'
+    'prises', 'prise', 'mes', 'au', 'aux', 'qui', 'sont', 'à',
+    'the', 'a', 'an', 'in', 'on', 'at', 'with', 'from', 'for', 'of', 'my', 'that', 'are', 'near', 'by', 'taken',
   ]);
 
   const rawTokens = cleanInput.split(/\s+/).filter(Boolean);
@@ -65,7 +81,9 @@ export function parseNaturalLanguageQuery(inputQuery: string): ParsedNaturalQuer
     cleanInput.includes('coup de coeur') ||
     cleanInput.includes('coups de cœur') ||
     cleanInput.includes('préféré') ||
-    cleanInput.includes('etoile')
+    cleanInput.includes('etoile') ||
+    cleanInput.includes('starred') ||
+    cleanInput.includes('best')
   ) {
     filters.isFavorite = true;
   }
@@ -75,7 +93,10 @@ export function parseNaturalLanguageQuery(inputQuery: string): ParsedNaturalQuer
     cleanInput.includes('flou') ||
     cleanInput.includes('floue') ||
     cleanInput.includes('ratee') ||
-    cleanInput.includes('ratée')
+    cleanInput.includes('ratée') ||
+    cleanInput.includes('blur') ||
+    cleanInput.includes('out of focus') ||
+    cleanInput.includes('low quality')
   ) {
     filters.isBlurry = true;
   }
@@ -85,7 +106,10 @@ export function parseNaturalLanguageQuery(inputQuery: string): ParsedNaturalQuer
     cleanInput.includes('gps') ||
     cleanInput.includes('carte') ||
     cleanInput.includes('géolocalis') ||
-    cleanInput.includes('geolocalis')
+    cleanInput.includes('geolocalis') ||
+    cleanInput.includes('geotag') ||
+    cleanInput.includes('location') ||
+    cleanInput.includes('map')
   ) {
     filters.hasGps = true;
   }
@@ -101,14 +125,15 @@ export function parseNaturalLanguageQuery(inputQuery: string): ParsedNaturalQuer
 
   // 5. Detect Seasons
   let inferredSeason: ParsedNaturalQuery['inferredSeason'];
+  let matchedSeasonKey: string | undefined;
   for (const [seasonKey, months] of Object.entries(SEASON_MONTHS)) {
     if (cleanInput.includes(seasonKey)) {
+      matchedSeasonKey = seasonKey;
       if (seasonKey.includes('hiver') || seasonKey.includes('winter')) inferredSeason = 'hiver';
       else if (seasonKey.includes('printemps') || seasonKey.includes('spring')) inferredSeason = 'printemps';
       else if (seasonKey.includes('ete') || seasonKey.includes('été') || seasonKey.includes('summer')) inferredSeason = 'été';
       else if (seasonKey.includes('automne') || seasonKey.includes('autumn') || seasonKey.includes('fall')) inferredSeason = 'automne';
 
-      // Pick middle month as primary filter or let multi-match handle it
       filters.month = months[1];
       break;
     }
@@ -127,14 +152,15 @@ export function parseNaturalLanguageQuery(inputQuery: string): ParsedNaturalQuer
 
   // 7. Residual meaningful query words for text search
   const intentTokens = new Set([
-    'favori', 'favoris', 'favorite', 'favorites', 'coup', 'coups', 'coeur', 'cœur', 'préféré', 'préférées', 'etoile',
-    'flou', 'floue', 'flous', 'floues', 'ratee', 'ratée', 'ratées',
-    'gps', 'carte', 'géolocalisé', 'géolocalisée', 'géolocalisées', 'geolocalise',
+    'favori', 'favoris', 'favorite', 'favorites', 'coup', 'coups', 'coeur', 'cœur', 'préféré', 'préférées', 'etoile', 'starred', 'best',
+    'flou', 'floue', 'flous', 'floues', 'ratee', 'ratée', 'ratées', 'blur', 'blurry',
+    'gps', 'carte', 'géolocalisé', 'géolocalisée', 'géolocalisées', 'geolocalise', 'geotag', 'geotagged', 'location', 'map',
   ]);
 
   const remainingSearchTokens = meaningfulTokens.filter((token) => {
     if (filters.year && token === String(filters.year)) return false;
     if (inferredSeason && token.includes(inferredSeason)) return false;
+    if (matchedSeasonKey && token.includes(matchedSeasonKey)) return false;
     if (intentTokens.has(token)) return false;
     if (matchedConcepts.some((concept) => token.includes(concept))) return false;
     return true;

@@ -7,6 +7,7 @@ import Editor from '../components/Editor';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { exportPhotosToZip } from '../services/exportService';
 import { getSmartAlbumPhotos } from '../services/smartAlbumService';
+import { useLanguage } from '../context/useLanguage';
 import type { Photo } from '../types/types';
 
 const SelectablePhotoItem: React.FC<{ photo: Photo; isSelected: boolean; onClick: () => void }> = ({
@@ -46,6 +47,7 @@ const AlbumDetail: React.FC = () => {
     removePhotoFromAlbum,
     setAlbumCover,
   } = usePhotos();
+  const { lang, isEn } = useLanguage();
 
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -73,12 +75,14 @@ const AlbumDetail: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-container-padding text-center">
         <span className="material-symbols-outlined text-6xl text-outline-variant mb-4">folder_off</span>
-        <p className="text-headline-md font-bold text-on-surface">Album introuvable</p>
+        <p className="text-headline-md font-bold text-on-surface">
+          {isEn ? 'Album not found' : 'Album introuvable'}
+        </p>
         <button
           onClick={() => navigate('/albums')}
           className="mt-4 px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
         >
-          Retour aux albums
+          {isEn ? 'Back to albums' : 'Retour aux albums'}
         </button>
       </div>
     );
@@ -118,7 +122,8 @@ const AlbumDetail: React.FC = () => {
       await exportPhotosToZip(
         albumPhotos,
         `${album.title.replace(/[^a-z0-9_-]/gi, '_')}.zip`,
-        (pct) => setExportProgress(pct)
+        (pct) => setExportProgress(pct),
+        lang
       );
     } catch (e) {
       console.error('ZIP Export error:', e);
@@ -138,7 +143,7 @@ const AlbumDetail: React.FC = () => {
           className="flex items-center gap-1.5 text-primary text-label-md font-bold hover:underline active:scale-95 transition-transform"
         >
           <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-          <span>Retour aux collections</span>
+          <span>{isEn ? 'Back to collections' : 'Retour aux collections'}</span>
         </button>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
@@ -147,7 +152,7 @@ const AlbumDetail: React.FC = () => {
               <h2 className="text-headline-lg font-bold text-on-surface leading-tight">{album.title}</h2>
               {album.isSmart && (
                 <span className="px-2.5 py-0.5 rounded-full bg-tertiary-container text-on-tertiary-container text-[11px] font-bold uppercase tracking-wider">
-                  Intelligent
+                  {isEn ? 'Smart' : 'Intelligent'}
                 </span>
               )}
             </div>
@@ -155,7 +160,7 @@ const AlbumDetail: React.FC = () => {
               <p className="text-body-sm text-on-surface-variant mt-1">{album.description}</p>
             )}
             <p className="text-label-sm font-semibold text-primary mt-1">
-              {albumPhotos.length} {albumPhotos.length > 1 ? 'photos' : 'photo'}
+              {albumPhotos.length} {albumPhotos.length === 1 ? 'photo' : 'photos'}
             </p>
           </div>
 
@@ -166,7 +171,7 @@ const AlbumDetail: React.FC = () => {
                   onClick={handleExportZip}
                   disabled={isExporting}
                   className="flex items-center gap-1.5 px-4 py-2.5 bg-surface-container-high text-on-surface rounded-xl text-label-md font-semibold hover:bg-surface-variant active:scale-95 transition-all shadow-sm"
-                  title="Télécharger l'album au format ZIP"
+                  title={isEn ? 'Download album as ZIP archive' : "Télécharger l'album au format ZIP"}
                 >
                   <span className="material-symbols-outlined text-[18px]">folder_zip</span>
                   <span>{isExporting ? `${exportProgress}%` : 'Export ZIP'}</span>
@@ -184,7 +189,9 @@ const AlbumDetail: React.FC = () => {
                         : 'bg-surface-container-high text-on-surface hover:bg-surface-variant'
                     }`}
                   >
-                    {isSelectionMode ? 'Terminer sélection' : 'Gérer photos'}
+                    {isSelectionMode
+                      ? isEn ? 'Finish selection' : 'Terminer sélection'
+                      : isEn ? 'Manage photos' : 'Gérer photos'}
                   </button>
                 )}
               </>
@@ -196,7 +203,7 @@ const AlbumDetail: React.FC = () => {
                 className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-xl text-label-md font-bold shadow-md active:scale-95 transition-transform"
               >
                 <span className="material-symbols-outlined text-[20px]">add_photo_alternate</span>
-                <span>Ajouter</span>
+                <span>{isEn ? 'Add' : 'Ajouter'}</span>
               </button>
             )}
           </div>
@@ -207,7 +214,7 @@ const AlbumDetail: React.FC = () => {
       {isSelectionMode && (
         <div className="mx-container-padding p-3 bg-primary-container/20 border border-primary/30 rounded-2xl flex items-center justify-between">
           <span className="text-label-md font-bold text-primary">
-            {selectedInAlbumIds.length} sélectionnée(s)
+            {isEn ? `${selectedInAlbumIds.length} selected` : `${selectedInAlbumIds.length} sélectionnée(s)`}
           </span>
           <div className="flex items-center gap-2">
             {selectedInAlbumIds.length === 1 && (
@@ -219,7 +226,7 @@ const AlbumDetail: React.FC = () => {
                 }}
                 className="px-3 py-1.5 bg-surface-container-high text-on-surface rounded-xl text-label-sm font-semibold hover:bg-surface-variant"
               >
-                Définir comme couverture
+                {isEn ? 'Set as cover' : 'Définir comme couverture'}
               </button>
             )}
             <button
@@ -228,7 +235,7 @@ const AlbumDetail: React.FC = () => {
               className="flex items-center gap-1.5 px-4 py-1.5 bg-error text-white rounded-xl text-label-sm font-bold disabled:opacity-40"
             >
               <span className="material-symbols-outlined text-[16px]">folder_delete</span>
-              <span>Retirer de l'album</span>
+              <span>{isEn ? 'Remove from album' : "Retirer de l'album"}</span>
             </button>
           </div>
         </div>
@@ -249,18 +256,24 @@ const AlbumDetail: React.FC = () => {
             <div className="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center mb-4 text-on-surface-variant">
               <span className="material-symbols-outlined text-3xl">photo_library</span>
             </div>
-            <p className="text-on-surface font-bold text-headline-sm">Cet album est vide</p>
+            <p className="text-on-surface font-bold text-headline-sm">
+              {isEn ? 'This album is empty' : 'Cet album est vide'}
+            </p>
             <p className="text-on-surface-variant text-body-sm mt-1 max-w-sm">
               {album.isSmart
-                ? 'Aucune photo ne correspond actuellement aux critères de cet album intelligent.'
-                : 'Commencez par ajouter des souvenirs depuis votre photothèque locale.'}
+                ? isEn
+                  ? 'No photos currently match the criteria for this smart album.'
+                  : 'Aucune photo ne correspond actuellement aux critères de cet album intelligent.'
+                : isEn
+                  ? 'Start by adding memories from your local library.'
+                  : 'Commencez par ajouter des souvenirs depuis votre photothèque locale.'}
             </p>
             {!album.isSmart && (
               <button
                 onClick={() => setIsAddingPhotos(true)}
                 className="mt-6 px-8 py-3 bg-primary text-on-primary rounded-2xl font-bold text-label-md active:scale-95 transition-transform shadow-md"
               >
-                Ajouter des photos à l'album
+                {isEn ? 'Add photos to album' : "Ajouter des photos à l'album"}
               </button>
             )}
           </div>
@@ -275,9 +288,11 @@ const AlbumDetail: React.FC = () => {
               onClick={() => setIsAddingPhotos(false)}
               className="text-on-surface-variant font-bold text-label-md px-3 py-1.5 rounded-xl hover:bg-surface-variant/30"
             >
-              Annuler
+              {isEn ? 'Cancel' : 'Annuler'}
             </button>
-            <h3 className="text-headline-md font-bold">Ajouter des photos à l'album</h3>
+            <h3 className="text-headline-md font-bold">
+              {isEn ? 'Add photos to album' : "Ajouter des photos à l'album"}
+            </h3>
             <button
               onClick={handleAddPhotos}
               disabled={selectedForAlbum.length === 0}
@@ -287,7 +302,7 @@ const AlbumDetail: React.FC = () => {
                   : 'bg-surface-container-high text-on-surface-variant opacity-50'
               }`}
             >
-              Ajouter ({selectedForAlbum.length})
+              {isEn ? 'Add' : 'Ajouter'} ({selectedForAlbum.length})
             </button>
           </header>
 
@@ -308,9 +323,11 @@ const AlbumDetail: React.FC = () => {
                 <span className="material-symbols-outlined text-6xl text-outline-variant mb-4">
                   check_circle
                 </span>
-                <p className="text-headline-sm font-bold text-on-surface">Toutes vos photos sont déjà dans cet album !</p>
+                <p className="text-headline-sm font-bold text-on-surface">
+                  {isEn ? 'All your photos are already in this album!' : 'Toutes vos photos sont déjà dans cet album !'}
+                </p>
                 <p className="text-body-sm text-on-surface-variant mt-2">
-                  Importez de nouvelles photos pour enrichir votre photothèque.
+                  {isEn ? 'Import new photos to expand your library.' : 'Importez de nouvelles photos pour enrichir votre photothèque.'}
                 </p>
               </div>
             )}

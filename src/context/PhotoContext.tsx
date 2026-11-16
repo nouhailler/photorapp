@@ -17,6 +17,7 @@ import { analyzePhotoContent, applyAnalysisToPhoto } from '../services/aiVisionS
 import { activityService } from '../services/activityService';
 import { getOrCreateThumbnailBlob } from '../services/thumbnailService';
 import { PhotoContext } from './photoContextDef';
+import { APP_LANG_STORAGE_KEY, type AppLang } from './languageContextDef';
 
 export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [photos, setPhotos] = useState<Photo[]>(() => {
@@ -493,21 +494,26 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 
   const analyzeAllPhotos = useCallback(
-    async (onProgress?: (current: number, total: number) => void) => {
+    async (onProgress?: (current: number, total: number) => void, lang?: AppLang) => {
+      const resolvedLang: AppLang =
+        lang || (localStorage.getItem(APP_LANG_STORAGE_KEY) === 'en' ? 'en' : 'fr');
+      const isEn = resolvedLang === 'en';
       const unanalyzed = photos.filter((p) => !p.metadata?.analysis || !p.metadata.analysis.sceneTags);
       const total = unanalyzed.length;
       if (total === 0) return;
 
       const taskId = activityService.createTask(
         'ai_analysis',
-        `Analyse IA locale (${total} photos)`,
+        isEn ? `Local AI analysis (${total} photos)` : `Analyse IA locale (${total} photos)`,
         true
       );
       const signal = activityService.getAbortSignal(taskId);
       activityService.updateTask(taskId, {
         status: 'running',
         progress: 0,
-        statusMessage: `Initialisation de l'analyse sur ${total} photos...`,
+        statusMessage: isEn
+          ? `Initializing local analysis for ${total} photos...`
+          : `Initialisation de l'analyse sur ${total} photos...`,
       });
 
       try {
@@ -520,7 +526,9 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const pct = Math.round(((i + 1) / total) * 100);
           activityService.updateTask(taskId, {
             progress: pct,
-            statusMessage: `Analyse des pixels (${i + 1}/${total}) : ${photo.alt || 'Photo'}`,
+            statusMessage: isEn
+              ? `Analyzing pixels (${i + 1}/${total}): ${photo.alt || 'Photo'}`
+              : `Analyse des pixels (${i + 1}/${total}) : ${photo.alt || 'Photo'}`,
           });
           await analyzePhoto(photo.id);
         }
@@ -529,14 +537,16 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           activityService.updateTask(taskId, {
             status: 'completed',
             progress: 100,
-            statusMessage: `${total} photo(s) analysée(s) localement avec succès.`,
+            statusMessage: isEn
+              ? `${total} photo(s) analyzed locally.`
+              : `${total} photo(s) analysée(s) localement avec succès.`,
           });
         }
       } catch (err) {
         activityService.updateTask(taskId, {
           status: 'failed',
-          error: err instanceof Error ? err.message : 'Erreur inconnue',
-          statusMessage: "Échec de l'analyse locale.",
+          error: err instanceof Error ? err.message : isEn ? 'Unknown error' : 'Erreur inconnue',
+          statusMessage: isEn ? 'Local analysis failed.' : "Échec de l'analyse locale.",
         });
       }
     },

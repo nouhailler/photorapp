@@ -7,11 +7,13 @@ import { exportPhotosToZip } from '../services/exportService';
 import { SlideshowModal } from '../components/SlideshowModal';
 import { HelpTooltip } from '../components/HelpTooltip';
 import { SouvenirsCarousel } from '../components/SouvenirsCarousel';
+import { useLanguage } from '../context/useLanguage';
 import type { Photo, PhotoSouvenir } from '../types/types';
 
 
 const Gallery: React.FC = () => {
   const { photos, albums, toggleFavorite, deletePhotos, addPhotosToAlbum, createAlbum } = usePhotos();
+  const { lang, isEn } = useLanguage();
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,12 +57,12 @@ const Gallery: React.FC = () => {
   // Grouping by Date (Day / Month)
   const groupedPhotos = useMemo(() => {
     return filteredPhotos.reduce((acc, photo) => {
-      const date = photo.date || 'Date inconnue';
+      const date = photo.date || (isEn ? 'Unknown date' : 'Date inconnue');
       if (!acc[date]) acc[date] = [];
       acc[date].push(photo);
       return acc;
     }, {} as Record<string, Photo[]>);
-  }, [filteredPhotos]);
+  }, [filteredPhotos, isEn]);
 
   // Selection Handlers
   const toggleSelectionMode = () => {
@@ -115,7 +117,7 @@ const Gallery: React.FC = () => {
     if (selected.length === 0) return;
     setIsExportingZip(true);
     try {
-      await exportPhotosToZip(selected, `selection_${selected.length}_photos.zip`);
+      await exportPhotosToZip(selected, `selection_${selected.length}_photos.zip`, undefined, lang);
       setIsSelectionMode(false);
       setSelectedPhotoIds([]);
     } catch (e) {
@@ -143,7 +145,7 @@ const Gallery: React.FC = () => {
             </span>
             <input
               className="w-full h-12 bg-surface-container-low border border-outline-variant/30 rounded-2xl pl-12 pr-4 font-body-md text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary outline-none transition-all shadow-sm"
-              placeholder="Rechercher par nom, tag, lieu, appareil..."
+              placeholder={isEn ? 'Search by name, tag, location, camera...' : 'Rechercher par nom, tag, lieu, appareil...'}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -164,16 +166,20 @@ const Gallery: React.FC = () => {
               <button
                 onClick={() => setIsSlideshowOpen(true)}
                 className="h-12 px-4 rounded-2xl bg-surface-container-high hover:bg-surface-variant text-on-surface font-semibold text-label-md flex items-center gap-2 active:scale-95 transition-all shadow-sm"
-                title="Lancer le diaporama plein écran"
+                title={isEn ? 'Start fullscreen slideshow' : 'Lancer le diaporama plein écran'}
               >
                 <span className="material-symbols-outlined text-primary text-[22px] material-symbols-fill">
                   slideshow
                 </span>
-                <span className="hidden sm:inline">Diaporama</span>
+                <span className="hidden sm:inline">{isEn ? 'Slideshow' : 'Diaporama'}</span>
               </button>
               <HelpTooltip
-                title="Diaporama plein écran"
-                text="Lance la lecture automatisée de vos photos avec réglage de vitesse et lecture aléatoire."
+                title={isEn ? 'Fullscreen slideshow' : 'Diaporama plein écran'}
+                text={
+                  isEn
+                    ? 'Starts automated playback of your photos with speed controls and shuffle mode.'
+                    : 'Lance la lecture automatisée de vos photos avec réglage de vitesse et lecture aléatoire.'
+                }
               />
             </div>
           )}
@@ -182,8 +188,12 @@ const Gallery: React.FC = () => {
         {/* Filter Chips */}
         <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
           <HelpTooltip
-            title="Filtres rapides"
-            text="Filtrez en un clic pour afficher toutes les photos, uniquement les clichés favoris ou ceux munis de coordonnées GPS."
+            title={isEn ? 'Quick filters' : 'Filtres rapides'}
+            text={
+              isEn
+                ? 'Filter in one click to show all photos, favorites only, or shots containing GPS coordinates.'
+                : 'Filtrez en un clic pour afficher toutes les photos, uniquement les clichés favoris ou ceux munis de coordonnées GPS.'
+            }
           />
           <button
             onClick={() => setFilterMode('all')}
@@ -193,7 +203,7 @@ const Gallery: React.FC = () => {
                 : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'
             }`}
           >
-            Toutes ({photos.length})
+            {isEn ? 'All' : 'Toutes'} ({photos.length})
           </button>
           <button
             onClick={() => setFilterMode('favorites')}
@@ -204,7 +214,7 @@ const Gallery: React.FC = () => {
             }`}
           >
             <span className="material-symbols-outlined text-[16px] material-symbols-fill">star</span>
-            <span>Favoris ({photos.filter((p) => p.isFavorite).length})</span>
+            <span>{isEn ? 'Favorites' : 'Favoris'} ({photos.filter((p) => p.isFavorite).length})</span>
           </button>
           <button
             onClick={() => setFilterMode('gps')}
@@ -215,7 +225,7 @@ const Gallery: React.FC = () => {
             }`}
           >
             <span className="material-symbols-outlined text-[16px]">location_on</span>
-            <span>Avec GPS ({photos.filter((p) => typeof p.metadata?.latitude === 'number').length})</span>
+            <span>{isEn ? 'With GPS' : 'Avec GPS'} ({photos.filter((p) => typeof p.metadata?.latitude === 'number').length})</span>
           </button>
         </div>
       </div>
@@ -230,7 +240,7 @@ const Gallery: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider">
-                  Souvenir • {activeSouvenir.periodLabel}
+                  {isEn ? 'Memory' : 'Souvenir'} • {activeSouvenir.periodLabel}
                 </span>
                 <span className="text-[12px] text-on-surface-variant">
                   {activeSouvenir.photos.length} photos
@@ -250,12 +260,12 @@ const Gallery: React.FC = () => {
               className="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-sm font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
             >
               <span className="material-symbols-outlined text-[16px] material-symbols-fill">slideshow</span>
-              <span>Lancer le diaporama</span>
+              <span>{isEn ? 'Start slideshow' : 'Lancer le diaporama'}</span>
             </button>
             <button
               onClick={() => setActiveSouvenir(null)}
               className="p-2 rounded-xl bg-surface hover:bg-surface-variant text-on-surface-variant hover:text-on-surface transition-colors"
-              title="Fermer ce souvenir et revenir à toute la galerie"
+              title={isEn ? 'Close this memory and return to full gallery' : 'Fermer ce souvenir et revenir à toute la galerie'}
             >
               <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
@@ -276,10 +286,14 @@ const Gallery: React.FC = () => {
       {isSelectionMode && (
         <div className="mx-container-padding p-3 flex justify-between items-center bg-primary-container/40 border border-primary/30 rounded-2xl">
           <span className="text-label-md font-bold text-primary">
-            {selectedPhotoIds.length} sélectionnée(s) sur {filteredPhotos.length}
+            {isEn
+              ? `${selectedPhotoIds.length} selected of ${filteredPhotos.length}`
+              : `${selectedPhotoIds.length} sélectionnée(s) sur ${filteredPhotos.length}`}
           </span>
           <button onClick={handleSelectAll} className="text-label-sm font-bold text-primary hover:underline">
-            {selectedPhotoIds.length === filteredPhotos.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+            {selectedPhotoIds.length === filteredPhotos.length
+              ? isEn ? 'Unselect all' : 'Tout désélectionner'
+              : isEn ? 'Select all' : 'Tout sélectionner'}
           </button>
         </div>
       )}
@@ -290,7 +304,7 @@ const Gallery: React.FC = () => {
           <section key={date} className="space-y-2">
             <div className="px-container-padding flex justify-between items-end">
               <h3 className="text-headline-md font-bold text-on-surface">
-                {date === new Date().toISOString().split('T')[0] ? "Aujourd'hui" : date}
+                {date === new Date().toISOString().split('T')[0] ? (isEn ? 'Today' : "Aujourd'hui") : date}
               </h3>
               <span
                 onClick={() =>
@@ -304,9 +318,9 @@ const Gallery: React.FC = () => {
               >
                 {isSelectionMode
                   ? datePhotos.every((p) => selectedPhotoIds.includes(p.id))
-                    ? 'Désélectionner groupe'
-                    : 'Sélectionner groupe'
-                  : 'Sélectionner'}
+                    ? isEn ? 'Unselect group' : 'Désélectionner groupe'
+                    : isEn ? 'Select group' : 'Sélectionner groupe'
+                  : isEn ? 'Select' : 'Sélectionner'}
               </span>
             </div>
 
@@ -325,11 +339,15 @@ const Gallery: React.FC = () => {
           <div className="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center text-on-surface-variant mb-4">
             <span className="material-symbols-outlined text-4xl">photo_library</span>
           </div>
-          <p className="text-headline-md font-bold text-on-surface">Aucune photo trouvée</p>
+          <p className="text-headline-md font-bold text-on-surface">
+            {isEn ? 'No photos found' : 'Aucune photo trouvée'}
+          </p>
           <p className="text-body-sm text-on-surface-variant max-w-sm mt-1">
             {searchQuery
-              ? 'Aucun résultat ne correspond à votre recherche.'
-              : 'Importez des photos depuis votre appareil ou l\'onglet Sauvegarde.'}
+              ? isEn ? 'No results match your search.' : 'Aucun résultat ne correspond à votre recherche.'
+              : isEn
+                ? 'Import photos from your device or from the Backup tab.'
+                : "Importez des photos depuis votre appareil ou l'onglet Sauvegarde."}
           </p>
         </div>
       )}
@@ -342,7 +360,7 @@ const Gallery: React.FC = () => {
             className="flex flex-col items-center gap-0.5 text-on-surface-variant active:scale-90 transition-transform"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
-            <span className="text-[10px] font-bold">Annuler</span>
+            <span className="text-[10px] font-bold">{isEn ? 'Cancel' : 'Annuler'}</span>
           </button>
           <div className="w-px h-8 bg-outline-variant/40" />
 
@@ -350,7 +368,7 @@ const Gallery: React.FC = () => {
             disabled={selectedPhotoIds.length === 0 || isExportingZip}
             onClick={handleExportSelectedZip}
             className="flex flex-col items-center gap-0.5 text-primary disabled:opacity-30 active:scale-90 transition-transform"
-            title="Télécharger la sélection en archive ZIP"
+            title={isEn ? 'Download selection as ZIP archive' : 'Télécharger la sélection en archive ZIP'}
           >
             <span className="material-symbols-outlined text-[20px]">folder_zip</span>
             <span className="text-[10px] font-bold">Export ZIP</span>
@@ -371,7 +389,7 @@ const Gallery: React.FC = () => {
             className="flex flex-col items-center gap-0.5 text-error disabled:opacity-30 active:scale-90 transition-transform"
           >
             <span className="material-symbols-outlined text-[20px]">delete</span>
-            <span className="text-[10px] font-bold">Supprimer</span>
+            <span className="text-[10px] font-bold">{isEn ? 'Delete' : 'Supprimer'}</span>
           </button>
         </div>
       )}
@@ -381,7 +399,9 @@ const Gallery: React.FC = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-headline-sm font-bold text-on-surface">Ajouter à l'album</h3>
+              <h3 className="text-headline-sm font-bold text-on-surface">
+                {isEn ? 'Add to album' : "Ajouter à l'album"}
+              </h3>
               <button
                 onClick={() => setShowAlbumPicker(false)}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/50"
@@ -405,19 +425,21 @@ const Gallery: React.FC = () => {
                   ))
               ) : (
                 <p className="text-body-sm text-on-surface-variant text-center py-4">
-                  Aucun album manuel disponible.
+                  {isEn ? 'No manual albums available.' : 'Aucun album manuel disponible.'}
                 </p>
               )}
             </div>
             <button
               onClick={() => {
-                const title = `Album du ${new Date().toLocaleDateString()}`;
+                const title = isEn
+                  ? `Album ${new Date().toLocaleDateString('en-US')}`
+                  : `Album du ${new Date().toLocaleDateString('fr-FR')}`;
                 const newAlbum = createAlbum(title);
                 handleAddSelectedToAlbum(newAlbum.id);
               }}
               className="w-full py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
             >
-              + Créer un nouvel album avec la sélection
+              {isEn ? '+ Create new album with selection' : '+ Créer un nouvel album avec la sélection'}
             </button>
           </div>
         </div>
@@ -432,10 +454,14 @@ const Gallery: React.FC = () => {
             </div>
             <div>
               <h3 className="text-headline-sm font-bold text-on-surface">
-                Supprimer {selectedPhotoIds.length} photo(s) ?
+                {isEn
+                  ? `Delete ${selectedPhotoIds.length} photo(s)?`
+                  : `Supprimer ${selectedPhotoIds.length} photo(s) ?`}
               </h3>
               <p className="text-body-sm text-on-surface-variant mt-1">
-                Ces photos seront définitivement retirées de votre photothèque locale.
+                {isEn
+                  ? 'These photos will be permanently removed from your local library.'
+                  : 'Ces photos seront définitivement retirées de votre photothèque locale.'}
               </p>
             </div>
             <div className="flex justify-end gap-3 pt-2">
@@ -443,13 +469,13 @@ const Gallery: React.FC = () => {
                 onClick={() => setShowDeleteConfirm(false)}
                 className="px-5 py-2.5 rounded-xl border border-outline-variant/40 text-on-surface font-semibold text-label-md"
               >
-                Annuler
+                {isEn ? 'Cancel' : 'Annuler'}
               </button>
               <button
                 onClick={handleDeleteConfirmed}
                 className="px-6 py-2.5 rounded-xl bg-error text-white font-bold text-label-md active:scale-95"
               >
-                Supprimer
+                {isEn ? 'Delete' : 'Supprimer'}
               </button>
             </div>
           </div>

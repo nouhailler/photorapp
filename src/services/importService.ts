@@ -2,6 +2,7 @@ import ExifReader from 'exifreader';
 import type { Photo, PhotoMetadata, PhotoExif } from '../types/types';
 import { savePhotoBlob, savePhotoMeta, saveThumbnailBlob } from '../utils/db';
 import { generateThumbnailBlob } from './thumbnailService';
+import type { AppLang } from '../context/languageContextDef';
 
 export interface ImportProgress {
   current: number;
@@ -149,8 +150,9 @@ export async function processPhotosImport(
   files: FileList | File[],
   existingPhotos: Photo[],
   onProgress?: (progress: ImportProgress) => void,
-  options: { skipDuplicates?: boolean } = { skipDuplicates: true }
+  options: { skipDuplicates?: boolean; lang?: AppLang } = { skipDuplicates: true }
 ): Promise<ImportResult> {
+  const isEn = options.lang === 'en';
   const fileArray = Array.from(files);
   const total = fileArray.length;
   const importedPhotos: Photo[] = [];
@@ -178,7 +180,9 @@ export async function processPhotosImport(
     if (!SUPPORTED_MIME_TYPES.has(file.type.toLowerCase()) && !file.type.startsWith('image/')) {
       failedFiles.push({
         name: file.name,
-        reason: `Format non supporté (${file.type || 'type inconnu'})`,
+        reason: isEn
+          ? `Unsupported format (${file.type || 'unknown type'})`
+          : `Format non supporté (${file.type || 'type inconnu'})`,
       });
       continue;
     }
@@ -212,7 +216,7 @@ export async function processPhotosImport(
       ]);
 
       // Calculate Megapixels resolution label
-      let resolutionLabel = 'Inconnue';
+      let resolutionLabel = isEn ? 'Unknown' : 'Inconnue';
       if (dimensions.width > 0 && dimensions.height > 0) {
         const mp = ((dimensions.width * dimensions.height) / 1000000).toFixed(1);
         resolutionLabel = `${dimensions.width} × ${dimensions.height} (${mp} MP)`;
@@ -234,7 +238,7 @@ export async function processPhotosImport(
       const id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
       const metadata: PhotoMetadata = {
-        device: exifData.device || 'Fichier importé',
+        device: exifData.device || (isEn ? 'Imported file' : 'Fichier importé'),
         resolution: resolutionLabel,
         width: dimensions.width,
         height: dimensions.height,
@@ -282,7 +286,7 @@ export async function processPhotosImport(
       console.error(`[ImportService] Failed to import ${file.name}:`, err);
       failedFiles.push({
         name: file.name,
-        reason: err instanceof Error ? err.message : 'Erreur inconnue',
+        reason: err instanceof Error ? err.message : isEn ? 'Unknown error' : 'Erreur inconnue',
       });
     }
   }

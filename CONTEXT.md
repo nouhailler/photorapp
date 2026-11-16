@@ -49,11 +49,11 @@ Documentation technique de référence pour les développeurs, contributeurs et 
 ### Architecture React et routage (`src/App.tsx`)
 
 L'application est encapsulée dans l'ordre suivant :
-`PhotoProvider` → `HelpProvider` → `BrowserRouter` → `Routes` (avec `/` hors `<Layout>`, et toutes les vues applicatives encapsulées dans `<Layout>`).
+`LanguageProvider` → `PhotoProvider` → `HelpProvider` → `BrowserRouter` → `Routes` (avec `/` et `/en` hors `<Layout>`, et toutes les vues applicatives encapsulées dans `<Layout>`).
 
 | Route | Composant page (`src/pages/`) | Enveloppe `<Layout>` | Responsabilité |
 | :--- | :--- | :--- | :--- |
-| `/` | `LandingPage.tsx` | Non (vitrine publique) | Présentation produit, captures réelles, démonstrations interactives isolées (`#demo`), parcours en 4 étapes (`#parcours`) sans `OnboardingModal` ni écriture IndexedDB |
+| `/`, `/en` | `LandingPage.tsx` | Non (vitrine publique FR/EN) | Présentation produit, captures réelles, démonstrations interactives isolées (`#demo`), parcours en 4 étapes (`#parcours`) sans `OnboardingModal` ni écriture IndexedDB |
 | `/gallery`, `/app` | `Gallery.tsx` | Oui | Mur chronologique, carrousel `SouvenirsCarousel`, sélection multiple, accès `DetailView` / `Editor` / `SlideshowModal` |
 | `/albums` | `Albums.tsx` | Oui | Gestion des albums manuels et des albums intelligents (`SmartAlbumCriteria`) |
 | `/albums/:id` | `AlbumDetail.tsx` | Oui | Contenu d'un album (statique ou évalué dynamiquement), changement de couverture, retrait de photos |
@@ -78,6 +78,8 @@ L'application est encapsulée dans l'ordre suivant :
   - Maintient en mémoire `photos`, `albums`, `isLoading`, `migrationReport` et un registre `localUrlsRef` (`Record<string, string>`) cachant les `ObjectURL` par clé `id` (original) et `${id}_thumb` (miniature).
   - Révoque tous les `ObjectURL` créés au démontage.
   - Synchronise un miroir JSON dans `localStorage` (`gallery_pro_photos`, `gallery_pro_albums`) avec capture silencieuse d'erreur si le quota `localStorage` est dépassé (IndexedDB reste la source de vérité).
+- **`src/context/LanguageContext.tsx` (+ `languageContextDef.ts`, `useLanguage.ts`) :**
+  - Maintient l'état linguistique global (`'fr' | 'en'`), le booléen dérivé `isEn`, la détection initiale via `/en` / `?lang=en` / `localStorage` (`gallery_pro_lang`) et la synchronisation de `document.documentElement.lang`.
 - **`src/context/HelpContext.tsx` (+ `helpContextDef.ts`, `useHelp.ts`) :**
   - Gère `isHelpModeActive` (mode novice / `HelpTooltip`), l'état d'ouverture et l'acceptation persistée des mentions légales (`OnboardingModal`).
 - **`src/hooks/usePhotoUrl.ts` :**
@@ -149,6 +151,7 @@ flowchart TB
 ### Clés `localStorage` complémentaires
 
 En parallèle d'IndexedDB, plusieurs clés `localStorage` sont utilisées :
+- `gallery_pro_lang` : préférence linguistique globale (`'fr'` | `'en'`) partagée entre vitrine et application.
 - `gallery_pro_photos`, `gallery_pro_albums` : miroir JSON secondaire et source héritée pour la migration.
 - `gallery_pro_faces_enabled` : drapeau opt-in (`'true'` / `'false'`) pour `faceService.ts`.
 - `gallery_pro_auto_update_enabled`, `gallery_pro_last_update_check`, `gallery_pro_version`, `gallery_pro_app_etag` : état de `updateService.ts`.
@@ -351,12 +354,12 @@ Le tableau suivant distingue strictement les techniques réellement implémenté
   - `npm run lint` : exécute `eslint .`.
   - `npm run build` : vérifie TypeScript (`tsc -b`) et produit `dist/` (`vite build`).
 
-### Couverture existante (13 fichiers de test, 64 tests Vitest)
+### Couverture existante (14 fichiers de test, 72 tests Vitest)
 
 | Catégorie | Fichiers présents | Scénarios couverts |
 | :--- | :--- | :--- |
-| **Landing Page & Démonstrations** | `src/pages/LandingPage.test.tsx` | Hero avec capture réelle et CTAs `/gallery` sans modale légale, `DemoGallery` (filtres + lightbox clavier), `DemoSearch` (saisie libre + `parseNaturalLanguageQuery`), `DemoPhotoEditor`, `UserJourneySection`, FAQ et menu mobile |
-| **Persistance & Contexte** | `src/utils/db.test.ts`, `src/context/PhotoContext.test.tsx` | Ouverture/mocks IndexedDB, migration idempotente `LocalStorage → IndexedDB`, suppression atomique et synchronisation des couvertures d'albums |
+| **Landing Page & Démonstrations** | `src/pages/LandingPage.test.tsx` | Hero avec capture réelle et CTAs `/gallery` sans modale légale, versions `/` FR et `/en` EN, `DemoGallery` (filtres + lightbox clavier), `DemoSearch` (saisie libre + `parseNaturalLanguageQuery`), `DemoPhotoEditor`, `UserJourneySection`, FAQ et menu mobile |
+| **Persistance & Contextes** | `src/utils/db.test.ts`, `src/context/PhotoContext.test.tsx`, `src/context/LanguageContext.test.tsx` | Ouverture/mocks IndexedDB, migration idempotente `LocalStorage → IndexedDB`, suppression atomique, synchronisation des couvertures d'albums et bascule/persistance `FR / EN` (`gallery_pro_lang`, `/en`) |
 | **Sauvegarde & Export** | `src/services/exportService.test.ts` | Génération de sauvegarde `.gpro.zip` avec manifeste v2, simulation de restauration, détection de corruption SHA-256 |
 | **Recherche & Albums intelligents** | `src/services/searchEngine.test.ts`, `src/services/naturalSearchService.test.ts`, `src/services/smartAlbumService.test.ts` | Filtrage multicritère, parsing FR/EN (saisons, années, concepts), validation et évaluation des `SmartAlbumCriteria` |
 | **Intelligence, Souvenirs, Doublons & Charge** | `src/services/aiVisionService.test.ts`, `src/services/souvenirService.test.ts`, `src/services/duplicateService.test.ts`, `src/services/benchmarkService.test.ts` | Enrichissement de tags et Canvas mocké, souvenirs par dates/lieux réels, distance `dHash` / doublons SHA-256, exécution du benchmark |

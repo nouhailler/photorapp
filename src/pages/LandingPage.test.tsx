@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import LandingPage from './LandingPage';
 
 describe('LandingPage', () => {
@@ -20,10 +20,13 @@ describe('LandingPage', () => {
         }) as MediaQueryList);
   });
 
-  const renderLanding = () =>
+  const renderLanding = (initialPath = '/') =>
     render(
-      <MemoryRouter initialEntries={['/']}>
-        <LandingPage />
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Routes>
+          <Route path="/" element={<LandingPage initialLang="fr" />} />
+          <Route path="/en" element={<LandingPage initialLang="en" />} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -159,4 +162,69 @@ describe('LandingPage', () => {
     expect(imgSrcs).toContain('/screenshots/sharing-restore-sim.png');
     expect(imgSrcs).toContain('/app_preview.svg');
   });
+
+  it('renders the full English landing page at /en with English interactive demos and switches back cleanly via FR/EN toggle', () => {
+    renderLanding('/en');
+
+    expect(document.documentElement.lang).toBe('en');
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: /All your photos\. One personal library\. Under your control\./i,
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Your photo library, organized and accessible right from your browser\./i)
+    ).toBeInTheDocument();
+
+    // English DemoGallery filter + lightbox
+    fireEvent.click(screen.getByRole('button', { name: 'Coast' }));
+    const coastalButtons = screen.getAllByRole('button', { name: /Enlarge /i });
+    expect(coastalButtons).toHaveLength(2);
+    fireEvent.click(coastalButtons[0]);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText(/Sample 1 \/ 2/i)).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    // English DemoSearch real parser
+    const searchInput = screen.getByLabelText(/Enter a demo search query/i);
+    fireEvent.change(searchInput, { target: { value: 'Favorite photos 2024 Paris' } });
+    expect(screen.getByText(/true \(Favorites\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/year 2024/i)).toBeInTheDocument();
+
+    // English DemoPhotoEditor preset
+    fireEvent.click(screen.getByRole('button', { name: 'Black & White' }));
+    expect(screen.getByText(/Preview \(Black & White\)/i)).toBeInTheDocument();
+
+    // English 4-step workflow & FAQ
+    expect(
+      screen.getByRole('heading', { name: /From your first photos to a well-organized library\./i })
+    ).toBeInTheDocument();
+    const faqSecond = screen.getByRole('button', { name: /Do I need to create an account\?/i });
+    fireEvent.click(faqSecond);
+    expect(faqSecond).toHaveAttribute('aria-expanded', 'true');
+
+    // Switch back to French via header toggle
+    const frBtn = screen.getByRole('button', { name: 'FR' });
+    fireEvent.click(frBtn);
+    expect(document.documentElement.lang).toBe('fr');
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: /Toutes vos photos\. Une seule photothèque\. Sous votre contrôle\./i,
+      })
+    ).toBeInTheDocument();
+
+    // Switch back to English via header toggle
+    const enBtn = screen.getByRole('button', { name: 'EN' });
+    fireEvent.click(enBtn);
+    expect(document.documentElement.lang).toBe('en');
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: /All your photos\. One personal library\. Under your control\./i,
+      })
+    ).toBeInTheDocument();
+  });
 });
+

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { activityService } from '../services/activityService';
 import type { ActivityTask } from '../services/activityService';
+import { useLanguage } from '../context/useLanguage';
 
 interface ActivityCenterModalProps {
   isOpen: boolean;
@@ -8,6 +9,8 @@ interface ActivityCenterModalProps {
 }
 
 export const ActivityCenterModal: React.FC<ActivityCenterModalProps> = ({ isOpen, onClose }) => {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const [tasks, setTasks] = useState<ActivityTask[]>([]);
 
   useEffect(() => {
@@ -45,15 +48,35 @@ export const ActivityCenterModal: React.FC<ActivityCenterModalProps> = ({ isOpen
   const getStatusBadge = (status: ActivityTask['status']) => {
     switch (status) {
       case 'running':
-        return <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold animate-pulse">En cours</span>;
+        return (
+          <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold animate-pulse">
+            {isEn ? 'Running' : 'En cours'}
+          </span>
+        );
       case 'completed':
-        return <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 text-[10px] font-bold">Terminé</span>;
+        return (
+          <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 text-[10px] font-bold">
+            {isEn ? 'Completed' : 'Terminé'}
+          </span>
+        );
       case 'failed':
-        return <span className="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 text-[10px] font-bold">Erreur</span>;
+        return (
+          <span className="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 text-[10px] font-bold">
+            {isEn ? 'Failed' : 'Erreur'}
+          </span>
+        );
       case 'canceled':
-        return <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 text-[10px] font-bold">Annulé</span>;
+        return (
+          <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 text-[10px] font-bold">
+            {isEn ? 'Canceled' : 'Annulé'}
+          </span>
+        );
       default:
-        return <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[10px] font-bold">Attente</span>;
+        return (
+          <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[10px] font-bold">
+            {isEn ? 'Pending' : 'Attente'}
+          </span>
+        );
     }
   };
 
@@ -67,11 +90,17 @@ export const ActivityCenterModal: React.FC<ActivityCenterModalProps> = ({ isOpen
               <span className="material-symbols-outlined text-[22px]">pending_actions</span>
             </div>
             <div>
-              <h3 className="text-headline-sm font-bold text-on-surface">Centre d'Activité</h3>
+              <h3 className="text-headline-sm font-bold text-on-surface">
+                {isEn ? 'Activity Center' : "Centre d'Activité"}
+              </h3>
               <p className="text-[12px] text-on-surface-variant">
                 {runningCount > 0
-                  ? `${runningCount} opération(s) en cours en arrière-plan`
-                  : 'Aucune tâche active. Historique récent.'}
+                  ? isEn
+                    ? `${runningCount} background operation(s) running`
+                    : `${runningCount} opération(s) en cours en arrière-plan`
+                  : isEn
+                    ? 'No active tasks. Recent history.'
+                    : 'Aucune tâche active. Historique récent.'}
               </p>
             </div>
           </div>
@@ -88,9 +117,13 @@ export const ActivityCenterModal: React.FC<ActivityCenterModalProps> = ({ isOpen
           {tasks.length === 0 ? (
             <div className="py-12 text-center text-on-surface-variant space-y-2">
               <span className="material-symbols-outlined text-4xl opacity-30">done_all</span>
-              <p className="text-body-sm font-semibold">Aucune activité enregistrée pour le moment.</p>
+              <p className="text-body-sm font-semibold">
+                {isEn ? 'No activity recorded yet.' : 'Aucune activité enregistrée pour le moment.'}
+              </p>
               <p className="text-[11px] opacity-70">
-                Vos imports, sauvegardes, calculs IA et restaurations apparaîtront ici.
+                {isEn
+                  ? 'Your imports, backups, AI analyses, and restores will appear here.'
+                  : 'Vos imports, sauvegardes, calculs IA et restaurations apparaîtront ici.'}
               </p>
             </div>
           ) : (
@@ -122,7 +155,7 @@ export const ActivityCenterModal: React.FC<ActivityCenterModalProps> = ({ isOpen
                       />
                     </div>
                     <div className="flex justify-between text-[10px] text-on-surface-variant font-medium">
-                      <span>Progression</span>
+                      <span>{isEn ? 'Progress' : 'Progression'}</span>
                       <span>{task.progress}%</span>
                     </div>
                   </div>
@@ -135,7 +168,7 @@ export const ActivityCenterModal: React.FC<ActivityCenterModalProps> = ({ isOpen
                       onClick={() => activityService.cancelTask(task.id)}
                       className="px-3 py-1 bg-surface-container-high hover:bg-error/15 text-error rounded-lg text-[11px] font-bold transition-colors"
                     >
-                      Annuler la tâche
+                      {isEn ? 'Cancel task' : 'Annuler la tâche'}
                     </button>
                   </div>
                 )}
@@ -150,13 +183,13 @@ export const ActivityCenterModal: React.FC<ActivityCenterModalProps> = ({ isOpen
             onClick={() => activityService.clearCompletedTasks()}
             className="text-label-xs font-semibold text-on-surface-variant hover:text-primary transition-colors"
           >
-            Effacer les tâches terminées
+            {isEn ? 'Clear completed tasks' : 'Effacer les tâches terminées'}
           </button>
           <button
             onClick={onClose}
             className="px-5 py-2 bg-primary text-on-primary rounded-xl font-bold text-label-sm active:scale-95"
           >
-            Fermer
+            {isEn ? 'Close' : 'Fermer'}
           </button>
         </div>
       </div>

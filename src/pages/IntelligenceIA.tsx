@@ -14,8 +14,25 @@ import {
   updatePersonGroupName,
   clearAllFaceData,
 } from '../services/faceService';
+import { useLanguage } from '../context/useLanguage';
 import type { Photo, PersonGroup } from '../types/types';
 
+const SCENE_LABEL_EN: Record<string, string> = {
+  'Nature & Paysage': 'Nature & Landscape',
+  'Plage & Mer': 'Beach & Ocean',
+  'Coucher de soleil': 'Sunset',
+  'Architecture & Ville': 'Architecture & City',
+  'Nuit & Basse lumière': 'Night & Low Light',
+  'Portrait & Personnes': 'Portrait & People',
+  'Animaux & Faune': 'Animals & Wildlife',
+  'Général Extérieur': 'Outdoor Scene',
+  'Scène Intérieur': 'Indoor Scene',
+};
+
+function localizeSceneLabel(label: string, isEn: boolean): string {
+  if (!isEn) return label;
+  return SCENE_LABEL_EN[label] || label;
+}
 
 // Lazy load MapComponent to avoid SSR/window issues
 const MapComponent = React.lazy(() => import('../components/MapComponent'));
@@ -27,6 +44,7 @@ const PhotoThumbnail: React.FC<{ photo: Photo; className?: string }> = ({ photo,
 
 const IntelligenceIA: React.FC = () => {
   const { photos, deletePhoto, analyzeAllPhotos } = usePhotos();
+  const { lang, isEn } = useLanguage();
 
   // Local Analysis Progress
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -108,7 +126,7 @@ const IntelligenceIA: React.FC = () => {
     try {
       await analyzeAllPhotos((curr, tot) => {
         setAnalysisProgress({ current: curr, total: tot });
-      });
+      }, lang);
     } catch (e) {
       console.error('Analysis batch error:', e);
     } finally {
@@ -133,7 +151,7 @@ const IntelligenceIA: React.FC = () => {
     setFaceGroupingEnabled(enabled);
     setFacesEnabled(enabled);
     if (enabled) {
-      const groups = await clusterPhotosIntoPersonGroups(photos);
+      const groups = await clusterPhotosIntoPersonGroups(photos, lang);
       setPersonGroups(groups);
     } else {
       setPersonGroups([]);
@@ -141,14 +159,18 @@ const IntelligenceIA: React.FC = () => {
   };
 
   const handleRescanFaces = async () => {
-    const groups = await clusterPhotosIntoPersonGroups(photos);
+    const groups = await clusterPhotosIntoPersonGroups(photos, lang);
     setPersonGroups(groups);
-    setFaceMessage(`${groups.length} groupe(s) de visages détectés localement.`);
+    setFaceMessage(
+      isEn
+        ? `${groups.length} face group(s) detected locally.`
+        : `${groups.length} groupe(s) de visages détectés localement.`
+    );
     setTimeout(() => setFaceMessage(''), 3000);
   };
 
   const handleSavePersonName = async (personId: string) => {
-    await updatePersonGroupName(personId, editingPersonName);
+    await updatePersonGroupName(personId, editingPersonName, lang);
     const refreshed = await getSavedPersonGroups();
     setPersonGroups(refreshed);
     setEditingPersonId(null);
@@ -157,13 +179,19 @@ const IntelligenceIA: React.FC = () => {
   const handleWipeFaceData = async () => {
     if (
       window.confirm(
-        'Voulez-vous vraiment supprimer de manière irréversible tous les groupes de personnes et données de visages locales ? Vos photos originales resteront intactes.'
+        isEn
+          ? 'Do you really want to permanently delete all person groups and local face data? Your original photos will remain intact.'
+          : 'Voulez-vous vraiment supprimer de manière irréversible tous les groupes de personnes et données de visages locales ? Vos photos originales resteront intactes.'
       )
     ) {
       await clearAllFaceData();
       setFacesEnabled(false);
       setPersonGroups([]);
-      setFaceMessage('Toutes les données biométriques locales ont été effacées.');
+      setFaceMessage(
+        isEn
+          ? 'All local biometric data has been erased.'
+          : 'Toutes les données biométriques locales ont été effacées.'
+      );
       setTimeout(() => setFaceMessage(''), 4000);
     }
   };
@@ -176,17 +204,25 @@ const IntelligenceIA: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-headline-lg font-bold text-on-surface">Intelligence Photographique</h2>
+              <h2 className="text-headline-lg font-bold text-on-surface">
+                {isEn ? 'Photo Intelligence' : 'Intelligence Photographique'}
+              </h2>
               <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container text-[11px] font-bold uppercase tracking-wider">
                 100% Local
               </span>
               <HelpTooltip
-                title="Intelligence & Vision par Ordinateur"
-                text="Les analyses de flou, d'exposition et de similarité s'exécutent entièrement sur votre appareil sans envoyer vos photos sur aucun serveur."
+                title={isEn ? 'Local Intelligence & Computer Vision' : 'Intelligence & Vision par Ordinateur'}
+                text={
+                  isEn
+                    ? 'Blur, exposure, and similarity checks run entirely on your device without sending your photos to any server.'
+                    : "Les analyses de flou, d'exposition et de similarité s'exécutent entièrement sur votre appareil sans envoyer vos photos sur aucun serveur."
+                }
               />
             </div>
             <p className="text-body-sm text-on-surface-variant mt-1">
-              Analyses scientifiques exécutées localement dans votre navigateur : détection de flou, doublons et exposition.
+              {isEn
+                ? 'Scientific pixel analysis executed locally in your browser: blur detection, duplicates, and exposure.'
+                : 'Analyses scientifiques exécutées localement dans votre navigateur : détection de flou, doublons et exposition.'}
             </p>
           </div>
 
@@ -198,7 +234,11 @@ const IntelligenceIA: React.FC = () => {
             <span className={`material-symbols-outlined text-[20px] ${isAnalyzing ? 'animate-spin' : 'material-symbols-fill'}`}>
               {isAnalyzing ? 'sync' : 'auto_fix_high'}
             </span>
-            <span>{isAnalyzing ? 'Analyse en cours...' : 'Analyser la bibliothèque'}</span>
+            <span>
+              {isAnalyzing
+                ? isEn ? 'Analyzing...' : 'Analyse en cours...'
+                : isEn ? 'Analyze library' : 'Analyser la bibliothèque'}
+            </span>
           </button>
         </div>
 
@@ -206,7 +246,11 @@ const IntelligenceIA: React.FC = () => {
         {isAnalyzing && analysisProgress && (
           <div className="mt-4 p-4 bg-primary-container/20 rounded-2xl border border-primary/30 space-y-2">
             <div className="flex justify-between text-label-sm font-bold text-primary">
-              <span>Analyse des pixels par vision par ordinateur...</span>
+              <span>
+                {isEn
+                  ? 'Analyzing pixels with local computer vision...'
+                  : 'Analyse des pixels par vision par ordinateur...'}
+              </span>
               <span>{analysisProgress.current} / {analysisProgress.total}</span>
             </div>
             <div className="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
@@ -225,9 +269,13 @@ const IntelligenceIA: React.FC = () => {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-headline-md font-bold text-on-surface">Nettoyage & Optimisation</h3>
+            <h3 className="text-headline-md font-bold text-on-surface">
+              {isEn ? 'Cleanup & Optimization' : 'Nettoyage & Optimisation'}
+            </h3>
             <span className="px-2 py-0.5 bg-surface-container-high rounded-md text-[11px] font-bold text-on-surface-variant">
-              {analyzedPhotos.length} / {photos.length} photos analysées
+              {isEn
+                ? `${analyzedPhotos.length} / ${photos.length} photos analyzed`
+                : `${analyzedPhotos.length} / ${photos.length} photos analysées`}
             </span>
           </div>
         </div>
@@ -240,11 +288,13 @@ const IntelligenceIA: React.FC = () => {
                 <span className="material-symbols-outlined text-[28px]">blur_on</span>
               </div>
               <div>
-                <h4 className="text-body-lg font-bold text-on-surface">Photos floues ou mal exposées</h4>
+                <h4 className="text-body-lg font-bold text-on-surface">
+                  {isEn ? 'Blurry or poorly exposed photos' : 'Photos floues ou mal exposées'}
+                </h4>
                 <p className="text-label-sm text-on-surface-variant">
                   {analyzedPhotos.length === 0
-                    ? 'Aucune analyse effectuée. Lancez l\'analyse locale.'
-                    : `${lowQualityPhotos.length} photo(s) détectée(s)`}
+                    ? isEn ? 'No analysis run yet. Start local analysis.' : "Aucune analyse effectuée. Lancez l'analyse locale."
+                    : isEn ? `${lowQualityPhotos.length} photo(s) detected` : `${lowQualityPhotos.length} photo(s) détectée(s)`}
                 </p>
               </div>
             </div>
@@ -253,7 +303,7 @@ const IntelligenceIA: React.FC = () => {
               onClick={() => setActiveReview('blurry')}
               className="px-4 py-2 rounded-xl bg-surface-container-high text-primary font-bold text-label-sm hover:bg-surface-variant active:scale-95 disabled:opacity-30 transition-all shrink-0"
             >
-              Réviser
+              {isEn ? 'Review' : 'Réviser'}
             </button>
           </div>
 
@@ -264,11 +314,15 @@ const IntelligenceIA: React.FC = () => {
                 <span className="material-symbols-outlined text-[28px]">content_copy</span>
               </div>
               <div>
-                <h4 className="text-body-lg font-bold text-on-surface">Doublons & Similitudes</h4>
+                <h4 className="text-body-lg font-bold text-on-surface">
+                  {isEn ? 'Duplicates & Similar Shots' : 'Doublons & Similitudes'}
+                </h4>
                 <p className="text-label-sm text-on-surface-variant">
                   {allDuplicateGroups.length === 0
-                    ? 'Aucun doublon trouvé dans la photothèque.'
-                    : `${allDuplicateGroups.length} groupe(s) de doublons identifiés`}
+                    ? isEn ? 'No duplicates found in your library.' : 'Aucun doublon trouvé dans la photothèque.'
+                    : isEn
+                      ? `${allDuplicateGroups.length} duplicate group(s) identified`
+                      : `${allDuplicateGroups.length} groupe(s) de doublons identifiés`}
                 </p>
               </div>
             </div>
@@ -277,7 +331,7 @@ const IntelligenceIA: React.FC = () => {
               onClick={() => setActiveReview('duplicates')}
               className="px-4 py-2 rounded-xl bg-surface-container-high text-primary font-bold text-label-sm hover:bg-surface-variant active:scale-95 disabled:opacity-30 transition-all shrink-0"
             >
-              Réviser
+              {isEn ? 'Review' : 'Réviser'}
             </button>
           </div>
         </div>
@@ -286,10 +340,16 @@ const IntelligenceIA: React.FC = () => {
       {/* Vision Locale & Catégories Détectées */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-headline-md font-bold text-on-surface">Classification Sémantique Locale</h3>
+          <h3 className="text-headline-md font-bold text-on-surface">
+            {isEn ? 'Local Semantic Classification' : 'Classification Sémantique Locale'}
+          </h3>
           <HelpTooltip
-            title="Classification Automatique"
-            text="Analyse colorimétrique, géométrique et spatiale exécutée dans votre navigateur pour identifier les paysages, portraits, couchers de soleil ou architectures."
+            title={isEn ? 'Automatic Classification' : 'Classification Automatique'}
+            text={
+              isEn
+                ? 'Color, geometry, and spatial analysis executed inside your browser to identify landscapes, portraits, sunsets, or architecture.'
+                : 'Analyse colorimétrique, géométrique et spatiale exécutée dans votre navigateur pour identifier les paysages, portraits, couchers de soleil ou architectures.'
+            }
           />
         </div>
 
@@ -297,11 +357,13 @@ const IntelligenceIA: React.FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {sceneDistribution.map((item) => (
               <div
-                key={item.category}
+                key={item.category + item.label}
                 className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/20 flex items-center justify-between"
               >
                 <div>
-                  <p className="text-label-md font-bold text-on-surface">{item.label}</p>
+                  <p className="text-label-md font-bold text-on-surface">
+                    {localizeSceneLabel(item.label, isEn)}
+                  </p>
                   <p className="text-[11px] text-on-surface-variant">{item.count} photo(s)</p>
                 </div>
                 <span className="material-symbols-outlined text-primary/70 text-[22px]">label</span>
@@ -310,7 +372,15 @@ const IntelligenceIA: React.FC = () => {
           </div>
         ) : (
           <div className="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/20 text-body-sm text-on-surface-variant">
-            Cliquez sur <strong>Analyser la bibliothèque</strong> ci-dessus pour classer automatiquement vos scènes (Nature, Portraits, Architecture, Plage, Nuit...).
+            {isEn ? (
+              <>
+                Click <strong>Analyze library</strong> above to automatically classify your scenes (Nature, Portraits, Architecture, Beach, Night...).
+              </>
+            ) : (
+              <>
+                Cliquez sur <strong>Analyser la bibliothèque</strong> ci-dessus pour classer automatiquement vos scènes (Nature, Portraits, Architecture, Plage, Nuit...).
+              </>
+            )}
           </div>
         )}
       </section>
@@ -324,13 +394,17 @@ const IntelligenceIA: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-headline-sm font-bold text-on-surface">Regroupement de Visages (Local)</h3>
+                <h3 className="text-headline-sm font-bold text-on-surface">
+                  {isEn ? 'Face Grouping (Local)' : 'Regroupement de Visages (Local)'}
+                </h3>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-bold uppercase">
-                  Strictement privé
+                  {isEn ? 'Strictly private' : 'Strictement privé'}
                 </span>
               </div>
               <p className="text-[12px] text-on-surface-variant">
-                Fonctionnement facultatif sur appareil uniquement. Aucun envoi vers un serveur ou registre tiers.
+                {isEn
+                  ? 'Optional on-device feature only. Nothing is sent to any server or third-party registry.'
+                  : 'Fonctionnement facultatif sur appareil uniquement. Aucun envoi vers un serveur ou registre tiers.'}
               </p>
             </div>
           </div>
@@ -344,7 +418,7 @@ const IntelligenceIA: React.FC = () => {
             />
             <div className="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
             <span className="ml-2 text-label-xs font-bold text-on-surface">
-              {facesEnabled ? 'Activé' : 'Désactivé'}
+              {facesEnabled ? (isEn ? 'Enabled' : 'Activé') : (isEn ? 'Disabled' : 'Désactivé')}
             </span>
           </label>
         </div>
@@ -363,7 +437,7 @@ const IntelligenceIA: React.FC = () => {
                 className="px-4 py-2 bg-surface-container-high hover:bg-surface-variant text-primary rounded-xl text-label-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
               >
                 <span className="material-symbols-outlined text-[18px]">person_search</span>
-                <span>Regrouper les portraits analysés</span>
+                <span>{isEn ? 'Group analyzed portraits' : 'Regrouper les portraits analysés'}</span>
               </button>
 
               <button
@@ -371,7 +445,7 @@ const IntelligenceIA: React.FC = () => {
                 className="px-4 py-2 bg-error/10 hover:bg-error/20 text-error rounded-xl text-label-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
               >
                 <span className="material-symbols-outlined text-[18px]">delete_forever</span>
-                <span>Effacement biométrique irréversible</span>
+                <span>{isEn ? 'Irreversible biometric wipe' : 'Effacement biométrique irréversible'}</span>
               </button>
             </div>
 
@@ -417,7 +491,7 @@ const IntelligenceIA: React.FC = () => {
                                 setEditingPersonName(group.name);
                               }}
                               className="p-1 text-on-surface-variant hover:text-primary rounded-lg"
-                              title="Nommer cette personne"
+                              title={isEn ? 'Name this person' : 'Nommer cette personne'}
                             >
                               <span className="material-symbols-outlined text-[16px]">edit</span>
                             </button>
@@ -433,13 +507,17 @@ const IntelligenceIA: React.FC = () => {
               </div>
             ) : (
               <p className="text-[12px] text-on-surface-variant">
-                Aucun groupe de visages créé. Lancez d'abord l'analyse de bibliothèque pour détecter les portraits, puis cliquez sur « Regrouper les portraits analysés ».
+                {isEn
+                  ? 'No face groups created yet. Run the library analysis first to detect portraits, then click "Group analyzed portraits".'
+                  : "Aucun groupe de visages créé. Lancez d'abord l'analyse de bibliothèque pour détecter les portraits, puis cliquez sur « Regrouper les portraits analysés »."}
               </p>
             )}
           </div>
         ) : (
           <p className="text-[12px] text-on-surface-variant">
-            Ce module est désactivé par défaut pour respecter votre vie privée. Activez l'interrupteur ci-dessus uniquement si vous souhaitez organiser vos portraits localement par personne.
+            {isEn
+              ? 'This module is disabled by default to protect your privacy. Turn on the switch above only if you want to organize portraits locally by person.'
+              : "Ce module est désactivé par défaut pour respecter votre vie privée. Activez l'interrupteur ci-dessus uniquement si vous souhaitez organiser vos portraits localement par personne."}
           </p>
         )}
       </section>
@@ -449,9 +527,13 @@ const IntelligenceIA: React.FC = () => {
       <section className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-headline-md font-bold text-on-surface">Carte Géographique Réelle</h3>
+            <h3 className="text-headline-md font-bold text-on-surface">
+              {isEn ? 'Real Geographic Map' : 'Carte Géographique Réelle'}
+            </h3>
             <p className="text-body-sm text-on-surface-variant">
-              Seules les photos possédant de réelles coordonnées EXIF GPS sont affichées.
+              {isEn
+                ? 'Only photos with real EXIF GPS coordinates are displayed.'
+                : 'Seules les photos possédant de réelles coordonnées EXIF GPS sont affichées.'}
             </p>
           </div>
         </div>
@@ -460,7 +542,7 @@ const IntelligenceIA: React.FC = () => {
           <Suspense
             fallback={
               <div className="w-full h-full bg-surface-container-low flex items-center justify-center text-on-surface-variant">
-                Chargement de la carte...
+                {isEn ? 'Loading map...' : 'Chargement de la carte...'}
               </div>
             }
           >
@@ -475,16 +557,18 @@ const IntelligenceIA: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[20px]">smart_toy</span>
             <h4 className="text-label-md font-bold text-on-surface">
-              Modèles IA Cloud optionnels (OpenRouter)
+              {isEn ? 'Optional Cloud AI Models (OpenRouter)' : 'Modèles IA Cloud optionnels (OpenRouter)'}
             </h4>
           </div>
           <button className="text-on-surface-variant text-label-xs font-semibold hover:text-primary">
-            {showApiConfig ? 'Masquer' : 'Configurer'}
+            {showApiConfig ? (isEn ? 'Hide' : 'Masquer') : (isEn ? 'Configure' : 'Configurer')}
           </button>
         </div>
 
         <p className="text-[11px] text-on-surface-variant">
-          Aucun appel distant n'est requis pour faire fonctionner Photorapp. Si vous renseignez une clé OpenRouter, elle est stockée localement dans votre navigateur pour interroger des modèles de texte ou de métadonnées.
+          {isEn
+            ? 'No remote call is required to run Gallery Pro. If you enter an OpenRouter key, it is stored locally in your browser to query text or metadata models.'
+            : "Aucun appel distant n'est requis pour faire fonctionner Gallery Pro. Si vous renseignez une clé OpenRouter, elle est stockée localement dans votre navigateur pour interroger des modèles de texte ou de métadonnées."}
         </p>
 
         {showApiConfig && (
@@ -493,7 +577,7 @@ const IntelligenceIA: React.FC = () => {
               type="password"
               value={apiKey}
               onChange={(e) => handleApiKeyChange(e.target.value)}
-              placeholder="Clé API OpenRouter (sk-or-...)"
+              placeholder={isEn ? 'OpenRouter API Key (sk-or-...)' : 'Clé API OpenRouter (sk-or-...)'}
               className="w-full h-10 px-4 rounded-xl bg-surface border border-outline-variant/40 text-body-sm outline-none focus:border-primary"
             />
             <button
@@ -501,7 +585,9 @@ const IntelligenceIA: React.FC = () => {
               disabled={loadingModels}
               className="px-4 py-2 bg-primary text-on-primary rounded-xl text-label-sm font-semibold active:scale-95 disabled:opacity-50"
             >
-              {loadingModels ? 'Vérification...' : 'Explorer les modèles gratuits (:free)'}
+              {loadingModels
+                ? isEn ? 'Checking...' : 'Vérification...'
+                : isEn ? 'Explore free models (:free)' : 'Explorer les modèles gratuits (:free)'}
             </button>
 
             {models.length > 0 && (
@@ -524,9 +610,13 @@ const IntelligenceIA: React.FC = () => {
           <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[85vh] flex flex-col space-y-4">
             <div className="flex justify-between items-center pb-2 border-b border-outline-variant/20">
               <div>
-                <h3 className="text-headline-sm font-bold text-on-surface">Photos à examiner</h3>
+                <h3 className="text-headline-sm font-bold text-on-surface">
+                  {isEn ? 'Photos to review' : 'Photos à examiner'}
+                </h3>
                 <p className="text-body-sm text-on-surface-variant">
-                  {lowQualityPhotos.length} photo(s) présentant un flou ou une anomalie d'exposition.
+                  {isEn
+                    ? `${lowQualityPhotos.length} photo(s) showing blur or an exposure issue.`
+                    : `${lowQualityPhotos.length} photo(s) présentant un flou ou une anomalie d'exposition.`}
                 </p>
               </div>
               <button
@@ -553,17 +643,17 @@ const IntelligenceIA: React.FC = () => {
                       <div className="flex gap-2 mt-1">
                         {p.metadata?.analysis?.isBlurry && (
                           <span className="text-[10px] bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-md font-semibold">
-                            Floue (Score : {p.metadata.analysis.qualityScore}/100)
+                            {isEn ? 'Blurry' : 'Floue'} ({isEn ? 'Score:' : 'Score :'} {p.metadata.analysis.qualityScore}/100)
                           </span>
                         )}
                         {p.metadata?.analysis?.isUnderexposed && (
                           <span className="text-[10px] bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded-md font-semibold">
-                            Sous-exposée
+                            {isEn ? 'Underexposed' : 'Sous-exposée'}
                           </span>
                         )}
                         {p.metadata?.analysis?.isOverexposed && (
                           <span className="text-[10px] bg-red-500/10 text-red-600 px-2 py-0.5 rounded-md font-semibold">
-                            Surexposée
+                            {isEn ? 'Overexposed' : 'Surexposée'}
                           </span>
                         )}
                       </div>
@@ -577,7 +667,7 @@ const IntelligenceIA: React.FC = () => {
                     className="flex items-center gap-1 px-3 py-1.5 bg-error/10 hover:bg-error/20 text-error rounded-xl text-label-xs font-bold active:scale-95 transition-all shrink-0"
                   >
                     <span className="material-symbols-outlined text-[16px]">delete</span>
-                    <span>Supprimer</span>
+                    <span>{isEn ? 'Delete' : 'Supprimer'}</span>
                   </button>
                 </div>
               ))}
@@ -588,7 +678,7 @@ const IntelligenceIA: React.FC = () => {
                 onClick={() => setActiveReview(null)}
                 className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
               >
-                Fermer
+                {isEn ? 'Close' : 'Fermer'}
               </button>
             </div>
           </div>
@@ -601,9 +691,13 @@ const IntelligenceIA: React.FC = () => {
           <div className="bg-surface border border-outline-variant/30 rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[85vh] flex flex-col space-y-4">
             <div className="flex justify-between items-center pb-2 border-b border-outline-variant/20">
               <div>
-                <h3 className="text-headline-sm font-bold text-on-surface">Groupes de doublons</h3>
+                <h3 className="text-headline-sm font-bold text-on-surface">
+                  {isEn ? 'Duplicate groups' : 'Groupes de doublons'}
+                </h3>
                 <p className="text-body-sm text-on-surface-variant">
-                  Comparez les fichiers et supprimez manuellement ceux dont vous n'avez pas besoin.
+                  {isEn
+                    ? 'Compare files and manually delete any copies you do not need.'
+                    : "Comparez les fichiers et supprimez manuellement ceux dont vous n'avez pas besoin."}
                 </p>
               </div>
               <button
@@ -619,7 +713,11 @@ const IntelligenceIA: React.FC = () => {
                 <div key={gIdx} className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-3">
                   <div className="flex justify-between items-center text-label-sm font-bold text-primary">
                     <span>
-                      Groupe {gIdx + 1} ({group.type === 'exact' ? 'Doublon exact SHA-256' : 'Images similaires'})
+                      {isEn ? 'Group' : 'Groupe'} {gIdx + 1} (
+                      {group.type === 'exact'
+                        ? isEn ? 'Exact SHA-256 duplicate' : 'Doublon exact SHA-256'
+                        : isEn ? 'Similar images' : 'Images similaires'}
+                      )
                     </span>
                     <span className="text-on-surface-variant font-normal text-label-xs">
                       {group.photos.length} photos
@@ -635,7 +733,7 @@ const IntelligenceIA: React.FC = () => {
                           <p className="text-on-surface-variant">{p.date}</p>
                           {p.metadata?.fileSize && (
                             <p className="text-on-surface-variant">
-                              {(p.metadata.fileSize / 1024).toFixed(0)} Ko
+                              {(p.metadata.fileSize / 1024).toFixed(0)} {isEn ? 'KB' : 'Ko'}
                             </p>
                           )}
                         </div>
@@ -645,7 +743,7 @@ const IntelligenceIA: React.FC = () => {
                           }}
                           className="w-full py-1.5 bg-error/10 hover:bg-error/20 text-error rounded-lg text-[11px] font-bold transition-colors"
                         >
-                          Supprimer cet exemplaire
+                          {isEn ? 'Delete this copy' : 'Supprimer cet exemplaire'}
                         </button>
                       </div>
                     ))}
@@ -659,7 +757,7 @@ const IntelligenceIA: React.FC = () => {
                 onClick={() => setActiveReview(null)}
                 className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
               >
-                Fermer
+                {isEn ? 'Close' : 'Fermer'}
               </button>
             </div>
           </div>

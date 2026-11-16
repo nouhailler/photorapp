@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { Photo } from '../types/types';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
+import { useLanguage } from '../context/useLanguage';
 
 interface PhotoGridProps {
   photos: Photo[];
@@ -21,6 +22,7 @@ export const PhotoItem: React.FC<{
 }> = React.memo(({ photo, onClick, isFeatured, isSelectionMode, isSelected, onToggleSelection }) => {
   // CRITICAL: Request lightweight thumbnail (250px) instead of 20MB master raw image!
   const url = usePhotoUrl(photo, true);
+  const { isEn } = useLanguage();
 
   const handleClick = (e: React.MouseEvent) => {
     if (isSelectionMode && onToggleSelection) {
@@ -60,7 +62,7 @@ export const PhotoItem: React.FC<{
       {/* Quality Warning badge if blurry or underexposed */}
       {photo.metadata?.analysis?.isBlurry && !isSelectionMode && (
         <div
-          title="Photo potentiellement floue"
+          title={isEn ? 'Potentially blurry photo' : 'Photo potentiellement floue'}
           className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-amber-500/80 backdrop-blur-md text-[10px] font-bold text-white flex items-center gap-0.5"
         >
           <span className="material-symbols-outlined text-[11px]">blur_on</span>

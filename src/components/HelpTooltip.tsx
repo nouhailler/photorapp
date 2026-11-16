@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useHelp } from '../context/useHelp';
+import { useLanguage } from '../context/useLanguage';
 
 interface HelpTooltipProps {
   text: string;
@@ -15,6 +16,8 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = ({
   className = '',
 }) => {
   const { isHelpModeActive } = useHelp();
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -54,8 +57,8 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = ({
           setIsVisible((prev) => !prev);
         }}
         className="w-4 h-4 rounded-full bg-primary/15 hover:bg-primary/30 text-primary flex items-center justify-center transition-all cursor-pointer select-none active:scale-90"
-        title="Cliquez pour afficher l'aide pour débutant"
-        aria-label="Aide contextuelle"
+        title={isEn ? 'Click to show beginner help' : "Cliquez pour afficher l'aide pour débutant"}
+        aria-label={isEn ? 'Contextual help' : 'Aide contextuelle'}
       >
         <span className="text-[10px] font-bold leading-none">?</span>
       </button>

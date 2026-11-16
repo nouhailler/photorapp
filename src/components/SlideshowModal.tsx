@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Photo } from '../types/types';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
+import { useLanguage } from '../context/useLanguage';
 
 interface SlideshowModalProps {
   photos: Photo[];
@@ -53,6 +54,7 @@ export const SlideshowModal: React.FC<SlideshowModalProps> = ({
   const [isPlaying, setIsPlaying] = useState(true);
   const [intervalMs, setIntervalMs] = useState(3500);
   const [isShuffle, setIsShuffle] = useState(false);
+  const { isEn } = useLanguage();
 
   if (initialIndex !== prevInitialIndex) {
     setPrevInitialIndex(initialIndex);
@@ -112,7 +114,7 @@ export const SlideshowModal: React.FC<SlideshowModalProps> = ({
             slideshow
           </span>
           <span className="text-label-md font-bold">
-            Diaporama ({currentIndex + 1} / {photos.length})
+            {isEn ? 'Slideshow' : 'Diaporama'} ({currentIndex + 1} / {photos.length})
           </span>
         </div>
 
@@ -123,9 +125,9 @@ export const SlideshowModal: React.FC<SlideshowModalProps> = ({
             onChange={(e) => setIntervalMs(parseInt(e.target.value, 10))}
             className="px-3 py-1.5 bg-white/10 text-white rounded-xl text-label-sm border border-white/20 outline-none"
           >
-            <option value={2000} className="bg-neutral-900">2s par photo</option>
-            <option value={3500} className="bg-neutral-900">3.5s par photo</option>
-            <option value={5000} className="bg-neutral-900">5s par photo</option>
+            <option value={2000} className="bg-neutral-900">{isEn ? '2s per photo' : '2s par photo'}</option>
+            <option value={3500} className="bg-neutral-900">{isEn ? '3.5s per photo' : '3.5s par photo'}</option>
+            <option value={5000} className="bg-neutral-900">{isEn ? '5s per photo' : '5s par photo'}</option>
           </select>
 
           {/* Shuffle toggle */}
@@ -134,7 +136,7 @@ export const SlideshowModal: React.FC<SlideshowModalProps> = ({
             className={`p-2 rounded-full transition-all ${
               isShuffle ? 'bg-primary text-on-primary' : 'bg-white/10 text-white hover:bg-white/20'
             }`}
-            title="Lecture aléatoire"
+            title={isEn ? 'Shuffle' : 'Lecture aléatoire'}
           >
             <span className="material-symbols-outlined text-[20px]">shuffle</span>
           </button>

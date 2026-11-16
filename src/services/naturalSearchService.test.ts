@@ -62,4 +62,19 @@ describe('naturalSearchService & smartSearchPhotos', () => {
     const favSearch = smartSearchPhotos(photos, 'Mes photos favorites');
     expect(favSearch.results.map((p) => p.id)).toEqual(['2']);
   });
+
+  it('parses English natural language queries and matches semantic tags', () => {
+    const winterQuery = parseNaturalLanguageQuery('Mountains in winter 2024');
+    expect(winterQuery.extractedFilters.year).toBe(2024);
+    expect(winterQuery.inferredSeason).toBe('hiver');
+    expect(winterQuery.semanticTags).toContain('mountain');
+    expect(winterQuery.semanticTags).toContain('snow');
+
+    const beachGps = parseNaturalLanguageQuery('Beach photos with GPS');
+    expect(beachGps.extractedFilters.hasGps).toBe(true);
+    expect(beachGps.semanticTags).toContain('beach');
+
+    const blurryQuery = parseNaturalLanguageQuery('Blurry photos to delete');
+    expect(blurryQuery.extractedFilters.isBlurry).toBe(true);
+  });
 });

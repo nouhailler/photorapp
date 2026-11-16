@@ -1,5 +1,6 @@
 import React from 'react';
 import type { RestoreSimulationResult } from '../services/exportService';
+import { useLanguage } from '../context/useLanguage';
 
 interface RestoreSimulationModalProps {
   simulation: RestoreSimulationResult | null;
@@ -16,6 +17,9 @@ export const RestoreSimulationModal: React.FC<RestoreSimulationModalProps> = ({
   onCancel,
   isRestoring,
 }) => {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
+
   if (!simulation) return null;
 
   return (
@@ -36,7 +40,7 @@ export const RestoreSimulationModal: React.FC<RestoreSimulationModalProps> = ({
           </div>
           <div>
             <h3 className="text-headline-sm font-bold text-on-surface">
-              Prévisualisation de la Restauration
+              {isEn ? 'Restore Preview' : 'Prévisualisation de la Restauration'}
             </h3>
             <p className="text-[12px] text-on-surface-variant truncate max-w-xs">{fileName}</p>
           </div>
@@ -49,34 +53,38 @@ export const RestoreSimulationModal: React.FC<RestoreSimulationModalProps> = ({
               <span className="block text-headline-sm font-bold text-primary">
                 {simulation.totalPhotosInArchive}
               </span>
-              <span className="text-[11px] text-on-surface-variant">Photos dans l'archive</span>
+              <span className="text-[11px] text-on-surface-variant">
+                {isEn ? 'Photos in archive' : "Photos dans l'archive"}
+              </span>
             </div>
             <div className="p-3 bg-surface rounded-xl border border-outline-variant/20">
               <span className="block text-headline-sm font-bold text-on-surface">
                 {simulation.totalAlbumsInArchive}
               </span>
-              <span className="text-[11px] text-on-surface-variant">Albums inclus</span>
+              <span className="text-[11px] text-on-surface-variant">
+                {isEn ? 'Albums included' : 'Albums inclus'}
+              </span>
             </div>
           </div>
 
           <div className="space-y-1.5 text-body-sm text-on-surface-variant pt-1 text-[13px]">
             <div className="flex justify-between">
-              <span>Nouvelles photos à ajouter :</span>
+              <span>{isEn ? 'New photos to add:' : 'Nouvelles photos à ajouter :'}</span>
               <strong className="text-emerald-600 font-bold">{simulation.newPhotosCount}</strong>
             </div>
             <div className="flex justify-between">
-              <span>Photos déjà présentes (préservées) :</span>
+              <span>{isEn ? 'Already present (preserved):' : 'Photos déjà présentes (préservées) :'}</span>
               <strong className="text-on-surface font-semibold">{simulation.alreadyPresentCount}</strong>
             </div>
             <div className="flex justify-between">
-              <span>Originaux stockés localement :</span>
+              <span>{isEn ? 'Locally stored originals:' : 'Originaux stockés localement :'}</span>
               <strong className="text-on-surface font-semibold">{simulation.localFilesCount}</strong>
             </div>
             {simulation.archiveDate && (
               <div className="flex justify-between">
-                <span>Date de la sauvegarde :</span>
+                <span>{isEn ? 'Backup date:' : 'Date de la sauvegarde :'}</span>
                 <span className="text-on-surface font-medium">
-                  {new Date(simulation.archiveDate).toLocaleDateString('fr-FR', {
+                  {new Date(simulation.archiveDate).toLocaleDateString(isEn ? 'en-US' : 'fr-FR', {
                     day: 'numeric',
                     month: 'short',
                     year: 'numeric',
@@ -91,7 +99,7 @@ export const RestoreSimulationModal: React.FC<RestoreSimulationModalProps> = ({
             <div className="p-2.5 bg-amber-500/10 rounded-xl border border-amber-500/20 text-[11px] text-amber-700 space-y-1">
               <p className="font-bold flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">info</span>
-                Avertissements ({simulation.warnings.length})
+                {isEn ? `Warnings (${simulation.warnings.length})` : `Avertissements (${simulation.warnings.length})`}
               </p>
               {simulation.warnings.slice(0, 3).map((w, idx) => (
                 <p key={idx}>• {w}</p>
@@ -103,7 +111,7 @@ export const RestoreSimulationModal: React.FC<RestoreSimulationModalProps> = ({
             <div className="p-2.5 bg-error/10 rounded-xl border border-error/20 text-[11px] text-error space-y-1">
               <p className="font-bold flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">error</span>
-                Anomalies détectées ({simulation.errors.length})
+                {isEn ? `Issues detected (${simulation.errors.length})` : `Anomalies détectées (${simulation.errors.length})`}
               </p>
               {simulation.errors.slice(0, 3).map((err, idx) => (
                 <p key={idx}>• {err}</p>
@@ -119,7 +127,7 @@ export const RestoreSimulationModal: React.FC<RestoreSimulationModalProps> = ({
             disabled={isRestoring}
             className="px-5 py-2.5 rounded-xl border border-outline-variant/40 text-on-surface font-semibold text-label-md hover:bg-surface-variant/40 transition-colors"
           >
-            Annuler
+            {isEn ? 'Cancel' : 'Annuler'}
           </button>
           <button
             onClick={onConfirm}
@@ -129,12 +137,12 @@ export const RestoreSimulationModal: React.FC<RestoreSimulationModalProps> = ({
             {isRestoring ? (
               <>
                 <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
-                <span>Restauration en cours...</span>
+                <span>{isEn ? 'Restoring...' : 'Restauration en cours...'}</span>
               </>
             ) : (
               <>
                 <span className="material-symbols-outlined text-[18px]">download_done</span>
-                <span>Confirmer et Restaurer</span>
+                <span>{isEn ? 'Confirm & Restore' : 'Confirmer et Restaurer'}</span>
               </>
             )}
           </button>

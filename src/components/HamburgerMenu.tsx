@@ -1,7 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useHelp } from '../context/useHelp';
-import { APP_VERSION, APP_RELEASE_DATE } from '../services/updateService';
+import { useLanguage } from '../context/useLanguage';
+import { APP_VERSION, getAppReleaseDate } from '../services/updateService';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface HamburgerMenuProps {
@@ -31,132 +32,258 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   onOpenActivityCenter,
 }) => {
   const { isHelpModeActive, toggleHelpMode, openLegalModal } = useHelp();
+  const { lang, setLang } = useLanguage();
+  const isEn = lang === 'en';
 
   if (!isOpen) return null;
 
-  const categories: MenuCategory[] = [
-    {
-      title: 'Photothèque & Souvenirs',
-      icon: 'photo_library',
-      items: [
+  const categories: MenuCategory[] = isEn
+    ? [
         {
-          label: 'Galerie Principale',
-          path: '/gallery',
-          icon: 'grid_view',
-          description: 'Mur chronologique de tous vos clichés',
+          title: 'Photo Library & Memories',
+          icon: 'photo_library',
+          items: [
+            {
+              label: 'Main Gallery',
+              path: '/gallery',
+              icon: 'grid_view',
+              description: 'Chronological timeline of all your photos',
+            },
+            {
+              label: 'Albums & Collections',
+              path: '/albums',
+              icon: 'collections_bookmark',
+              description: 'Manual and dynamic smart albums',
+            },
+            {
+              label: 'Advanced Search & Filters',
+              path: '/search',
+              icon: 'manage_search',
+              description: 'Search by keywords, month, tags, and GPS',
+            },
+          ],
         },
         {
-          label: 'Albums & Collections',
-          path: '/albums',
-          icon: 'collections_bookmark',
-          description: 'Albums manuels et albums intelligents',
+          title: 'Smart Tools & Quality',
+          icon: 'auto_awesome',
+          items: [
+            {
+              label: 'Intelligence & Cleanup',
+              path: '/ia',
+              icon: 'psychology',
+              description: 'Local pixel, blur, and exposure analysis',
+            },
+            {
+              label: 'Duplicates & Similarity',
+              path: '/ia',
+              icon: 'content_copy',
+              description: 'Cryptographic SHA-256 and perceptual dHash',
+            },
+            {
+              label: 'Real Geographic Map',
+              path: '/ia',
+              icon: 'explore',
+              description: 'Leaflet GPS view of your travels',
+            },
+          ],
         },
         {
-          label: 'Recherche Avancée & Filtres',
-          path: '/search',
-          icon: 'manage_search',
-          description: 'Recherche par mots-clés, mois, tags et GPS',
-        },
-      ],
-    },
-    {
-      title: 'Outils Intelligents & Qualité',
-      icon: 'auto_awesome',
-      items: [
-        {
-          label: 'Intelligence & Nettoyage',
-          path: '/ia',
-          icon: 'psychology',
-          description: 'Analyse locale des pixels, flou et exposition',
-        },
-        {
-          label: 'Doublons & Similitudes',
-          path: '/ia',
-          icon: 'content_copy',
-          description: 'Hachage cryptographique SHA-256 et dHash',
-        },
-        {
-          label: 'Carte Géographique Réelle',
-          path: '/ia',
-          icon: 'explore',
-          description: 'Visualisation GPS Leaflet de vos voyages',
-        },
-      ],
-    },
-    {
-      title: 'Gestion des Données',
-      icon: 'folder_zip',
-      items: [
-        {
-          label: 'Sauvegarde & Restauration',
-          path: '/sharing',
-          icon: 'archive',
-          description: 'Archives intégrales .gpro.zip et export catalogue',
+          title: 'Data Management',
+          icon: 'folder_zip',
+          items: [
+            {
+              label: 'Backup & Restore',
+              path: '/sharing',
+              icon: 'archive',
+              description: 'Full .gpro.zip archives and JSON catalog export',
+            },
+            {
+              label: 'Import Photos',
+              action: () => {
+                onClose();
+                onImportClick?.();
+              },
+              icon: 'upload_file',
+              description: 'Select images from your device',
+              badge: 'New',
+            },
+            {
+              label: 'Local Storage Health',
+              path: '/sharing',
+              icon: 'storage',
+              description: 'IndexedDB diagnostics and orphan cleanup',
+            },
+          ],
         },
         {
-          label: 'Importer des photos',
-          action: () => {
-            onClose();
-            onImportClick?.();
-          },
-          icon: 'upload_file',
-          description: 'Sélectionner des images depuis votre appareil',
-          badge: 'Nouveau',
+          title: 'System & Preferences',
+          icon: 'settings',
+          items: [
+            {
+              label: 'System Settings & Updates',
+              path: '/settings',
+              icon: 'system_update',
+              description: 'Version info, 20k benchmark, and auto-update',
+            },
+            {
+              label: 'Activity & Tasks Center',
+              action: () => {
+                onClose();
+                onOpenActivityCenter?.();
+              },
+              icon: 'pending_actions',
+              description: 'Live progress and cancellation of long operations',
+            },
+            {
+              label: 'Novice Guide & Tooltips',
+              action: () => {
+                toggleHelpMode();
+              },
+              icon: isHelpModeActive ? 'help' : 'help_outline',
+              description: isHelpModeActive ? 'Enabled (Tooltips visible)' : 'Disabled (Hidden)',
+              badge: isHelpModeActive ? 'Active' : 'Off',
+            },
+            {
+              label: 'Legal Notice & Liability',
+              action: () => {
+                onClose();
+                openLegalModal();
+              },
+              icon: 'gavel',
+              description: 'Data liability disclaimer',
+            },
+            {
+              label: 'Public Showcase Page',
+              path: '/en',
+              icon: 'public',
+              description: 'Return to Gallery Pro product showcase',
+            },
+          ],
+        },
+      ]
+    : [
+        {
+          title: 'Photothèque & Souvenirs',
+          icon: 'photo_library',
+          items: [
+            {
+              label: 'Galerie Principale',
+              path: '/gallery',
+              icon: 'grid_view',
+              description: 'Mur chronologique de tous vos clichés',
+            },
+            {
+              label: 'Albums & Collections',
+              path: '/albums',
+              icon: 'collections_bookmark',
+              description: 'Albums manuels et albums intelligents',
+            },
+            {
+              label: 'Recherche Avancée & Filtres',
+              path: '/search',
+              icon: 'manage_search',
+              description: 'Recherche par mots-clés, mois, tags et GPS',
+            },
+          ],
         },
         {
-          label: 'Santé du Stockage Local',
-          path: '/sharing',
-          icon: 'storage',
-          description: 'Diagnostic IndexedDB et nettoyage des orphelins',
-        },
-      ],
-    },
-    {
-      title: 'Système & Préférences',
-      icon: 'settings',
-      items: [
-        {
-          label: 'Paramètres Système & Mises à Jour',
-          path: '/settings',
-          icon: 'system_update',
-          description: 'Versions, benchmark 20k photos et auto-update',
-        },
-        {
-          label: "Centre d'Activité & Tâches",
-          action: () => {
-            onClose();
-            onOpenActivityCenter?.();
-          },
-          icon: 'pending_actions',
-          description: 'Suivi en direct et annulation des opérations longues',
+          title: 'Outils Intelligents & Qualité',
+          icon: 'auto_awesome',
+          items: [
+            {
+              label: 'Intelligence & Nettoyage',
+              path: '/ia',
+              icon: 'psychology',
+              description: 'Analyse locale des pixels, flou et exposition',
+            },
+            {
+              label: 'Doublons & Similitudes',
+              path: '/ia',
+              icon: 'content_copy',
+              description: 'Hachage cryptographique SHA-256 et dHash',
+            },
+            {
+              label: 'Carte Géographique Réelle',
+              path: '/ia',
+              icon: 'explore',
+              description: 'Visualisation GPS Leaflet de vos voyages',
+            },
+          ],
         },
         {
-          label: 'Guide & Infobulles pour Novices',
-          action: () => {
-            toggleHelpMode();
-          },
-          icon: isHelpModeActive ? 'help' : 'help_outline',
-          description: isHelpModeActive ? 'Activé (Infobulles visibles)' : 'Désactivé (Masqué)',
-          badge: isHelpModeActive ? 'Actif' : 'Off',
+          title: 'Gestion des Données',
+          icon: 'folder_zip',
+          items: [
+            {
+              label: 'Sauvegarde & Restauration',
+              path: '/sharing',
+              icon: 'archive',
+              description: 'Archives intégrales .gpro.zip et export catalogue',
+            },
+            {
+              label: 'Importer des photos',
+              action: () => {
+                onClose();
+                onImportClick?.();
+              },
+              icon: 'upload_file',
+              description: 'Sélectionner des images depuis votre appareil',
+              badge: 'Nouveau',
+            },
+            {
+              label: 'Santé du Stockage Local',
+              path: '/sharing',
+              icon: 'storage',
+              description: 'Diagnostic IndexedDB et nettoyage des orphelins',
+            },
+          ],
         },
         {
-          label: 'Mentions Légales & Responsabilité',
-          action: () => {
-            onClose();
-            openLegalModal();
-          },
-          icon: 'gavel',
-          description: 'Décharge de responsabilité sur les données',
+          title: 'Système & Préférences',
+          icon: 'settings',
+          items: [
+            {
+              label: 'Paramètres Système & Mises à Jour',
+              path: '/settings',
+              icon: 'system_update',
+              description: 'Versions, benchmark 20k photos et auto-update',
+            },
+            {
+              label: "Centre d'Activité & Tâches",
+              action: () => {
+                onClose();
+                onOpenActivityCenter?.();
+              },
+              icon: 'pending_actions',
+              description: 'Suivi en direct et annulation des opérations longues',
+            },
+            {
+              label: 'Guide & Infobulles pour Novices',
+              action: () => {
+                toggleHelpMode();
+              },
+              icon: isHelpModeActive ? 'help' : 'help_outline',
+              description: isHelpModeActive ? 'Activé (Infobulles visibles)' : 'Désactivé (Masqué)',
+              badge: isHelpModeActive ? 'Actif' : 'Off',
+            },
+            {
+              label: 'Mentions Légales & Responsabilité',
+              action: () => {
+                onClose();
+                openLegalModal();
+              },
+              icon: 'gavel',
+              description: 'Décharge de responsabilité sur les données',
+            },
+            {
+              label: 'Page de présentation publique',
+              path: '/',
+              icon: 'public',
+              description: 'Revenir à la vitrine produit Gallery Pro',
+            },
+          ],
         },
-        {
-          label: 'Page de présentation publique',
-          path: '/',
-          icon: 'public',
-          description: 'Revenir à la vitrine produit Gallery Pro',
-        },
-      ],
-    },
-  ];
+      ];
 
   return (
     <div className="fixed inset-0 z-[120] flex animate-in fade-in duration-200">
@@ -184,13 +311,42 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/40 active:scale-95 transition-all"
-            title="Fermer le menu"
-          >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <div
+              role="group"
+              aria-label={isEn ? 'Choose language' : 'Choisir la langue'}
+              className="inline-flex items-center rounded-lg border border-outline-variant/40 bg-surface p-0.5 text-[10px] font-bold"
+            >
+              <button
+                type="button"
+                onClick={() => setLang('fr')}
+                aria-pressed={lang === 'fr'}
+                className={`px-1.5 py-0.5 rounded transition-colors ${
+                  lang === 'fr' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'
+                }`}
+              >
+                FR
+              </button>
+              <button
+                type="button"
+                onClick={() => setLang('en')}
+                aria-pressed={lang === 'en'}
+                className={`px-1.5 py-0.5 rounded transition-colors ${
+                  lang === 'en' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'
+                }`}
+              >
+                EN
+              </button>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/40 active:scale-95 transition-all"
+              title={isEn ? 'Close menu' : 'Fermer le menu'}
+            >
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          </div>
         </div>
 
         {/* PWA Install Promo in Drawer */}
@@ -214,7 +370,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
                       <NavLink
                         key={itemIdx}
                         to={item.path}
-                        end={item.path === '/'}
+                        end={item.path === '/' || item.path === '/en'}
                         onClick={onClose}
                         className={({ isActive }) =>
                           `flex items-start gap-3 p-2.5 rounded-2xl transition-all ${
@@ -273,12 +429,12 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         {/* Drawer Footer with version and release date */}
         <div className="p-4 border-t border-outline-variant/20 bg-surface-container-low/50 text-[11px] text-on-surface-variant space-y-1">
           <div className="flex justify-between items-center">
-            <span>Version de l'application</span>
+            <span>{isEn ? 'Application version' : "Version de l'application"}</span>
             <span className="font-bold text-on-surface">v{APP_VERSION}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span>Date de sortie</span>
-            <span className="font-semibold">{APP_RELEASE_DATE}</span>
+            <span>{isEn ? 'Release date' : 'Date de sortie'}</span>
+            <span className="font-semibold">{getAppReleaseDate(lang)}</span>
           </div>
         </div>
       </aside>

@@ -3,6 +3,8 @@
  * Prise en charge des vérifications manuelles, forcées et automatiques en arrière-plan.
  */
 
+import type { AppLang } from '../context/languageContextDef';
+
 export interface UpdateStatus {
   version: string;
   releaseDate: string;
@@ -11,10 +13,37 @@ export interface UpdateStatus {
   isUpdateAvailable: boolean;
   autoUpdateEnabled: boolean;
   statusMessage: string;
+  statusKey?: 'up_to_date' | 'checking_manual' | 'checking_auto' | 'update_found' | 'up_to_date_version' | 'offline' | 'forcing';
 }
 
 export const APP_VERSION = '2.5.0';
 export const APP_RELEASE_DATE = '13 Novembre 2026';
+export const APP_RELEASE_DATE_EN = 'November 13, 2026';
+
+export function getAppReleaseDate(lang: AppLang = 'fr'): string {
+  return lang === 'en' ? APP_RELEASE_DATE_EN : APP_RELEASE_DATE;
+}
+
+export function getLocalizedUpdateMessage(status: UpdateStatus, lang: AppLang = 'fr'): string {
+  if (lang !== 'en') return status.statusMessage;
+  switch (status.statusKey) {
+    case 'checking_manual':
+      return 'Checking server for updates...';
+    case 'checking_auto':
+      return 'Running background update check...';
+    case 'update_found':
+      return 'A new version is available!';
+    case 'up_to_date_version':
+      return `Your photo library is up to date (v${APP_VERSION}).`;
+    case 'offline':
+      return 'Unable to check for updates (offline mode active).';
+    case 'forcing':
+      return 'Forcing update...';
+    case 'up_to_date':
+    default:
+      return 'Application is up to date with the latest version.';
+  }
+}
 
 const STORAGE_KEYS = {
   AUTO_UPDATE: 'gallery_pro_auto_update_enabled',
@@ -34,6 +63,7 @@ const currentStatus: UpdateStatus = {
   isUpdateAvailable: false,
   autoUpdateEnabled: localStorage.getItem(STORAGE_KEYS.AUTO_UPDATE) !== 'false', // défaut: true
   statusMessage: 'Application à jour avec la dernière version.',
+  statusKey: 'up_to_date',
 };
 
 function notifyListeners() {
@@ -41,7 +71,7 @@ function notifyListeners() {
     try {
       listener({ ...currentStatus });
     } catch (e) {
-      console.warn('Erreur écouteur updateService:', e);
+      console.warn('UpdateService listener error:', e);
     }
   });
 }
@@ -85,11 +115,20 @@ function recordCheckTime() {
 /**
  * Vérifie la disponibilité d'une nouvelle version via le Service Worker et le réseau.
  */
-export async function checkForUpdates(manual = false): Promise<{ hasUpdate: boolean; message: string }> {
+export async function checkForUpdates(
+  manual = false,
+  lang: AppLang = 'fr'
+): Promise<{ hasUpdate: boolean; message: string }> {
+  const isEn = lang === 'en';
   currentStatus.isChecking = true;
+  currentStatus.statusKey = manual ? 'checking_manual' : 'checking_auto';
   currentStatus.statusMessage = manual
-    ? 'Recherche de mises à jour sur le serveur...'
-    : 'Vérification automatique en arrière-plan...';
+    ? isEn
+      ? 'Checking server for updates...'
+      : 'Recherche de mises à jour sur le serveur...'
+    : isEn
+      ? 'Running background update check...'
+      : 'Vérification automatique en arrière-plan...';
   notifyListeners();
 
   recordCheckTime();
@@ -108,7 +147,7 @@ export async function checkForUpdates(manual = false): Promise<{ hasUpdate: bool
           }
         }
       } catch (swErr) {
-        console.warn('[UpdateService] Vérification ServiceWorker:', swErr);
+        console.warn('[UpdateService] ServiceWorker check:', swErr);
       }
     }
 
@@ -127,35 +166,52 @@ export async function checkForUpdates(manual = false): Promise<{ hasUpdate: bool
         localStorage.setItem('gallery_pro_app_etag', etag);
       }
     } catch {
-      // Mode hors-ligne toléré
+      // Offline mode tolerated
     }
 
     currentStatus.isChecking = false;
     currentStatus.isUpdateAvailable = updateFound;
 
     if (updateFound) {
-      currentStatus.statusMessage = 'Une nouvelle version est disponible !';
+      currentStatus.statusKey = 'update_found';
+      currentStatus.statusMessage = isEn
+        ? 'A new version is available!'
+        : 'Une nouvelle version est disponible !';
       notifyListeners();
 
-      // Si auto-update est activé, appliquer automatiquement en arrière-plan
       if (currentStatus.autoUpdateEnabled) {
-        console.log('[UpdateService] Auto-update activé : application en arrière-plan...');
+        console.log('[UpdateService] Auto-update active: applying in background...');
         setTimeout(() => {
-          forceAppUpdate();
+          forceAppUpdate(lang);
         }, 1200);
       }
 
-      return { hasUpdate: true, message: 'Nouvelle version prête à être installée.' };
+      return {
+        hasUpdate: true,
+        message: isEn ? 'New version ready to install.' : 'Nouvelle version prête à être installée.',
+      };
     }
 
-    currentStatus.statusMessage = 'Votre photothèque est parfaitement à jour (v' + APP_VERSION + ').';
+    currentStatus.statusKey = 'up_to_date_version';
+    currentStatus.statusMessage = isEn
+      ? `Your photo library is up to date (v${APP_VERSION}).`
+      : 'Votre photothèque est parfaitement à jour (v' + APP_VERSION + ').';
     notifyListeners();
-    return { hasUpdate: false, message: 'Aucune nouvelle version disponible.' };
+    return {
+      hasUpdate: false,
+      message: isEn ? 'No new version available.' : 'Aucune nouvelle version disponible.',
+    };
   } catch (error) {
     currentStatus.isChecking = false;
-    currentStatus.statusMessage = 'Vérification impossible (mode hors-ligne actif).';
+    currentStatus.statusKey = 'offline';
+    currentStatus.statusMessage = isEn
+      ? 'Unable to check for updates (offline mode active).'
+      : 'Vérification impossible (mode hors-ligne actif).';
     notifyListeners();
-    return { hasUpdate: false, message: error instanceof Error ? error.message : 'Erreur réseau' };
+    return {
+      hasUpdate: false,
+      message: error instanceof Error ? error.message : isEn ? 'Network error' : 'Erreur réseau',
+    };
   }
 }
 
@@ -163,19 +219,18 @@ export async function checkForUpdates(manual = false): Promise<{ hasUpdate: bool
  * Force la mise à jour immédiate de l'application :
  * Purge les caches du Service Worker et recharge la dernière version sans toucher à IndexedDB.
  */
-export async function forceAppUpdate(): Promise<void> {
+export async function forceAppUpdate(lang: AppLang = 'fr'): Promise<void> {
   currentStatus.isChecking = true;
-  currentStatus.statusMessage = 'Mise à jour forcée en cours...';
+  currentStatus.statusKey = 'forcing';
+  currentStatus.statusMessage = lang === 'en' ? 'Forcing update...' : 'Mise à jour forcée en cours...';
   notifyListeners();
 
   try {
-    // 1. Purge des caches Web Cache API
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map((name) => caches.delete(name)));
     }
 
-    // 2. Notifier le Service Worker d'activer la nouvelle version immédiatement
     if ('serviceWorker' in navigator) {
       const registration = await navigator.serviceWorker.getRegistration();
       if (registration?.waiting) {
@@ -186,9 +241,8 @@ export async function forceAppUpdate(): Promise<void> {
       }
     }
   } catch (err) {
-    console.warn('[UpdateService] Erreur lors de la purge de cache:', err);
+    console.warn('[UpdateService] Cache purge error:', err);
   } finally {
-    // 3. Rechargement propre de la page
     window.location.reload();
   }
 }

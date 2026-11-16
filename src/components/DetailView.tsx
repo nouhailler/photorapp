@@ -3,6 +3,7 @@ import type { Photo } from '../types/types';
 import { usePhotos } from '../context/usePhotos';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { exportSinglePhoto } from '../services/exportService';
+import { useLanguage } from '../context/useLanguage';
 
 interface DetailViewProps {
   photo: Photo;
@@ -21,6 +22,7 @@ const DetailView: React.FC<DetailViewProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState(false);
   const { deletePhoto, photos } = usePhotos();
+  const { isEn } = useLanguage();
 
   // Find updated photo state from context
   const photo = photos.find((p) => p.id === initialPhoto.id) || initialPhoto;
@@ -65,8 +67,8 @@ const DetailView: React.FC<DetailViewProps> = ({
     if (navigator.share) {
       try {
         const shareData: ShareData = {
-          title: photo.alt || 'Photo Gallery Pro',
-          text: 'Découvrez cette photo sur Gallery Pro !',
+          title: photo.alt || 'Gallery Pro Photo',
+          text: isEn ? 'Check out this photo on Gallery Pro!' : 'Découvrez cette photo sur Gallery Pro !',
         };
 
         if (photo.storage === 'local') {
@@ -108,7 +110,11 @@ const DetailView: React.FC<DetailViewProps> = ({
         <div className="flex gap-2">
           <button
             onClick={onToggleFavorite}
-            title={photo.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            title={
+              photo.isFavorite
+                ? isEn ? 'Remove from favorites' : 'Retirer des favoris'
+                : isEn ? 'Add to favorites' : 'Ajouter aux favoris'
+            }
             className="p-2.5 text-white bg-black/30 rounded-full backdrop-blur-md active:scale-90 transition-transform hover:bg-black/50"
           >
             <span
@@ -121,21 +127,21 @@ const DetailView: React.FC<DetailViewProps> = ({
           </button>
           <button
             onClick={() => handleExport(true)}
-            title="Télécharger la photo"
+            title={isEn ? 'Download photo' : 'Télécharger la photo'}
             className="p-2.5 text-white bg-black/30 rounded-full backdrop-blur-md active:scale-90 transition-transform hover:bg-black/50"
           >
             <span className="material-symbols-outlined text-[22px]">download</span>
           </button>
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            title="Supprimer la photo"
+            title={isEn ? 'Delete photo' : 'Supprimer la photo'}
             className="p-2.5 text-white bg-black/30 rounded-full backdrop-blur-md active:scale-90 transition-transform hover:bg-black/50 hover:text-error"
           >
             <span className="material-symbols-outlined text-[22px]">delete</span>
           </button>
           <button
             onClick={() => setShowInfo(!showInfo)}
-            title="Détails et EXIF"
+            title={isEn ? 'Details & EXIF' : 'Détails et EXIF'}
             className={`p-2.5 rounded-full backdrop-blur-md active:scale-90 transition-transform ${
               showInfo ? 'bg-primary text-on-primary' : 'bg-black/30 text-white hover:bg-black/50'
             }`}
@@ -169,7 +175,7 @@ const DetailView: React.FC<DetailViewProps> = ({
           className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary text-on-primary font-bold text-label-md shadow-xl hover:brightness-110 active:scale-95 transition-all"
         >
           <span className="material-symbols-outlined text-[18px]">tune</span>
-          <span>Ajuster</span>
+          <span>{isEn ? 'Adjust' : 'Ajuster'}</span>
         </button>
 
         <button
@@ -177,14 +183,14 @@ const DetailView: React.FC<DetailViewProps> = ({
           className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/20 text-white backdrop-blur-md font-bold text-label-md shadow-xl hover:bg-white/30 active:scale-95 transition-all"
         >
           <span className="material-symbols-outlined text-[18px]">share</span>
-          <span>Partager</span>
+          <span>{isEn ? 'Share' : 'Partager'}</span>
         </button>
       </footer>
 
       {/* Toast Notification */}
       {copiedNotification && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 px-4 py-2 bg-primary text-on-primary rounded-full shadow-lg text-label-sm font-semibold animate-in fade-in">
-          Photo exportée avec succès !
+          {isEn ? 'Photo exported successfully!' : 'Photo exportée avec succès !'}
         </div>
       )}
 
@@ -196,7 +202,7 @@ const DetailView: React.FC<DetailViewProps> = ({
       >
         <div className="p-6 h-full overflow-y-auto space-y-6">
           <div className="flex justify-between items-center pb-4 border-b border-outline-variant/20">
-            <h3 className="text-headline-sm font-bold text-on-surface">Informations</h3>
+            <h3 className="text-headline-sm font-bold text-on-surface">{isEn ? 'Information' : 'Informations'}</h3>
             <button
               onClick={() => setShowInfo(false)}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant/50 text-on-surface-variant"
@@ -207,28 +213,28 @@ const DetailView: React.FC<DetailViewProps> = ({
 
           <div>
             <span className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
-              Nom du fichier
+              {isEn ? 'Filename' : 'Nom du fichier'}
             </span>
             <p className="text-body-md font-semibold text-on-surface break-words">{photo.alt || 'Photo'}</p>
           </div>
 
           <div>
             <span className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
-              Date de prise de vue
+              {isEn ? 'Capture Date' : 'Date de prise de vue'}
             </span>
-            <p className="text-body-md text-on-surface">{photo.date || 'Date inconnue'}</p>
+            <p className="text-body-md text-on-surface">{photo.date || (isEn ? 'Unknown date' : 'Date inconnue')}</p>
           </div>
 
           {/* Location details */}
           <div>
             <span className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
-              Localisation GPS
+              {isEn ? 'GPS Location' : 'Localisation GPS'}
             </span>
             {hasGps ? (
               <div className="p-3 bg-surface-container-high rounded-xl space-y-1">
                 <div className="flex items-center gap-1.5 text-primary font-bold text-label-sm">
                   <span className="material-symbols-outlined text-[18px]">pin_drop</span>
-                  <span>{photo.metadata?.location || 'Coordonnées GPS réelles'}</span>
+                  <span>{photo.metadata?.location || (isEn ? 'Real GPS coordinates' : 'Coordonnées GPS réelles')}</span>
                 </div>
                 <p className="text-label-xs text-on-surface-variant font-mono">
                   {photo.metadata!.latitude!.toFixed(5)}, {photo.metadata!.longitude!.toFixed(5)}
@@ -237,7 +243,7 @@ const DetailView: React.FC<DetailViewProps> = ({
             ) : (
               <div className="p-3 bg-surface-container-low rounded-xl text-on-surface-variant text-[11px] flex items-center gap-2">
                 <span className="material-symbols-outlined text-[18px] opacity-60">location_off</span>
-                <span>Aucune coordonnée GPS enregistrée</span>
+                <span>{isEn ? 'No GPS coordinates recorded' : 'Aucune coordonnée GPS enregistrée'}</span>
               </div>
             )}
           </div>
@@ -246,18 +252,18 @@ const DetailView: React.FC<DetailViewProps> = ({
           <div className="grid grid-cols-2 gap-4 pt-2">
             <div>
               <span className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
-                Appareil
+                {isEn ? 'Device' : 'Appareil'}
               </span>
               <p className="text-body-sm font-medium text-on-surface">
-                {photo.metadata?.device || 'Inconnu'}
+                {photo.metadata?.device || (isEn ? 'Unknown' : 'Inconnu')}
               </p>
             </div>
             <div>
               <span className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
-                Résolution
+                {isEn ? 'Resolution' : 'Résolution'}
               </span>
               <p className="text-body-sm font-medium text-on-surface">
-                {photo.metadata?.resolution || 'Inconnue'}
+                {photo.metadata?.resolution || (isEn ? 'Unknown' : 'Inconnue')}
               </p>
             </div>
           </div>
@@ -266,7 +272,7 @@ const DetailView: React.FC<DetailViewProps> = ({
           {photo.metadata?.exif && (
             <div className="pt-4 border-t border-outline-variant/20 space-y-3">
               <span className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
-                Données d'exposition EXIF
+                {isEn ? 'EXIF Exposure Data' : "Données d'exposition EXIF"}
               </span>
               <div className="grid grid-cols-2 gap-3 text-body-xs">
                 {photo.metadata.exif.shutterSpeed && (
@@ -301,23 +307,23 @@ const DetailView: React.FC<DetailViewProps> = ({
           {photo.metadata?.analysis && (
             <div className="pt-4 border-t border-outline-variant/20 space-y-2">
               <span className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
-                Analyse locale
+                {isEn ? 'Local analysis' : 'Analyse locale'}
               </span>
               <div className="p-3 bg-surface-container-high rounded-xl space-y-1 text-label-xs">
                 <div className="flex justify-between">
-                  <span>Score netteté :</span>
+                  <span>{isEn ? 'Sharpness score:' : 'Score netteté :'}</span>
                   <span className="font-bold text-primary">
                     {photo.metadata.analysis.qualityScore}/100
                   </span>
                 </div>
                 {photo.metadata.analysis.isBlurry && (
-                  <p className="text-amber-500 font-semibold">• Potentiellement floue</p>
+                  <p className="text-amber-500 font-semibold">• {isEn ? 'Potentially blurry' : 'Potentiellement floue'}</p>
                 )}
                 {photo.metadata.analysis.isUnderexposed && (
-                  <p className="text-amber-500 font-semibold">• Sous-exposée</p>
+                  <p className="text-amber-500 font-semibold">• {isEn ? 'Underexposed' : 'Sous-exposée'}</p>
                 )}
                 {photo.metadata.analysis.isOverexposed && (
-                  <p className="text-amber-500 font-semibold">• Surexposée</p>
+                  <p className="text-amber-500 font-semibold">• {isEn ? 'Overexposed' : 'Surexposée'}</p>
                 )}
               </div>
             </div>
@@ -333,9 +339,13 @@ const DetailView: React.FC<DetailViewProps> = ({
               <span className="material-symbols-outlined text-[28px]">delete_forever</span>
             </div>
             <div>
-              <h3 className="text-headline-sm font-bold text-on-surface">Supprimer cette photo ?</h3>
+              <h3 className="text-headline-sm font-bold text-on-surface">
+                {isEn ? 'Delete this photo?' : 'Supprimer cette photo ?'}
+              </h3>
               <p className="text-body-sm text-on-surface-variant mt-1">
-                Cette action supprimera définitivement le fichier et ses métadonnées de votre photothèque locale.
+                {isEn
+                  ? 'This action will permanently remove the file and its metadata from your local library.'
+                  : 'Cette action supprimera définitivement le fichier et ses métadonnées de votre photothèque locale.'}
               </p>
             </div>
             <div className="flex justify-end gap-3 pt-2">
@@ -343,13 +353,13 @@ const DetailView: React.FC<DetailViewProps> = ({
                 onClick={() => setShowDeleteConfirm(false)}
                 className="px-5 py-2.5 rounded-xl border border-outline-variant/40 text-on-surface font-semibold text-label-md hover:bg-surface-variant/30"
               >
-                Annuler
+                {isEn ? 'Cancel' : 'Annuler'}
               </button>
               <button
                 onClick={handleDelete}
                 className="px-6 py-2.5 rounded-xl bg-error text-white font-bold text-label-md active:scale-95 shadow-md"
               >
-                Supprimer
+                {isEn ? 'Delete' : 'Supprimer'}
               </button>
             </div>
           </div>

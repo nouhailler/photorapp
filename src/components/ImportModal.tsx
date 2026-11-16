@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ImportProgress, ImportResult } from '../services/importService';
+import { useLanguage } from '../context/useLanguage';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -16,6 +17,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   isProcessing,
   onClose,
 }) => {
+  const { lang } = useLanguage();
+  const isEn = lang === 'en';
+
   if (!isOpen) return null;
 
   const percent = progress && progress.total > 0
@@ -34,10 +38,22 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             </div>
             <div>
               <h3 className="text-headline-sm font-bold text-on-surface">
-                {isProcessing ? 'Importation en cours...' : 'Importation terminée'}
+                {isProcessing
+                  ? isEn
+                    ? 'Importing...'
+                    : 'Importation en cours...'
+                  : isEn
+                    ? 'Import Complete'
+                    : 'Importation terminée'}
               </h3>
               <p className="text-label-sm text-on-surface-variant">
-                {isProcessing ? 'Traitement local & extraction EXIF' : 'Résultat de l\'opération'}
+                {isProcessing
+                  ? isEn
+                    ? 'Local processing & EXIF extraction'
+                    : 'Traitement local & extraction EXIF'
+                  : isEn
+                    ? 'Operation summary'
+                    : "Résultat de l'opération"}
               </p>
             </div>
           </div>
@@ -55,7 +71,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({
         {isProcessing && progress && (
           <div className="space-y-3 pt-2">
             <div className="flex justify-between text-label-sm font-semibold text-on-surface">
-              <span className="truncate max-w-[240px]">{progress.fileName || 'Préparation...'}</span>
+              <span className="truncate max-w-[240px]">
+                {progress.fileName || (isEn ? 'Preparing...' : 'Préparation...')}
+              </span>
               <span>{progress.current} / {progress.total}</span>
             </div>
             {/* Progress bar */}
@@ -66,10 +84,10 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               />
             </div>
             <p className="text-[11px] text-on-surface-variant italic text-center">
-              {progress.phase === 'reading' && 'Lecture du fichier...'}
-              {progress.phase === 'hashing' && 'Calcul de l\'empreinte SHA-256...'}
-              {progress.phase === 'exif' && 'Extraction métadonnées EXIF & GPS...'}
-              {progress.phase === 'saving' && 'Enregistrement dans IndexedDB...'}
+              {progress.phase === 'reading' && (isEn ? 'Reading file...' : 'Lecture du fichier...')}
+              {progress.phase === 'hashing' && (isEn ? 'Computing SHA-256 fingerprint...' : "Calcul de l'empreinte SHA-256...")}
+              {progress.phase === 'exif' && (isEn ? 'Extracting EXIF & GPS metadata...' : 'Extraction métadonnées EXIF & GPS...')}
+              {progress.phase === 'saving' && (isEn ? 'Saving to IndexedDB...' : 'Enregistrement dans IndexedDB...')}
             </p>
           </div>
         )}
@@ -79,18 +97,20 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           <div className="space-y-3 pt-2">
             <div className="p-4 bg-surface-container-low rounded-2xl space-y-2 border border-outline-variant/20">
               <div className="flex items-center justify-between text-body-sm font-medium">
-                <span className="text-on-surface">Photos importées :</span>
+                <span className="text-on-surface">{isEn ? 'Photos imported:' : 'Photos importées :'}</span>
                 <span className="font-bold text-primary">{result.importedPhotos.length}</span>
               </div>
               {result.skippedDuplicates > 0 && (
                 <div className="flex items-center justify-between text-body-sm font-medium">
-                  <span className="text-on-surface-variant">Doublons identiques ignorés :</span>
+                  <span className="text-on-surface-variant">
+                    {isEn ? 'Exact duplicates skipped:' : 'Doublons identiques ignorés :'}
+                  </span>
                   <span className="font-bold text-amber-500">{result.skippedDuplicates}</span>
                 </div>
               )}
               {result.failedFiles.length > 0 && (
                 <div className="flex items-center justify-between text-body-sm font-medium">
-                  <span className="text-error">Fichiers en échec :</span>
+                  <span className="text-error">{isEn ? 'Failed files:' : 'Fichiers en échec :'}</span>
                   <span className="font-bold text-error">{result.failedFiles.length}</span>
                 </div>
               )}
@@ -108,7 +128,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               onClick={onClose}
               className="w-full py-3 bg-primary text-on-primary rounded-2xl font-bold text-label-md active:scale-95 transition-transform"
             >
-              Terminer
+              {isEn ? 'Done' : 'Terminer'}
             </button>
           </div>
         )}

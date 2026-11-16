@@ -1,3 +1,5 @@
+import { APP_LANG_STORAGE_KEY } from '../context/languageContextDef';
+
 export type ActivityType =
   | 'import'
   | 'backup'
@@ -23,6 +25,14 @@ export interface ActivityTask {
 }
 
 type ActivityListener = (tasks: ActivityTask[]) => void;
+
+function isEnglishLang(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.localStorage?.getItem(APP_LANG_STORAGE_KEY) === 'en';
+  } catch {
+    return false;
+  }
+}
 
 class ActivityService {
   private tasks: ActivityTask[] = [];
@@ -54,7 +64,7 @@ class ActivityService {
       title,
       status: 'pending',
       progress: 0,
-      statusMessage: 'En attente...',
+      statusMessage: isEnglishLang() ? 'Pending...' : 'En attente...',
       startedAt: new Date().toISOString(),
       canCancel,
     };
@@ -101,7 +111,9 @@ class ActivityService {
     }
     this.updateTask(id, {
       status: 'canceled',
-      statusMessage: 'Opération interrompue par l’utilisateur.',
+      statusMessage: isEnglishLang()
+        ? 'Operation canceled by user.'
+        : 'Opération interrompue par l’utilisateur.',
     });
   }
 

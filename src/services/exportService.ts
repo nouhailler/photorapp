@@ -9,6 +9,7 @@ import {
   saveThumbnailBlob,
 } from '../utils/db';
 import { generateThumbnailBlob } from './thumbnailService';
+import type { AppLang } from '../context/languageContextDef';
 
 export interface BackupFileEntry {
   fileName: string;
@@ -283,8 +284,10 @@ export async function exportSinglePhoto(
 export async function exportPhotosToZip(
   photos: Photo[],
   zipFilename = 'gallery-pro-export.zip',
-  onProgress?: (percent: number, currentName: string) => void
+  onProgress?: (percent: number, currentName: string) => void,
+  lang: AppLang = 'fr'
 ): Promise<ZipExportResult> {
+  const isEn = lang === 'en';
   const zip = new JSZip();
   const folder = zip.folder('photos') || zip;
   const total = photos.length;
@@ -315,21 +318,34 @@ export async function exportPhotosToZip(
         folder.file(fileName, blob);
         exported++;
       } else {
-        failed.push({ id: photo.id, name: fileName, reason: 'Fichier binaire introuvable' });
+        failed.push({
+          id: photo.id,
+          name: fileName,
+          reason: isEn ? 'Binary file not found' : 'Fichier binaire introuvable',
+        });
       }
     } catch (e) {
-      const reason = e instanceof Error ? e.message : 'Erreur de traitement';
+      const reason = e instanceof Error ? e.message : isEn ? 'Processing error' : 'Erreur de traitement';
       failed.push({ id: photo.id, name: fileName, reason });
     }
   }
 
   if (exported > 0) {
-    onProgress?.(90, 'Génération du fichier ZIP...');
+    onProgress?.(90, isEn ? 'Generating ZIP archive...' : 'Génération du fichier ZIP...');
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     triggerDownload(zipBlob, zipFilename);
   }
 
-  onProgress?.(100, exported === total ? 'Export terminé !' : `Export terminé avec ${failed.length} avertissement(s).`);
+  onProgress?.(
+    100,
+    exported === total
+      ? isEn
+        ? 'Export complete!'
+        : 'Export terminé !'
+      : isEn
+        ? `Export finished with ${failed.length} warning(s).`
+        : `Export terminé avec ${failed.length} avertissement(s).`
+  );
 
   return { total, exported, failed };
 }
@@ -357,8 +373,10 @@ export function exportMetadataJson(photos: Photo[], albums: Album[]): void {
 export async function createFullLibraryBackup(
   photos: Photo[],
   albums: Album[],
-  onProgress?: (percent: number, status: string) => void
+  onProgress?: (percent: number, status: string) => void,
+  lang: AppLang = 'fr'
 ): Promise<BackupResult> {
+  const isEn = lang === 'en';
   const zip = new JSZip();
   const photosFolder = zip.folder('photos') || zip;
   const warnings: string[] = [];
@@ -381,7 +399,7 @@ export async function createFullLibraryBackup(
     const photo = photos[i];
     onProgress?.(
       Math.round(((i + 1) / total) * 80),
-      `Sauvegarde de ${photo.alt || photo.id}...`
+      isEn ? `Backing up ${photo.alt || photo.id}...` : `Sauvegarde de ${photo.alt || photo.id}...`
     );
 
     const isLocal = photo.storage === 'local';
@@ -405,7 +423,11 @@ export async function createFullLibraryBackup(
           };
         } else {
           manifest.missingFilesCount++;
-          warnings.push(`Blob manquant pour la photo locale ${photo.id} (${photo.alt})`);
+          warnings.push(
+            isEn
+              ? `Missing binary blob for local photo ${photo.id} (${photo.alt})`
+              : `Blob manquant pour la photo locale ${photo.id} (${photo.alt})`
+          );
           manifest.files[photo.id] = {
             fileName: archiveFileName,
             mimeType: photo.metadata?.mimeType || 'image/jpeg',
@@ -414,7 +436,11 @@ export async function createFullLibraryBackup(
         }
       } catch (err) {
         manifest.missingFilesCount++;
-        warnings.push(`Échec lecture blob ${photo.id}: ${err instanceof Error ? err.message : 'Erreur'}`);
+        warnings.push(
+          isEn
+            ? `Failed reading blob ${photo.id}: ${err instanceof Error ? err.message : 'Error'}`
+            : `Échec lecture blob ${photo.id}: ${err instanceof Error ? err.message : 'Erreur'}`
+        );
       }
     } else {
       manifest.remoteFilesCount++;
@@ -430,7 +456,7 @@ export async function createFullLibraryBackup(
   zip.file('backup_manifest.json', JSON.stringify(manifest, null, 2));
   zip.file('metadata.json', JSON.stringify({ photos, albums }, null, 2));
 
-  onProgress?.(85, 'Compression de l\'archive de sauvegarde...');
+  onProgress?.(85, isEn ? 'Compressing backup archive...' : "Compression de l'archive de sauvegarde...");
   const content = await zip.generateAsync({
     type: 'blob',
     compression: 'DEFLATE',
@@ -439,7 +465,7 @@ export async function createFullLibraryBackup(
 
   const dateStr = new Date().toISOString().split('T')[0];
   triggerDownload(content, `gallery_pro_backup_${dateStr}.gpro.zip`);
-  onProgress?.(100, 'Sauvegarde téléchargée avec succès.');
+  onProgress?.(100, isEn ? 'Backup downloaded successfully.' : 'Sauvegarde téléchargée avec succès.');
 
   return {
     success: true,
@@ -457,8 +483,10 @@ export async function createFullLibraryBackup(
  * and already existing photos before taking action.
  */
 export async function simulateRestoreBackup(
-  backupFile: File
+  backupFile: File,
+  lang: AppLang = 'fr'
 ): Promise<RestoreSimulationResult> {
+  const isEn = lang === 'en';
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -476,7 +504,11 @@ export async function simulateRestoreBackup(
       newPhotosCount: 0,
       corruptedBlobsCount: 0,
       missingBlobsCount: 0,
-      errors: [`Archive ZIP invalide ou corrompue: ${e instanceof Error ? e.message : 'Erreur'}`],
+      errors: [
+        isEn
+          ? `Invalid or corrupted ZIP archive: ${e instanceof Error ? e.message : 'Error'}`
+          : `Archive ZIP invalide ou corrompue: ${e instanceof Error ? e.message : 'Erreur'}`,
+      ],
       warnings: [],
     };
   }
@@ -494,7 +526,11 @@ export async function simulateRestoreBackup(
       newPhotosCount: 0,
       corruptedBlobsCount: 0,
       missingBlobsCount: 0,
-      errors: ['Fichier metadata.json manquant dans l\'archive.'],
+      errors: [
+        isEn
+          ? 'Missing metadata.json file in archive.'
+          : "Fichier metadata.json manquant dans l'archive.",
+      ],
       warnings: [],
     };
   }
@@ -514,7 +550,11 @@ export async function simulateRestoreBackup(
       newPhotosCount: 0,
       corruptedBlobsCount: 0,
       missingBlobsCount: 0,
-      errors: [`Format JSON invalide dans metadata.json: ${e instanceof Error ? e.message : 'Erreur'}`],
+      errors: [
+        isEn
+          ? `Invalid JSON format in metadata.json: ${e instanceof Error ? e.message : 'Error'}`
+          : `Format JSON invalide dans metadata.json: ${e instanceof Error ? e.message : 'Erreur'}`,
+      ],
       warnings: [],
     };
   }
@@ -530,7 +570,11 @@ export async function simulateRestoreBackup(
       const manifestStr = await manifestFile.async('string');
       manifest = JSON.parse(manifestStr) as BackupManifest;
     } catch {
-      warnings.push('Manifeste illisible, prévisualisation effectuée via metadata.json.');
+      warnings.push(
+        isEn
+          ? 'Unreadable manifest; preview generated from metadata.json.'
+          : 'Manifeste illisible, prévisualisation effectuée via metadata.json.'
+      );
     }
   }
 
@@ -569,14 +613,22 @@ export async function simulateRestoreBackup(
 
       if (!blobZipFile) {
         missingBlobsCount++;
-        warnings.push(`Fichier binaire absent dans l'archive pour la photo ${photo.id}`);
+        warnings.push(
+          isEn
+            ? `Missing binary file in archive for photo ${photo.id}`
+            : `Fichier binaire absent dans l'archive pour la photo ${photo.id}`
+        );
       } else if (manifestEntry?.sha256) {
         try {
           const blobData = await blobZipFile.async('blob');
           const hash = await computeBlobSha256(blobData);
           if (hash !== manifestEntry.sha256) {
             corruptedBlobsCount++;
-            errors.push(`Somme de contrôle corrompue pour photo ${photo.id}`);
+            errors.push(
+              isEn
+                ? `Corrupted checksum for photo ${photo.id}`
+                : `Somme de contrôle corrompue pour photo ${photo.id}`
+            );
           }
         } catch {
           corruptedBlobsCount++;
@@ -609,16 +661,23 @@ export async function simulateRestoreBackup(
  */
 export async function restoreFullLibraryBackup(
   backupFile: File,
-  onProgress?: (percent: number, status: string) => void
+  onProgress?: (percent: number, status: string) => void,
+  lang: AppLang = 'fr'
 ): Promise<RestoreResult> {
-  onProgress?.(5, 'Lecture et vérification du format de l\'archive...');
+  const isEn = lang === 'en';
+  onProgress?.(
+    5,
+    isEn ? 'Reading and verifying archive format...' : "Lecture et vérification du format de l'archive..."
+  );
 
   let zip: JSZip;
   try {
     zip = await JSZip.loadAsync(backupFile);
   } catch (e) {
     throw new Error(
-      `Fichier ZIP corrompu ou illisible : ${e instanceof Error ? e.message : 'Erreur'}`,
+      isEn
+        ? `Corrupted or unreadable ZIP file: ${e instanceof Error ? e.message : 'Error'}`
+        : `Fichier ZIP corrompu ou illisible : ${e instanceof Error ? e.message : 'Erreur'}`,
       { cause: e }
     );
   }
@@ -626,26 +685,37 @@ export async function restoreFullLibraryBackup(
   // 1. Verify metadata.json
   const metadataFile = zip.file('metadata.json');
   if (!metadataFile) {
-    throw new Error('Fichier metadata.json manquant dans l\'archive. Restauration impossible.');
+    throw new Error(
+      isEn
+        ? 'Missing metadata.json in archive. Unable to restore.'
+        : "Fichier metadata.json manquant dans l'archive. Restauration impossible."
+    );
   }
 
-  onProgress?.(15, 'Extraction des métadonnées...');
+  onProgress?.(15, isEn ? 'Extracting metadata...' : 'Extraction des métadonnées...');
   let metadataStr: string;
   try {
     metadataStr = await metadataFile.async('string');
   } catch (e) {
-    throw new Error('Impossible de lire metadata.json dans l\'archive', { cause: e });
+    throw new Error(
+      isEn ? 'Unable to read metadata.json in archive' : "Impossible de lire metadata.json dans l'archive",
+      { cause: e }
+    );
   }
 
   let parsedMetadata: { photos?: Photo[]; albums?: Album[] };
   try {
     parsedMetadata = JSON.parse(metadataStr);
   } catch {
-    throw new Error('Format JSON invalide dans metadata.json');
+    throw new Error(isEn ? 'Invalid JSON format in metadata.json' : 'Format JSON invalide dans metadata.json');
   }
 
   if (!parsedMetadata || !Array.isArray(parsedMetadata.photos)) {
-    throw new Error('Structure de données invalide dans metadata.json (tableau de photos manquant)');
+    throw new Error(
+      isEn
+        ? 'Invalid data structure in metadata.json (missing photos array)'
+        : 'Structure de données invalide dans metadata.json (tableau de photos manquant)'
+    );
   }
 
   const photos = parsedMetadata.photos;
@@ -689,14 +759,13 @@ export async function restoreFullLibraryBackup(
 
     onProgress?.(
       20 + Math.round(((i + 1) / totalPhotos) * 60),
-      `Restauration de la photo ${i + 1}/${totalPhotos}...`
+      isEn ? `Restoring photo ${i + 1}/${totalPhotos}...` : `Restauration de la photo ${i + 1}/${totalPhotos}...`
     );
 
     if (photo.storage === 'local') {
       const manifestEntry = manifest?.files?.[photo.id];
       const ext = getExtension(photo.metadata?.mimeType, 'jpg');
 
-      // Check standard path photos/${id}.${ext} or legacy fallback photos/${id}.blob
       let blobZipFile = zip.file(`photos/${photo.id}.${ext}`);
       if (!blobZipFile && manifestEntry?.fileName) {
         blobZipFile = zip.file(`photos/${manifestEntry.fileName}`) || zip.file(manifestEntry.fileName);
@@ -709,17 +778,17 @@ export async function restoreFullLibraryBackup(
         try {
           const blobData = await blobZipFile.async('blob');
 
-          // Verify integrity checksum if present in manifest
           if (manifestEntry?.sha256) {
             const actualHash = await computeBlobSha256(blobData);
             if (actualHash !== manifestEntry.sha256) {
-              integrityErrors.push(`Empreinte corrompue pour photo ${photo.id}`);
+              integrityErrors.push(
+                isEn ? `Corrupted checksum for photo ${photo.id}` : `Empreinte corrompue pour photo ${photo.id}`
+              );
             }
           }
 
           await savePhotoBlob({ id: photo.id, blob: blobData });
 
-          // Generate lightweight thumbnail for instant high-performance grid rendering
           try {
             const thumbBlob = await generateThumbnailBlob(blobData);
             await saveThumbnailBlob({ id: photo.id, blob: thumbBlob });
@@ -730,12 +799,16 @@ export async function restoreFullLibraryBackup(
         } catch (e) {
           missingBlobs.push(photo.id);
           warnings.push(
-            `Erreur lors de l'extraction du blob ${photo.id}: ${e instanceof Error ? e.message : 'Erreur'}`
+            isEn
+              ? `Error extracting blob ${photo.id}: ${e instanceof Error ? e.message : 'Error'}`
+              : `Erreur lors de l'extraction du blob ${photo.id}: ${e instanceof Error ? e.message : 'Erreur'}`
           );
         }
       } else {
         missingBlobs.push(photo.id);
-        warnings.push(`Fichier photo manquant pour ${photo.id} (${photo.alt})`);
+        warnings.push(
+          isEn ? `Missing photo file for ${photo.id} (${photo.alt})` : `Fichier photo manquant pour ${photo.id} (${photo.alt})`
+        );
       }
     }
 
@@ -744,14 +817,14 @@ export async function restoreFullLibraryBackup(
   }
 
   // 4. Restore albums
-  onProgress?.(85, 'Restauration des albums...');
+  onProgress?.(85, isEn ? 'Restoring albums...' : 'Restauration des albums...');
   for (const album of albums) {
     if (album && album.id) {
       await saveAlbumMeta(album);
     }
   }
 
-  onProgress?.(100, 'Restauration terminée !');
+  onProgress?.(100, isEn ? 'Restore completed!' : 'Restauration terminée !');
 
   return {
     success: true,
