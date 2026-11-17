@@ -156,7 +156,7 @@ export const SystemSettings: React.FC = () => {
       )}
 
       {/* Card 0: Interface Language */}
-      <section className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <section data-demo-id="settings-language-card" className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-[24px]">translate</span>
@@ -337,7 +337,7 @@ export const SystemSettings: React.FC = () => {
       </section>
 
       {/* Card 3: Installation de l'application (PWA) */}
-      <section className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm space-y-4">
+      <section data-demo-id="settings-pwa-card" className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[24px]">install_mobile</span>
@@ -392,7 +392,7 @@ export const SystemSettings: React.FC = () => {
       </section>
 
       {/* Card 5: Assistance et Mode Débutant */}
-      <section className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm flex items-center justify-between gap-4">
+      <section data-demo-id="settings-help-card" className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm flex items-center justify-between gap-4">
         <div>
           <h4 className="text-headline-sm font-bold text-on-surface">
             {isEn ? 'Beginner Guide & Help Tooltips Mode' : 'Mode Guide Débutant & Infobulles'}
@@ -431,7 +431,7 @@ export const SystemSettings: React.FC = () => {
       </section>
 
       {/* Card 6: Performance & Benchmark Suite (1k to 20k photos) */}
-      <section className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm space-y-4">
+      <section data-demo-id="settings-benchmark-card" className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-outline-variant/20">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[24px]">speed</span>

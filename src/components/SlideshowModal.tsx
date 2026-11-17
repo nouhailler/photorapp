@@ -106,7 +106,7 @@ export const SlideshowModal: React.FC<SlideshowModalProps> = ({
   const currentPhoto = photos[currentIndex] || photos[0];
 
   return (
-    <div className="fixed inset-0 z-[120] bg-black flex flex-col justify-between animate-in fade-in duration-300 select-none">
+    <div data-demo-id="slideshow-viewer" className="fixed inset-0 z-[120] bg-black flex flex-col justify-between animate-in fade-in duration-300 select-none">
       {/* Top Bar */}
       <header className="flex justify-between items-center px-6 py-4 bg-gradient-to-b from-black/80 via-black/40 to-transparent z-10">
         <div className="flex items-center gap-3 text-white">
@@ -143,6 +143,7 @@ export const SlideshowModal: React.FC<SlideshowModalProps> = ({
 
           {/* Close */}
           <button
+            data-demo-id="slideshow-close"
             onClick={onClose}
             className="p-2 text-white/80 hover:text-white rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-all"
           >

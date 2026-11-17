@@ -283,6 +283,7 @@ const Albums: React.FC = () => {
         </div>
         <div className="flex items-center gap-1">
           <button
+            data-demo-id="albums-new-btn"
             onClick={openCreateModal}
             className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-2xl font-bold text-label-md shadow-md active:scale-95 transition-transform"
           >
@@ -373,7 +374,7 @@ const Albums: React.FC = () => {
       </div>
 
       {/* Smart Spaces Section computed from real user data */}
-      <section className="pt-8 border-t border-outline-variant/20">
+      <section data-demo-id="albums-smart-spaces" className="pt-8 border-t border-outline-variant/20">
         <h3 className="text-headline-md font-bold text-on-surface mb-2">
           {isEn ? 'Instant Smart Spaces' : 'Espaces Intelligents Instantanés'}
         </h3>
@@ -474,6 +475,7 @@ const Albums: React.FC = () => {
                   {isEn ? 'Album title *' : "Titre de l'album *"}
                 </label>
                 <input
+                  data-demo-id="albums-modal-title-input"
                   type="text"
                   required
                   value={albumTitle}
@@ -499,7 +501,7 @@ const Albums: React.FC = () => {
 
               {!editingAlbum && (
                 <div className="p-4 bg-surface-container-low rounded-2xl space-y-3 border border-outline-variant/30">
-                  <label className="flex items-center gap-3 cursor-pointer">
+                  <label data-demo-id="albums-modal-smart-toggle" className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isSmartAlbum}
@@ -524,6 +526,7 @@ const Albums: React.FC = () => {
                         {isEn ? 'Automatic membership rule:' : "Critère d'appartenance automatique :"}
                       </label>
                       <select
+                        data-demo-id="albums-modal-smart-select"
                         value={smartType}
                         onChange={(e) =>
                           setSmartType(
@@ -629,6 +632,7 @@ const Albums: React.FC = () => {
                   {isEn ? 'Cancel' : 'Annuler'}
                 </button>
                 <button
+                  data-demo-id="albums-modal-submit"
                   type="submit"
                   disabled={!isFormValid}
                   className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-label-md active:scale-95 disabled:opacity-50"

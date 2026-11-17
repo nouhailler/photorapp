@@ -164,6 +164,7 @@ const Gallery: React.FC = () => {
           {filteredPhotos.length > 0 && (
             <div className="flex items-center gap-1">
               <button
+                data-demo-id="gallery-slideshow-btn"
                 onClick={() => setIsSlideshowOpen(true)}
                 className="h-12 px-4 rounded-2xl bg-surface-container-high hover:bg-surface-variant text-on-surface font-semibold text-label-md flex items-center gap-2 active:scale-95 transition-all shadow-sm"
                 title={isEn ? 'Start fullscreen slideshow' : 'Lancer le diaporama plein écran'}
@@ -187,15 +188,18 @@ const Gallery: React.FC = () => {
 
         {/* Filter Chips */}
         <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
-          <HelpTooltip
-            title={isEn ? 'Quick filters' : 'Filtres rapides'}
-            text={
-              isEn
-                ? 'Filter in one click to show all photos, favorites only, or shots containing GPS coordinates.'
-                : 'Filtrez en un clic pour afficher toutes les photos, uniquement les clichés favoris ou ceux munis de coordonnées GPS.'
-            }
-          />
+          <span data-demo-id="gallery-help-filters" className="inline-flex items-center shrink-0">
+            <HelpTooltip
+              title={isEn ? 'Quick filters' : 'Filtres rapides'}
+              text={
+                isEn
+                  ? 'Filter in one click to show all photos, favorites only, or shots containing GPS coordinates.'
+                  : 'Filtrez en un clic pour afficher toutes les photos, uniquement les clichés favoris ou ceux munis de coordonnées GPS.'
+              }
+            />
+          </span>
           <button
+            data-demo-id="gallery-filter-all"
             onClick={() => setFilterMode('all')}
             className={`px-4 py-1.5 rounded-full text-label-sm font-semibold transition-all ${
               filterMode === 'all'
@@ -206,6 +210,7 @@ const Gallery: React.FC = () => {
             {isEn ? 'All' : 'Toutes'} ({photos.length})
           </button>
           <button
+            data-demo-id="gallery-filter-favorites"
             onClick={() => setFilterMode('favorites')}
             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-label-sm font-semibold transition-all ${
               filterMode === 'favorites'
@@ -217,6 +222,7 @@ const Gallery: React.FC = () => {
             <span>{isEn ? 'Favorites' : 'Favoris'} ({photos.filter((p) => p.isFavorite).length})</span>
           </button>
           <button
+            data-demo-id="gallery-filter-gps"
             onClick={() => setFilterMode('gps')}
             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-label-sm font-semibold transition-all ${
               filterMode === 'gps'

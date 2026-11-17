@@ -19,7 +19,14 @@
     "test:all": "eslint . && vitest run && tsc -b && vite build && playwright test",
     "cf:deploy": "npm run build && npx wrangler deploy",
     "cf:preview": "npm run build && npx wrangler dev",
-    "cf:pages": "npm run build && npx wrangler pages deploy dist --project-name=photorapp"
+    "cf:pages": "npm run build && npx wrangler pages deploy dist --project-name=photorapp",
+    "video:list": "video-studio list",
+    "video:validate": "video-studio validate",
+    "video:audio": "video-studio audio",
+    "video:record": "video-studio record",
+    "video:render": "video-studio render",
+    "video:generate": "video-studio generate",
+    "video:preview": "video-studio preview"
   },
   "dependencies": {
     "@types/jszip": "^3.4.0",
@@ -35,6 +42,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@nouhailler/video-studio": "github:nouhailler/video-studio#v0.2.0",
     "@playwright/test": "1.65.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

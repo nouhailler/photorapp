@@ -200,7 +200,7 @@ const IntelligenceIA: React.FC = () => {
   return (
     <div className="px-container-padding space-y-section-margin max-w-6xl mx-auto pb-28">
       {/* Page Title & Local-First Privacy Banner */}
-      <section className="pt-2">
+      <section data-demo-id="ia-local-header" className="pt-2">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -266,7 +266,7 @@ const IntelligenceIA: React.FC = () => {
       </section>
 
       {/* Nettoyage Intelligent Section */}
-      <section className="space-y-4">
+      <section data-demo-id="ia-cleanup-section" className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className="text-headline-md font-bold text-on-surface">
@@ -299,6 +299,7 @@ const IntelligenceIA: React.FC = () => {
               </div>
             </div>
             <button
+              data-demo-id="ia-blurry-review-btn"
               disabled={lowQualityPhotos.length === 0}
               onClick={() => setActiveReview('blurry')}
               className="px-4 py-2 rounded-xl bg-surface-container-high text-primary font-bold text-label-sm hover:bg-surface-variant active:scale-95 disabled:opacity-30 transition-all shrink-0"
@@ -327,6 +328,7 @@ const IntelligenceIA: React.FC = () => {
               </div>
             </div>
             <button
+              data-demo-id="ia-duplicates-review-btn"
               disabled={allDuplicateGroups.length === 0}
               onClick={() => setActiveReview('duplicates')}
               className="px-4 py-2 rounded-xl bg-surface-container-high text-primary font-bold text-label-sm hover:bg-surface-variant active:scale-95 disabled:opacity-30 transition-all shrink-0"
@@ -338,7 +340,7 @@ const IntelligenceIA: React.FC = () => {
       </section>
 
       {/* Vision Locale & Catégories Détectées */}
-      <section className="space-y-4">
+      <section data-demo-id="ia-semantic-section" className="space-y-4">
         <div className="flex items-center gap-2">
           <h3 className="text-headline-md font-bold text-on-surface">
             {isEn ? 'Local Semantic Classification' : 'Classification Sémantique Locale'}
@@ -386,7 +388,7 @@ const IntelligenceIA: React.FC = () => {
       </section>
 
       {/* Groupes de Personnes & Visages (Strictement Opt-In & Local) */}
-      <section className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 space-y-4">
+      <section data-demo-id="ia-faces-section" className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30 space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-3 border-b border-outline-variant/20">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center shrink-0">
@@ -524,7 +526,7 @@ const IntelligenceIA: React.FC = () => {
 
 
       {/* Interactive Map Widget (Real GPS Only) */}
-      <section className="space-y-4">
+      <section data-demo-id="ia-map-section" className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
             <h3 className="text-headline-md font-bold text-on-surface">
@@ -675,6 +677,7 @@ const IntelligenceIA: React.FC = () => {
 
             <div className="flex justify-end pt-2">
               <button
+                data-demo-id="ia-blurry-modal-close"
                 onClick={() => setActiveReview(null)}
                 className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
               >
@@ -754,6 +757,7 @@ const IntelligenceIA: React.FC = () => {
 
             <div className="flex justify-end pt-2">
               <button
+                data-demo-id="ia-duplicates-modal-close"
                 onClick={() => setActiveReview(null)}
                 className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-bold text-label-md active:scale-95"
               >

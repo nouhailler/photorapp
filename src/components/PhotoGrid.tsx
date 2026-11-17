@@ -35,6 +35,7 @@ export const PhotoItem: React.FC<{
 
   return (
     <div
+      data-demo-id={`photo-card-${photo.id}`}
       className={`relative aspect-square group overflow-hidden bg-surface-container cursor-pointer select-none rounded-sm ${
         isFeatured ? 'col-span-2 row-span-2' : ''
       }`}

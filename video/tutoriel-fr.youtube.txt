@@ -1,0 +1,23 @@
+Reprenez le contrôle de vos souvenirs photo directement depuis votre navigateur, sans compte obligatoire ni envoi vers un cloud tiers. Dans ce tutoriel pas à pas de Gallery Pro (Photorapp), découvrez comment organiser, retoucher, analyser et sauvegarder toute votre photothèque en 100 % Local-First grâce à IndexedDB.
+
+Au fil des six chapitres, nous parcourons l'ensemble de l'application sur des données de démonstration : de l'écran d'accueil jusqu'aux paramètres avancés du mode hors ligne.
+
+Fonctionnalités présentées :
+- Navigation par catégories, mode guide débutant (?) et carrousel Souvenirs
+- Filtres rapides, diaporama plein écran et panneau technique EXIF / GPS
+- Éditeur non destructif (auto-ajustement, filtres HDR, recadrage 16:9, comparaison Avant/Après)
+- Albums intelligents dynamiques et recherche sémantique hors ligne
+- Intelligence locale : tri des photos floues, doublons SHA-256 / dHash, visages opt-in et carte GPS
+- Sauvegarde intégrale en ZIP certifié SHA-256, diagnostic IndexedDB et installation PWA
+
+Essayer l'application : https://photorapp.swinux.ch/
+
+Chapitres :
+00:00 Introduction
+00:07 Découverte et prise en main
+00:41 Galerie, filtres et visionneuse
+01:38 Retouche photo non destructive
+02:30 Albums et recherche intelligente
+03:34 Intelligence locale et carte GPS
+04:25 Sauvegarde, paramètres et mode hors-ligne
+05:08 Conclusion

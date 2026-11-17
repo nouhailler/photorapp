@@ -60,7 +60,7 @@ export const SouvenirsCarousel: React.FC<SouvenirsCarouselProps> = ({ photos, on
   if (souvenirs.length === 0) return null;
 
   return (
-    <section className="space-y-3 pt-2">
+    <section data-demo-id="souvenirs-carousel" className="space-y-3 pt-2">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-primary text-[24px]">history_edu</span>

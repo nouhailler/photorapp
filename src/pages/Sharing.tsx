@@ -330,6 +330,7 @@ const Sharing: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
+            data-demo-id="sharing-import-btn"
             onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-4 p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:border-primary/50 shadow-sm group active:scale-95 transition-all text-left"
           >
@@ -386,6 +387,7 @@ const Sharing: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Backup Full Library */}
           <div
+            data-demo-id="sharing-backup-card"
             onClick={handleBackupLibrary}
             className="p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:border-primary/50 shadow-sm group cursor-pointer active:scale-95 transition-all space-y-3"
           >
@@ -434,6 +436,7 @@ const Sharing: React.FC = () => {
 
           {/* Export Metadata JSON */}
           <div
+            data-demo-id="sharing-export-json"
             onClick={handleExportMetadata}
             className="p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 hover:border-primary/50 shadow-sm group cursor-pointer active:scale-95 transition-all space-y-3"
           >
@@ -459,7 +462,7 @@ const Sharing: React.FC = () => {
       </section>
 
       {/* Storage Diagnostics and Local Health */}
-      <section className="space-y-4">
+      <section data-demo-id="sharing-diagnostic-section" className="space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-label-md font-bold text-primary uppercase tracking-wider">
             {isEn ? 'Local Storage Diagnostics (IndexedDB)' : 'Diagnostic du Stockage Local (IndexedDB)'}

@@ -1,14 +1,27 @@
-import { defineConfig } from 'vitest/config'
+/// <reference types="vitest/config" />
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    entries: ['index.html'],
+  },
   server: {
     host: '0.0.0.0',
     port: 3000,
     allowedHosts: true,
     hmr: false,
+    watch: {
+      ignored: [
+        '**/stitch_photorapp/**',
+        '**/playwright-report/**',
+        '**/test-results/**',
+        '**/tests/**',
+        '**/dist/**',
+      ],
+    },
   },
   plugins: [
     react(),

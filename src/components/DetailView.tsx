@@ -101,6 +101,7 @@ const DetailView: React.FC<DetailViewProps> = ({
       {/* Top Bar */}
       <header className="fixed top-0 left-0 right-0 z-10 flex justify-between items-center px-4 h-16 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
         <button
+          data-demo-id="detail-close-btn"
           onClick={onClose}
           className="p-2.5 text-white bg-black/30 rounded-full backdrop-blur-md active:scale-90 transition-transform hover:bg-black/50"
         >
@@ -109,6 +110,7 @@ const DetailView: React.FC<DetailViewProps> = ({
 
         <div className="flex gap-2">
           <button
+            data-demo-id="detail-favorite-btn"
             onClick={onToggleFavorite}
             title={
               photo.isFavorite
@@ -140,6 +142,7 @@ const DetailView: React.FC<DetailViewProps> = ({
             <span className="material-symbols-outlined text-[22px]">delete</span>
           </button>
           <button
+            data-demo-id="detail-info-btn"
             onClick={() => setShowInfo(!showInfo)}
             title={isEn ? 'Details & EXIF' : 'Détails et EXIF'}
             className={`p-2.5 rounded-full backdrop-blur-md active:scale-90 transition-transform ${
@@ -171,6 +174,7 @@ const DetailView: React.FC<DetailViewProps> = ({
       {/* Bottom Actions */}
       <footer className="fixed bottom-0 left-0 right-0 p-6 flex justify-center gap-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
         <button
+          data-demo-id="detail-edit-btn"
           onClick={onEdit}
           className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary text-on-primary font-bold text-label-md shadow-xl hover:brightness-110 active:scale-95 transition-all"
         >
@@ -196,6 +200,7 @@ const DetailView: React.FC<DetailViewProps> = ({
 
       {/* Info & EXIF Panel */}
       <div
+        data-demo-id="detail-info-panel"
         className={`fixed right-0 top-0 bottom-0 w-84 max-w-[90vw] z-20 bg-surface/95 backdrop-blur-2xl border-l border-outline-variant/30 transition-transform duration-300 ease-out shadow-2xl ${
           showInfo ? 'translate-x-0' : 'translate-x-full'
         }`}
@@ -204,6 +209,7 @@ const DetailView: React.FC<DetailViewProps> = ({
           <div className="flex justify-between items-center pb-4 border-b border-outline-variant/20">
             <h3 className="text-headline-sm font-bold text-on-surface">{isEn ? 'Information' : 'Informations'}</h3>
             <button
+              data-demo-id="detail-info-close"
               onClick={() => setShowInfo(false)}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant/50 text-on-surface-variant"
             >

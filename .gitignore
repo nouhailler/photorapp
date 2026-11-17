@@ -27,3 +27,10 @@ blob-report/
 *.njsproj
 *.sln
 *.sw?
+
+# video-studio — fichiers générés
+video/audio/
+video/cache/
+video/recordings/
+video/build/
+video/output/

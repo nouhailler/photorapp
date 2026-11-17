@@ -36,6 +36,7 @@ const TopAppBar: React.FC<TopAppBarProps> = ({
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Hamburger Menu Trigger */}
         <button
+          data-demo-id="nav-menu-button"
           onClick={onOpenMenu}
           className="w-10 h-10 rounded-2xl bg-surface-container-high hover:bg-surface-variant flex items-center justify-center text-on-surface active:scale-95 transition-all shadow-xs shrink-0 overflow-hidden"
           title={isEn ? 'Open categorized feature menu' : 'Ouvrir le menu des fonctionnalités par catégorie'}
@@ -99,6 +100,7 @@ const TopAppBar: React.FC<TopAppBarProps> = ({
 
         {/* Activity Center Trigger */}
         <button
+          data-demo-id="nav-activity-button"
           onClick={onOpenActivityCenter}
           className="relative w-9 h-9 rounded-xl bg-surface-container-high hover:bg-surface-variant flex items-center justify-center text-on-surface transition-all active:scale-95"
           title={isEn ? 'Activity Center & background tasks' : "Centre d'activité et tâches en arrière-plan"}
@@ -119,6 +121,7 @@ const TopAppBar: React.FC<TopAppBarProps> = ({
 
         {/* Toggle Novice Help Mode */}
         <button
+          data-demo-id="nav-help-toggle"
           onClick={toggleHelpMode}
           className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 ${
             isHelpModeActive
@@ -143,6 +146,7 @@ const TopAppBar: React.FC<TopAppBarProps> = ({
 
         {/* Import Button */}
         <button
+          data-demo-id="nav-import-button"
           onClick={onImportClick}
           className="flex items-center gap-1.5 bg-primary text-on-primary text-label-md font-semibold px-3 sm:px-3.5 py-2 rounded-xl active:scale-95 duration-200 ease-in-out transition-colors hover:bg-primary-container shadow-sm shrink-0"
           aria-label={isEn ? 'Import photos' : 'Importer des photos'}
@@ -161,20 +165,20 @@ const BottomNavBar: React.FC = () => {
 
   const navItems = isEn
     ? [
-        { label: 'Photos', icon: 'photo_library', path: '/gallery' },
-        { label: 'Albums', icon: 'collections_bookmark', path: '/albums' },
-        { label: 'AI & Quality', icon: 'auto_awesome', path: '/ia' },
-        { label: 'Search', icon: 'search', path: '/search' },
-        { label: 'Backup', icon: 'cloud_sync', path: '/sharing' },
-        { label: 'System', icon: 'settings', path: '/settings' },
+        { label: 'Photos', icon: 'photo_library', path: '/gallery', demoId: 'tab-gallery' },
+        { label: 'Albums', icon: 'collections_bookmark', path: '/albums', demoId: 'tab-albums' },
+        { label: 'AI & Quality', icon: 'auto_awesome', path: '/ia', demoId: 'tab-ia' },
+        { label: 'Search', icon: 'search', path: '/search', demoId: 'tab-search' },
+        { label: 'Backup', icon: 'cloud_sync', path: '/sharing', demoId: 'tab-sharing' },
+        { label: 'System', icon: 'settings', path: '/settings', demoId: 'tab-settings' },
       ]
     : [
-        { label: 'Photos', icon: 'photo_library', path: '/gallery' },
-        { label: 'Albums', icon: 'collections_bookmark', path: '/albums' },
-        { label: 'IA & Qualité', icon: 'auto_awesome', path: '/ia' },
-        { label: 'Recherche', icon: 'search', path: '/search' },
-        { label: 'Sauvegarde', icon: 'cloud_sync', path: '/sharing' },
-        { label: 'Système', icon: 'settings', path: '/settings' },
+        { label: 'Photos', icon: 'photo_library', path: '/gallery', demoId: 'tab-gallery' },
+        { label: 'Albums', icon: 'collections_bookmark', path: '/albums', demoId: 'tab-albums' },
+        { label: 'IA & Qualité', icon: 'auto_awesome', path: '/ia', demoId: 'tab-ia' },
+        { label: 'Recherche', icon: 'search', path: '/search', demoId: 'tab-search' },
+        { label: 'Sauvegarde', icon: 'cloud_sync', path: '/sharing', demoId: 'tab-sharing' },
+        { label: 'Système', icon: 'settings', path: '/settings', demoId: 'tab-settings' },
       ];
 
   return (
@@ -183,6 +187,7 @@ const BottomNavBar: React.FC = () => {
         <NavLink
           key={item.path}
           to={item.path}
+          data-demo-id={item.demoId}
           className={({ isActive }) =>
             `flex flex-col items-center justify-center px-2 sm:px-2.5 py-1 active:scale-90 duration-200 transition-all cursor-pointer ${
               isActive

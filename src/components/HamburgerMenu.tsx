@@ -294,7 +294,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       />
 
       {/* Drawer */}
-      <aside className="relative w-full max-w-xs sm:max-w-sm bg-surface border-r border-outline-variant/30 flex flex-col h-full shadow-2xl z-10 animate-in slide-in-from-left duration-300">
+      <aside data-demo-id="hamburger-drawer" className="relative w-full max-w-xs sm:max-w-sm bg-surface border-r border-outline-variant/30 flex flex-col h-full shadow-2xl z-10 animate-in slide-in-from-left duration-300">
         {/* Drawer Header */}
         <div className="p-5 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low/50">
           <div className="flex items-center gap-3">
@@ -340,6 +340,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
             </div>
 
             <button
+              data-demo-id="hamburger-close"
               onClick={onClose}
               className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/40 active:scale-95 transition-all"
               title={isEn ? 'Close menu' : 'Fermer le menu'}

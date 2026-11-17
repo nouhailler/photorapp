@@ -222,6 +222,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
           {/* Compare Button */}
           <div className="flex items-center gap-1">
             <button
+              data-demo-id="editor-compare-btn"
               onMouseDown={() => setIsComparing(true)}
               onMouseUp={() => setIsComparing(false)}
               onTouchStart={() => setIsComparing(true)}
@@ -262,6 +263,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
 
           {/* Save */}
           <button
+            data-demo-id="editor-save-btn"
             onClick={handleSave}
             className="bg-primary text-on-primary px-5 py-1.5 rounded-full text-label-md font-bold shadow-md hover:brightness-110 active:scale-95 transition-all"
           >
@@ -312,6 +314,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
           {isEn ? 'Adjustments' : 'Ajustements'}
         </button>
         <button
+          data-demo-id="editor-tab-filters"
           onClick={() => setActiveTab('filters')}
           className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-label-md font-semibold transition-all ${
             activeTab === 'filters' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'
@@ -321,6 +324,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
           {isEn ? 'Filters' : 'Filtres'}
         </button>
         <button
+          data-demo-id="editor-tab-crop"
           onClick={() => setActiveTab('crop')}
           className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-label-md font-semibold transition-all ${
             activeTab === 'crop' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'
@@ -337,6 +341,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
         <div className="flex justify-around items-center py-3 border-b border-outline-variant/10 shrink-0">
           <div className="flex items-center gap-1.5">
             <button
+              data-demo-id="editor-auto-adjust"
               onClick={handleAutoAdjust}
               className="flex flex-col items-center gap-1 group active:scale-95 transition-transform"
               title={isEn ? 'Automatic color and light optimization' : 'Optimisation automatique des couleurs et de la lumière'}
@@ -422,6 +427,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
               {filters.map((f) => (
                 <button
                   key={f.name}
+                  data-demo-id={`editor-filter-${f.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')}`}
                   onClick={() => handleFilterSelect(f.value)}
                   className="flex flex-col items-center gap-2 flex-shrink-0 group"
                 >
@@ -461,6 +467,7 @@ const Editor: React.FC<EditorProps> = ({ photo, onClose }) => {
                 {(['original', '1:1', '4:3', '16:9'] as const).map((ratio) => (
                   <button
                     key={ratio}
+                    data-demo-id={`editor-ratio-${ratio.replace(':', '')}`}
                     onClick={() => handleAspectRatio(ratio)}
                     className={`py-3 px-2 rounded-xl text-label-md font-bold text-center border-2 transition-all active:scale-95 ${
                       adjustments.aspectRatio === ratio

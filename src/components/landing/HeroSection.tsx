@@ -52,7 +52,7 @@ export const HeroSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           {/* Left column: value proposition */}
-          <div className="lg:col-span-5 space-y-6">
+          <div data-demo-id="hero-value-prop" className="lg:col-span-5 space-y-6">
             <p className="text-xs font-mono uppercase tracking-[0.18em] text-[#1E35D0] font-semibold">
               {t.eyebrow}
             </p>
@@ -69,6 +69,7 @@ export const HeroSection: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3.5 pt-1">
               <Link
                 to="/gallery"
+                data-demo-id="hero-launch-app"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm sm:text-base font-semibold text-white bg-[#1E35D0] hover:bg-[#1629A8] rounded-xl transition-colors whitespace-nowrap shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1E35D0]"
               >
                 <span>{t.primaryCta}</span>

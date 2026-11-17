@@ -153,6 +153,7 @@ const Search: React.FC = () => {
             <span className="material-symbols-outlined text-primary text-[22px]">search</span>
           </div>
           <input
+            data-demo-id="search-input"
             className="bg-transparent border-none focus:ring-0 w-full py-2.5 font-body-md text-on-surface placeholder:text-on-surface-variant/60 outline-none"
             placeholder={
               isEn
@@ -184,7 +185,7 @@ const Search: React.FC = () => {
 
         {/* Natural Language Semantic Badges */}
         {(searchOutcome.inferredCategory || searchOutcome.semanticTags.length > 0) && (
-          <div className="flex items-center gap-2 pt-2.5 px-2 flex-wrap text-label-xs animate-in fade-in">
+          <div data-demo-id="search-semantic-badges" className="flex items-center gap-2 pt-2.5 px-2 flex-wrap text-label-xs animate-in fade-in">
             <span className="text-primary font-bold flex items-center gap-1">
               <span className="material-symbols-outlined text-[15px]">psychology</span>
               {isEn ? 'Natural language analysis:' : 'Analyse du langage naturel :'}
@@ -249,6 +250,7 @@ const Search: React.FC = () => {
               {isEn ? 'Instant filters' : 'Filtres instantanés'}
             </span>
             <button
+              data-demo-id="search-more-filters-btn"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               className="text-primary text-label-xs font-bold hover:underline flex items-center gap-1"
             >
@@ -341,7 +343,7 @@ const Search: React.FC = () => {
 
         {/* Advanced Filters Expandable Drawer */}
         {showAdvancedFilters && (
-          <div className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-4 animate-in fade-in">
+          <div data-demo-id="search-advanced-drawer" className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-4 animate-in fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {/* Month selector */}
               <div>
@@ -473,7 +475,7 @@ const Search: React.FC = () => {
 
       {/* Results Header */}
       <section className="space-y-4">
-        <div className="flex justify-between items-center">
+        <div data-demo-id="search-results-header" className="flex justify-between items-center">
           <h3 className="text-headline-md font-bold text-on-surface">
             {hasActiveFilters
               ? isEn
