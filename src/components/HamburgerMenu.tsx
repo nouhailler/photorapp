@@ -4,6 +4,7 @@ import { useHelp } from '../context/useHelp';
 import { useLanguage } from '../context/useLanguage';
 import { APP_VERSION, getAppReleaseDate } from '../services/updateService';
 import { PWAInstallButton } from './PWAInstallButton';
+import { YOUTUBE_TUTORIAL_URL } from './landing/landingMedia';
 
 interface HamburgerMenuProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface MenuCategory {
   items: {
     label: string;
     path?: string;
+    externalUrl?: string;
     action?: () => void;
     icon: string;
     description: string;
@@ -158,6 +160,13 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
               icon: 'public',
               description: 'Return to Gallery Pro product showcase',
             },
+            {
+              label: 'Video Tutorial (YouTube)',
+              externalUrl: YOUTUBE_TUTORIAL_URL,
+              icon: 'smart_display',
+              description: 'Full guided walkthrough of Gallery Pro',
+              badge: 'Video',
+            },
           ],
         },
       ]
@@ -281,6 +290,13 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
               icon: 'public',
               description: 'Revenir à la vitrine produit Gallery Pro',
             },
+            {
+              label: 'Tutoriel vidéo (YouTube)',
+              externalUrl: YOUTUBE_TUTORIAL_URL,
+              icon: 'smart_display',
+              description: 'Visite guidée complète de Gallery Pro en vidéo',
+              badge: 'Vidéo',
+            },
           ],
         },
       ];
@@ -396,6 +412,34 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
                           <p className="text-[11px] text-on-surface-variant truncate">{item.description}</p>
                         </div>
                       </NavLink>
+                    );
+                  }
+
+                  if (item.externalUrl) {
+                    return (
+                      <a
+                        key={itemIdx}
+                        href={item.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={onClose}
+                        className="flex items-start gap-3 p-2.5 rounded-2xl hover:bg-surface-container text-on-surface transition-all"
+                      >
+                        <span className="material-symbols-outlined text-[20px] text-primary shrink-0 mt-0.5">
+                          {item.icon}
+                        </span>
+                        <div className="flex-grow min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-label-sm font-bold truncate">{item.label}</span>
+                            {item.badge && (
+                              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-on-surface-variant truncate">{item.description}</p>
+                        </div>
+                      </a>
                     );
                   }
 

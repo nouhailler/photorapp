@@ -9,6 +9,9 @@ import goldenBeachImg from '../../assets/images/demo_golden_beach_1794689901283.
 
 export const GITHUB_REPO_URL = 'https://github.com/nouhailler/photorapp';
 export const DEPLOYED_APP_URL = 'https://photorapp.swinux.ch/';
+export const YOUTUBE_VIDEO_ID = 'Z--ZypHe5LM';
+export const YOUTUBE_TUTORIAL_URL = `https://www.youtube.com/watch?v=${YOUTUBE_VIDEO_ID}`;
+export const YOUTUBE_EMBED_URL = `https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?rel=0`;
 
 export interface DemoPhotoItem {
   id: string;

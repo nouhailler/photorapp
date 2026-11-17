@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLandingLang } from './LandingLangContext';
+import { YOUTUBE_TUTORIAL_URL } from './landingMedia';
 
 const COPY = {
   fr: {
@@ -10,6 +11,7 @@ const COPY = {
       'Organisez, retrouvez, retouchez et préservez vos photographies directement dans votre navigateur. Sans compte obligatoire. Sans cloud imposé. Vos originaux restent chez vous.',
     primaryCta: 'Découvrir Gallery Pro',
     secondaryCta: 'Voir les démonstrations',
+    tutorialCta: 'Voir le tutoriel vidéo sur YouTube',
     pillars: [
       { title: 'Local-First', detail: 'Stockage privé dans votre navigateur via IndexedDB v3.' },
       { title: 'Sans inscription', detail: 'Accès immédiat, sans compte ni abonnement imposé.' },
@@ -29,6 +31,7 @@ const COPY = {
       'Organize, search, edit, and preserve your photography directly inside your browser. No mandatory account. No forced cloud upload. Your original files stay with you.',
     primaryCta: 'Launch Gallery Pro',
     secondaryCta: 'Explore interactive demos',
+    tutorialCta: 'Watch the video tutorial on YouTube',
     pillars: [
       { title: 'Local-First', detail: 'Private in-browser storage powered by IndexedDB v3.' },
       { title: 'No account required', detail: 'Instant access with no sign-up or recurring subscription.' },
@@ -83,6 +86,23 @@ export const HeroSection: React.FC = () => {
                 className="inline-flex items-center justify-center px-5 py-3.5 text-sm sm:text-base font-semibold text-[#18191D] bg-white border border-neutral-300 hover:border-neutral-400 hover:bg-neutral-50 rounded-xl transition-colors whitespace-nowrap shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1E35D0]"
               >
                 {t.secondaryCta}
+              </a>
+            </div>
+
+            <div>
+              <a
+                href={YOUTUBE_TUTORIAL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-[#1E35D0] hover:text-[#1629A8] hover:underline underline-offset-4 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E35D0] rounded"
+              >
+                <span className="material-symbols-outlined text-[19px]" aria-hidden="true">
+                  play_circle
+                </span>
+                <span>{t.tutorialCta}</span>
+                <span className="material-symbols-outlined text-[15px]" aria-hidden="true">
+                  open_in_new
+                </span>
               </a>
             </div>
 

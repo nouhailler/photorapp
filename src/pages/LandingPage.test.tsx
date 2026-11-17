@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import LandingPage from './LandingPage';
+import { HamburgerMenu } from '../components/HamburgerMenu';
+import { LanguageProvider } from '../context/LanguageContext';
+import { HelpProvider } from '../context/HelpContext';
 
 describe('LandingPage', () => {
   beforeEach(() => {
@@ -53,6 +56,15 @@ describe('LandingPage', () => {
     const githubLinks = screen.getAllByRole('link', { name: /GitHub/i });
     expect(githubLinks.length).toBeGreaterThanOrEqual(2);
     expect(githubLinks.some((el) => el.getAttribute('href') === 'https://github.com/nouhailler/photorapp')).toBe(true);
+
+    const youtubeLinks = screen.getAllByRole('link', { name: /tutoriel|YouTube/i });
+    expect(youtubeLinks.length).toBeGreaterThanOrEqual(3);
+    expect(youtubeLinks.every((el) => el.getAttribute('href') === 'https://www.youtube.com/watch?v=Z--ZypHe5LM')).toBe(true);
+
+    const frYoutubeIframe = screen.getByTitle(/Tutoriel vidéo complet de Gallery Pro sur YouTube/i);
+    expect(frYoutubeIframe.tagName).toBe('IFRAME');
+    expect(frYoutubeIframe).toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/Z--ZypHe5LM?rel=0');
+    expect(frYoutubeIframe).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
 
     // Public visitors must NOT see the legal onboarding modal overlay
     expect(screen.queryByText(/Mentions légales et responsabilité/i)).not.toBeInTheDocument();
@@ -225,6 +237,36 @@ describe('LandingPage', () => {
         name: /All your photos\. One personal library\. Under your control\./i,
       })
     ).toBeInTheDocument();
+
+    const enYoutubeLinks = screen.getAllByRole('link', { name: /Video Tutorial|Watch on YouTube|video tutorial on YouTube/i });
+    expect(enYoutubeLinks.length).toBeGreaterThanOrEqual(3);
+    expect(enYoutubeLinks.every((el) => el.getAttribute('href') === 'https://www.youtube.com/watch?v=Z--ZypHe5LM')).toBe(true);
+
+    const enYoutubeIframe = screen.getByTitle(/Gallery Pro full video tutorial on YouTube/i);
+    expect(enYoutubeIframe.tagName).toBe('IFRAME');
+    expect(enYoutubeIframe).toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/Z--ZypHe5LM?rel=0');
+    expect(enYoutubeIframe).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+  });
+
+  it('includes the YouTube tutorial link in HamburgerMenu in both French and English', () => {
+    render(
+      <MemoryRouter>
+        <LanguageProvider>
+          <HelpProvider>
+            <HamburgerMenu isOpen={true} onClose={() => {}} />
+          </HelpProvider>
+        </LanguageProvider>
+      </MemoryRouter>
+    );
+
+    const frMenuLink = screen.getByRole('link', { name: /Tutoriel vidéo \(YouTube\)/i });
+    expect(frMenuLink).toHaveAttribute('href', 'https://www.youtube.com/watch?v=Z--ZypHe5LM');
+    expect(frMenuLink).toHaveAttribute('target', '_blank');
+
+    fireEvent.click(screen.getByRole('button', { name: 'EN' }));
+    const enMenuLink = screen.getByRole('link', { name: /Video Tutorial \(YouTube\)/i });
+    expect(enMenuLink).toHaveAttribute('href', 'https://www.youtube.com/watch?v=Z--ZypHe5LM');
+    expect(enMenuLink).toHaveAttribute('target', '_blank');
   });
 });
 
